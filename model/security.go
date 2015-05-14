@@ -26,7 +26,7 @@ func FetchAnswer(db *sqlx.DB, uid string) (*SecurityAnswer, error) {
 }
 
 func StoreAnswer(db *sqlx.DB, answer *SecurityAnswer) (error) {
-    _, err := db.NamedExec("insert into security_answer (user_name,question_id,answer) values (:user_name, :question_id, :answer)", answer)
+    _, err := db.NamedExec("insert into security_answer (user_name,question_id,answer,created_at) values (:user_name, :question_id, :answer, now())", answer)
     if err != nil {
         return err
     }

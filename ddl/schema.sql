@@ -1,10 +1,13 @@
+DROP TABLE IF EXISTS `security_answer`;
 CREATE TABLE `security_answer` (
-    `user_name`        varchar(255) NOT NULL,
+    `user_name`      varchar(255) NOT NULL,
     `question_id`    int(11)      NOT NULL,
     `answer`         varchar(255) NOT NULL,
+    `created_at`     datetime     NOT NULL,
     PRIMARY KEY      (`user_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+DROP TABLE IF EXISTS `security_question`;
 CREATE TABLE `security_question` (
     `id`        int(11) NOT NULL AUTO_INCREMENT,
     `question`  varchar(255) NOT NULL,
