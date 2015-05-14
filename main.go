@@ -9,7 +9,7 @@ import (
 func init() {
     viper.SetConfigName("mokey")
     viper.SetConfigType("yaml")
-    viper.AddConfigPath("/etc/mokey/")
+    viper.AddConfigPath("/srv/mokey/")
 }
 
 func main() {
