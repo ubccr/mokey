@@ -1,6 +1,7 @@
 ---
 dsn: "user:pass@/dbname?parseTime=true"
 port: 8080
+bind: "127.0.0.1"
 secret: mysecret
 ipahost: "ipa.example.edu"
 keytab: "/path/to/client.keytab"

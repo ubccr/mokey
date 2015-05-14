@@ -121,6 +121,7 @@ func (a *Application) router() *mux.Router {
 
 func init() {
     viper.SetDefault("port", 8080)
+    viper.SetDefault("bind", "")
     viper.SetDefault("secret", "change-me")
     viper.SetDefault("driver", "mysql")
     viper.SetDefault("dsn", "/mokey?parseTime=true")
@@ -138,7 +139,7 @@ func Server() {
         logrus.Fatal(err.Error())
     }
 
-    logrus.Printf("Running on http://127.0.0.1:%d", viper.GetInt("port"))
+    logrus.Printf("Running on http://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
 
     http.Handle("/", middle)
 
@@ -146,8 +147,8 @@ func Server() {
     keyFile := viper.GetString("key")
 
     if certFile != "" && keyFile != "" {
-        http.ListenAndServeTLS(fmt.Sprintf(":%d", viper.GetInt("port")), certFile, keyFile, nil)
+        http.ListenAndServeTLS(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), certFile, keyFile, nil)
     } else {
-        http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("port")), nil)
+        http.ListenAndServe(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), nil)
     }
 }
