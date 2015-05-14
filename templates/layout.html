@@ -1,0 +1,80 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MyCCR</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yellowtail">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Montserrat">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.5.4/bootstrap-select.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css?v=2" rel="stylesheet">
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.5.4/bootstrap-select.min.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+
+    <div class="navbar navbar-custom navbar-fixed-top" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#"><img src="/static/images/ub_reaching_others.gif" alt="University at Buffalo, The State University of New York, Reaching Others" border="0"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="navbar navbar-default navbar-fixed-top secondnavbar" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#"><span class="myccr-script">my</span><span class="myccr-block">CCR</span></a>
+          {{ with .user }}
+              <p class="navbar-text">Hello {{ .First }}</p>
+          {{ end }}
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="#">Help</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <p><strong>Migrate your CCR account</strong></p>
+            <p>To better server you we are updating our authentication systems
+            and ask that you accept our new terms of service and set a security
+            question for use in resetting your password.</p>
+            <p>Any questions about the process don't hesistate to email us at:<br/> ccr-help@ccr.buffalo.edu.</p>
+            <p>Thank you --CCR Staff</p>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+
+          {{template "content" .}}
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+{{end}}

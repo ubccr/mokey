@@ -1,0 +1,14 @@
+{{define "content"}}
+
+<div class="page-header">
+  <h3><i class="fa fa-frown-o fa-lg"></i> System error</h3>
+  <div class="alert alert-danger" role="alert">
+    {{ if . }}
+        {{ . }}
+    {{ else }}
+        A system error has occurred. Please check the system logs.
+    {{ end }}
+  </div>
+</div>
+
+{{end}}
