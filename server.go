@@ -141,5 +141,13 @@ func Server() {
     logrus.Printf("Running on http://127.0.0.1:%d", viper.GetInt("port"))
 
     http.Handle("/", middle)
-    http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("port")), nil)
+
+    certFile := viper.GetString("cert")
+    keyFile := viper.GetString("key")
+
+    if certFile != "" && keyFile != "" {
+        http.ListenAndServeTLS(fmt.Sprintf(":%d", viper.GetInt("port")), certFile, keyFile, nil)
+    } else {
+        http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("port")), nil)
+    }
 }

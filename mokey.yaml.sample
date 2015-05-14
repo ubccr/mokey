@@ -6,4 +6,6 @@ ipahost: "ipa.example.edu"
 keytab: "/path/to/client.keytab"
 ccrcrt: "/path/to/ccrca.pem"
 ccrsrv: "oldkerb.example.edu"
+cert: "/path/to/cert"
+key: "/path/to/key"
 ...
