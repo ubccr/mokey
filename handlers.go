@@ -86,7 +86,7 @@ func IndexHandler(app *Application) http.Handler {
         if err == nil {
             logrus.WithFields(logrus.Fields{
                 "uid": user.Uid,
-            }).Error("logged in user already migrated. security answer exists in database")
+            }).Error("logged in user already activated. security answer exists in database")
 
             vars := map[string]interface{}{
                     "user": user,
@@ -161,8 +161,8 @@ func tryAuth(app *Application, uid, pass string) (error) {
     if err == nil {
         logrus.WithFields(logrus.Fields{
             "uid": uid,
-        }).Error("tryauth: user already migrated. security answer exists in database")
-        return errors.New("This account has already been migrated. If you feel this is an error, contact ccr-help.")
+        }).Error("tryauth: user already activated. security answer exists in database")
+        return errors.New("This account has already been activated. If you feel this is an error, contact ccr-help.")
     }
 
     // Attempt authentication via existing CCR Kerb

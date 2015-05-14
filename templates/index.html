@@ -1,7 +1,7 @@
 {{define "content"}}
 
 {{ if .completed }}
-    <div class="alert alert-success">Thank you. Your account has been successfully migrated. </div>
+    <div class="alert alert-success">Thank you. Your account has been successfully activated. </div>
 {{ else }}
 
 {{ with .message }}
@@ -13,7 +13,7 @@
 
 <div class="panel panel-primary">
   <div class="panel-heading">
-      <h3 class="panel-title"><i class="fa fa-lock fa-lg"></i> Migrating user account: {{ .user.Uid }}</h3>
+      <h3 class="panel-title"><i class="fa fa-lock fa-lg"></i> Activating user account: {{ .user.Uid }}</h3>
   </div>
   <div class="panel-body">
     <form class="form-horizontal" role="form" method="POST">
