@@ -30,9 +30,10 @@ func renderTemplate(w http.ResponseWriter, t *template.Template, data interface{
     buf.WriteTo(w)
 }
 
-func errorHandler(app *Application, w http.ResponseWriter, status int, message string) {
+func errorHandler(app *Application, w http.ResponseWriter, status int) {
     w.WriteHeader(status)
-    renderTemplate(w, app.templates["error.html"], message)
+
+    renderTemplate(w, app.templates["error.html"], nil)
 }
 
 func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, qid, answer, uid string) (error) {
@@ -93,7 +94,7 @@ func IndexHandler(app *Application) http.Handler {
         user := context.Get(r, "user").(*ipa.UserRecord)
         if user == nil {
             logrus.Error("index handler: user not found in request context")
-            errorHandler(app, w, http.StatusInternalServerError, "")
+            errorHandler(app, w, http.StatusInternalServerError)
             return
         }
 
@@ -116,7 +117,7 @@ func IndexHandler(app *Application) http.Handler {
             logrus.WithFields(logrus.Fields{
                 "error": err.Error(),
             }).Error("Failed to fetch questions from database")
-            errorHandler(app, w, http.StatusInternalServerError, "")
+            errorHandler(app, w, http.StatusInternalServerError)
             return
         }
 
@@ -214,7 +215,7 @@ func LoginHandler(app *Application) http.Handler {
                         "uid": uid,
                         "error": err.Error(),
                     }).Error("loginhandler: failed to set password")
-                    errorHandler(app, w, http.StatusInternalServerError, "")
+                    errorHandler(app, w, http.StatusInternalServerError)
                     return
                 }
 
@@ -226,7 +227,7 @@ func LoginHandler(app *Application) http.Handler {
                     logrus.WithFields(logrus.Fields{
                         "error": err.Error(),
                     }).Error("loginhandler: failed to save session")
-                    errorHandler(app, w, http.StatusInternalServerError, "")
+                    errorHandler(app, w, http.StatusInternalServerError)
                     return
                 }
 
