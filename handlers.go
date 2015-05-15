@@ -6,6 +6,7 @@ import (
     "strconv"
     "html/template"
     "net/http"
+    "unicode/utf8"
 
     "golang.org/x/crypto/bcrypt"
     "github.com/gorilla/context"
@@ -39,6 +40,10 @@ func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, 
         return errors.New("Please choose a security question and answer.")
     }
 
+    if utf8.RuneCountInString(answer) < 2 || utf8.RuneCountInString(answer) > 100 {
+        return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
+    }
+
     q, err := strconv.Atoi(qid)
     if err != nil {
         return errors.New("Invalid security question")
@@ -58,6 +63,10 @@ func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, 
 
     hash, err := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
     if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err.Error(),
+        }).Error("failed to generate bcrypt hash of answer")
         return errors.New("Fatal system error. Please contact ccr-help.")
     }
 
@@ -82,6 +91,12 @@ func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, 
 func IndexHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         user := context.Get(r, "user").(*ipa.UserRecord)
+        if user == nil {
+            logrus.Error("index handler: user not found in request context")
+            errorHandler(app, w, http.StatusInternalServerError, "")
+            return
+        }
+
         _, err := model.FetchAnswer(app.db, string(user.Uid))
         if err == nil {
             logrus.WithFields(logrus.Fields{
@@ -98,6 +113,9 @@ func IndexHandler(app *Application) http.Handler {
 
         questions, err := model.FetchQuestions(app.db)
         if err != nil {
+            logrus.WithFields(logrus.Fields{
+                "error": err.Error(),
+            }).Error("Failed to fetch questions from database")
             errorHandler(app, w, http.StatusInternalServerError, "")
             return
         }
@@ -205,6 +223,9 @@ func LoginHandler(app *Application) http.Handler {
                 session.Values[MOKEY_COOKIE_USER] = uid
                 err = session.Save(r, w)
                 if err != nil {
+                    logrus.WithFields(logrus.Fields{
+                        "error": err.Error(),
+                    }).Error("loginhandler: failed to save session")
                     errorHandler(app, w, http.StatusInternalServerError, "")
                     return
                 }
