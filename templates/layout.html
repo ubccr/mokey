@@ -48,6 +48,8 @@
           <a class="navbar-brand" href="#"><span class="myccr-script">my</span><span class="myccr-block">CCR</span></a>
           {{ with .user }}
               <p class="navbar-text">Hello {{ .First }}</p>
+          {{ else }}
+              <p class="navbar-text"><a href="/auth/login">Login</a></p>
           {{ end }}
         </div>
         <div class="navbar-collapse collapse">

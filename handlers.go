@@ -37,7 +37,20 @@ func errorHandler(app *Application, w http.ResponseWriter, status int) {
     renderTemplate(w, app.templates["error.html"], nil)
 }
 
-func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, qid, answer string, token *model.Token) (error) {
+func setupAccount(app *Application, questions []*model.SecurityQuestion, token *model.Token, r *http.Request) (error) {
+    qid := r.FormValue("qid")
+    answer := r.FormValue("answer")
+    pass := r.FormValue("password")
+    pass2 := r.FormValue("password2")
+
+    if len(pass) < 8 || len(pass2) < 8 {
+        return errors.New("Please set a password at least 8 characters in length.")
+    }
+
+    if pass != pass2 {
+        return errors.New("Password do not match. Please confirm your password.")
+    }
+
     if len(qid) == 0 || len(answer) == 0 {
         return errors.New("Please choose a security question and answer.")
     }
@@ -72,6 +85,44 @@ func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, 
         return errors.New("Fatal system error. Please contact ccr-help.")
     }
 
+    // Setup password in FreeIPA
+    client := NewIpaClient(true)
+    rand, err := client.ResetPassword(token.UserName)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": token.UserName,
+            "error": err.Error(),
+        }).Error("failed to reset user password in FreeIPA")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+    err = client.ChangePassword(token.UserName, rand, pass)
+    if err != nil {
+        if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
+            logrus.WithFields(logrus.Fields{
+                "uid": token.UserName,
+                "error": ierr.Error(),
+            }).Error("password does not conform to policy")
+            return errors.New("Invalid password. Please ensure your password includes XYz")
+        }
+
+        if ierr, ok :=  err.(*ipa.ErrInvalidPassword); ok {
+            logrus.WithFields(logrus.Fields{
+                "uid": token.UserName,
+                "error": ierr.Error(),
+            }).Error("invalid password from FreeIPA")
+            return errors.New("Invalid password. Please ensure your password includes XYz")
+        }
+
+        logrus.WithFields(logrus.Fields{
+            "uid": token.UserName,
+            "error": err.Error(),
+        }).Error("failed to change user password in FreeIPA")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+
+    // Save security answer
     a := &model.SecurityAnswer{
         UserName: token.UserName,
         QuestionId: q,
@@ -87,6 +138,8 @@ func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, 
         return errors.New("Fatal system error. Please contact ccr-help.")
     }
 
+
+    // Destroy token
     err = model.DestroyToken(app.db, token.Token)
     if err != nil {
         logrus.WithFields(logrus.Fields{
@@ -124,10 +177,8 @@ func SetupAccountHandler(app *Application) http.Handler {
         completed := false
 
         if r.Method == "POST" {
-            qid := r.FormValue("qid")
-            answer := r.FormValue("answer")
 
-            err := setSecurityQuestion(app, questions, qid, answer, token)
+            err := setupAccount(app, questions, token, r)
             if err != nil {
                 message = err.Error()
                 completed = false
