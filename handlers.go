@@ -9,6 +9,7 @@ import (
     "unicode/utf8"
 
     "golang.org/x/crypto/bcrypt"
+    "github.com/gorilla/mux"
     "github.com/gorilla/context"
     "github.com/justinas/nosurf"
     "github.com/ubccr/goipa"
@@ -36,7 +37,7 @@ func errorHandler(app *Application, w http.ResponseWriter, status int) {
     renderTemplate(w, app.templates["error.html"], nil)
 }
 
-func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, qid, answer, uid string) (error) {
+func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, qid, answer string, token *model.Token) (error) {
     if len(qid) == 0 || len(answer) == 0 {
         return errors.New("Please choose a security question and answer.")
     }
@@ -65,14 +66,14 @@ func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, 
     hash, err := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
     if err != nil {
         logrus.WithFields(logrus.Fields{
-            "uid": uid,
+            "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to generate bcrypt hash of answer")
         return errors.New("Fatal system error. Please contact ccr-help.")
     }
 
     a := &model.SecurityAnswer{
-        UserName: uid,
+        UserName: token.UserName,
         QuestionId: q,
         Answer: string(hash),
     }
@@ -80,35 +81,33 @@ func setSecurityQuestion(app *Application, questions []*model.SecurityQuestion, 
     err = model.StoreAnswer(app.db, a)
     if err != nil {
         logrus.WithFields(logrus.Fields{
-            "uid": uid,
+            "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to save answer to the database")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+    err = model.DestroyToken(app.db, token.Token)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": token.UserName,
+            "error": err.Error(),
+        }).Error("failed to remove token from database")
         return errors.New("Fatal system error. Please contact ccr-help.")
     }
 
     return nil
 }
 
-func IndexHandler(app *Application) http.Handler {
+func SetupAccountHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        user := context.Get(r, "user").(*ipa.UserRecord)
-        if user == nil {
-            logrus.Error("index handler: user not found in request context")
-            errorHandler(app, w, http.StatusInternalServerError)
-            return
-        }
-
-        _, err := model.FetchAnswer(app.db, string(user.Uid))
-        if err == nil {
+        token, err := model.FetchToken(app.db, mux.Vars(r)["token"], viper.GetInt("setup_max_age"))
+        if err != nil {
             logrus.WithFields(logrus.Fields{
-                "uid": user.Uid,
-            }).Error("logged in user already activated. security answer exists in database")
-
-            vars := map[string]interface{}{
-                    "user": user,
-                    "completed": true}
-
-            renderTemplate(w, app.templates["index.html"], vars)
+                "error": err.Error(),
+            }).Error("Failed to fetch token from database")
+            w.WriteHeader(http.StatusNotFound)
+            renderTemplate(w, app.templates["404.html"], nil)
             return
         }
 
@@ -128,7 +127,7 @@ func IndexHandler(app *Application) http.Handler {
             qid := r.FormValue("qid")
             answer := r.FormValue("answer")
 
-            err := setSecurityQuestion(app, questions, qid, answer, string(user.Uid))
+            err := setSecurityQuestion(app, questions, qid, answer, token)
             if err != nil {
                 message = err.Error()
                 completed = false
@@ -139,62 +138,61 @@ func IndexHandler(app *Application) http.Handler {
 
         vars := map[string]interface{}{
                 "token": nosurf.Token(r),
-                "user": user,
+                "uid": token.UserName,
                 "completed": completed,
                 "questions": questions,
                 "message": message}
 
-        renderTemplate(w, app.templates["index.html"], vars)
+        renderTemplate(w, app.templates["setup-account.html"], vars)
     })
 }
 
-func setPasswordAndLogin(uid, pass string) (string, error) {
+func setPassword(uid, pass string) (error) {
     c := &ipa.Client{
         Host: viper.GetString("ipahost"),
         KeyTab: viper.GetString("keytab")}
 
     rand, err := c.ResetPassword(uid)
     if err != nil {
-        return "", err
+        return  err
     }
 
     err = c.ChangePassword(uid, rand, pass)
     if err != nil {
-        return "", err
-    }
-
-    sess, err := c.Login(uid, pass)
-    if err != nil {
-        return "", err
-    }
-
-    return sess, nil
-}
-
-func tryAuth(app *Application, uid, pass string) (error) {
-    if len(uid) == 0 || len(pass) == 0 {
-        return errors.New("Please provide a uid/password")
-    }
-
-    _, err := model.FetchAnswer(app.db, uid)
-    if err == nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-        }).Error("tryauth: user already activated. security answer exists in database")
-        return errors.New("This account has already been activated. If you feel this is an error, contact ccr-help.")
-    }
-
-    // Attempt authentication via existing CCR Kerb
-    err = ccrAuth(uid, pass)
-    if err != nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-            "error": err,
-        }).Error("tryauth: failed login attempt")
-        return errors.New("Invalid login")
+        return err
     }
 
     return nil
+}
+
+func tryAuth(uid, pass string) (string, *ipa.UserRecord, error) {
+    if len(uid) == 0 || len(pass) == 0 {
+        return "", nil, errors.New("Please provide a uid/password")
+    }
+
+    c := &ipa.Client{
+        Host: viper.GetString("ipahost"),
+        KeyTab: viper.GetString("keytab")}
+
+    sess, err := c.Login(uid, pass)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "ipa_client_error": err,
+        }).Error("tryauth: failed login attempt")
+        return "", nil, errors.New("Invalid login")
+    }
+
+    userRec, err := c.UserShow(uid)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "ipa_client_error": err,
+        }).Error("tryauth: failed to fetch user info")
+        return "", nil, errors.New("Invalid login")
+    }
+
+    return sess, userRec, nil
 }
 
 func LoginHandler(app *Application) http.Handler {
@@ -205,23 +203,13 @@ func LoginHandler(app *Application) http.Handler {
             uid := r.FormValue("uid")
             pass := r.FormValue("password")
 
-            err := tryAuth(app, uid, pass)
+            sid, userRec, err := tryAuth(uid, pass)
             if err != nil {
                 message = err.Error()
             } else {
-                sid, err := setPasswordAndLogin(uid, pass)
-                if err != nil {
-                    logrus.WithFields(logrus.Fields{
-                        "uid": uid,
-                        "error": err.Error(),
-                    }).Error("loginhandler: failed to set password")
-                    errorHandler(app, w, http.StatusInternalServerError)
-                    return
-                }
-
                 session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
                 session.Values[MOKEY_COOKIE_SID] = sid
-                session.Values[MOKEY_COOKIE_USER] = uid
+                session.Values[MOKEY_COOKIE_USER] = userRec
                 err = session.Save(r, w)
                 if err != nil {
                     logrus.WithFields(logrus.Fields{
@@ -241,5 +229,21 @@ func LoginHandler(app *Application) http.Handler {
                 "message": message}
 
         renderTemplate(w, app.templates["login.html"], vars)
+    })
+}
+
+func IndexHandler(app *Application) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        user := context.Get(r, "user").(*ipa.UserRecord)
+        if user == nil {
+            logrus.Error("index handler: user not found in request context")
+            errorHandler(app, w, http.StatusInternalServerError)
+            return
+        }
+
+        vars := map[string]interface{}{
+                "user": user}
+
+        renderTemplate(w, app.templates["index.html"], vars)
     })
 }

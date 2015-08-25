@@ -4,7 +4,9 @@ import (
     "fmt"
     "log"
     "os"
+    "bytes"
     "html/template"
+    "encoding/gob"
     "path/filepath"
     "net/http"
     "github.com/jmoiron/sqlx"
@@ -17,6 +19,7 @@ import (
     "github.com/gorilla/schema"
     "github.com/gorilla/sessions"
     "github.com/ubccr/goipa"
+    "gopkg.in/gomail.v2-unstable"
 )
 
 const (
@@ -31,16 +34,26 @@ type Application struct {
     cookieStore   *sessions.CookieStore
     decoder       *schema.Decoder
     templates     map[string]*template.Template
+    emails        map[string]*template.Template
     tmpldir       string
 }
 
-func NewApplication() (*Application, error) {
+func NewDb() (*sqlx.DB, error) {
     db, err := sqlx.Open(viper.GetString("driver"), viper.GetString("dsn"))
     if err != nil {
         return nil, err
     }
 
     err = db.Ping()
+    if err != nil {
+        return nil, err
+    }
+
+    return db, nil
+}
+
+func NewApplication() (*Application, error) {
+    db, err := NewDb()
     if err != nil {
         return nil, err
     }
@@ -75,6 +88,17 @@ func NewApplication() (*Application, error) {
         }
     }
 
+    tmpls, err = filepath.Glob(tmpldir + "/templates/email/*.txt")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    emails := make(map[string]*template.Template)
+    for _, t := range tmpls {
+        base := filepath.Base(t)
+        emails[base] = template.Must(template.New(base).ParseFiles(t))
+    }
+
     app := &Application{}
     app.tmpldir = tmpldir
     app.db = db
@@ -82,17 +106,47 @@ func NewApplication() (*Application, error) {
     app.decoder = schema.NewDecoder()
     //app.decoder.IgnoreUnknownKeys(true)
     app.templates = templates
+    app.emails = emails
 
     return app, nil
 }
 
-func (a *Application) NewIpaClient(withKeytab bool) (*ipa.Client) {
+func NewIpaClient(withKeytab bool) (*ipa.Client) {
     c := &ipa.Client{Host: viper.GetString("ipahost")}
     if withKeytab {
         c.KeyTab = viper.GetString("keytab")
     }
 
     return c
+}
+
+func (a *Application) SendEmail(user *ipa.UserRecord, subject, template string, data interface{}) (error) {
+    logrus.WithFields(logrus.Fields{
+        "uid": user.Uid,
+        "email": user.Email,
+    }).Info("Sending email to user")
+
+    t := a.emails[template]
+    var buf bytes.Buffer
+    err := t.ExecuteTemplate(&buf, template, data)
+
+    if err != nil {
+        return err
+    }
+
+    m := gomail.NewMessage()
+    m.SetHeader("From", viper.GetString("email_from"))
+    m.SetHeader("To", string(user.Email))
+    m.SetHeader("Subject", subject)
+
+    m.SetBody("text/plain", buf.String())
+
+    d := gomail.Dialer{Host: viper.GetString("smtp_host"), Port: viper.GetInt("smtp_port")}
+    if err := d.DialAndSend(m); err != nil {
+        return err
+    }
+
+    return nil
 }
 
 func (a *Application) middlewareStruct() (*interpose.Middleware, error) {
@@ -113,7 +167,8 @@ func (a *Application) router() *mux.Router {
     })
     router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", a.tmpldir)))))
     router.Path("/auth/login").Handler(LoginHandler(a)).Methods("GET", "POST")
-    router.Path("/").Handler(AuthRequired(a, IndexHandler(a))).Methods("GET", "POST")
+    router.Path("/auth/setup/{token:[0-9a-f]+}").Handler(SetupAccountHandler(a)).Methods("GET", "POST")
+    router.Path("/").Handler(AuthRequired(a, IndexHandler(a))).Methods("GET")
 
     return router
 }
@@ -121,11 +176,19 @@ func (a *Application) router() *mux.Router {
 
 func init() {
     viper.SetDefault("port", 8080)
+    viper.SetDefault("smtp_host", "localhost")
+    viper.SetDefault("smtp_port", 25)
+    viper.SetDefault("email_link_base", "http://localhost")
+    viper.SetDefault("email_from", "helpdesk@example.com")
+    viper.SetDefault("setup_max_age", 86400)
     viper.SetDefault("bind", "")
     viper.SetDefault("secret", "change-me")
     viper.SetDefault("driver", "mysql")
     viper.SetDefault("dsn", "/mokey?parseTime=true")
     viper.SetDefault("ipahost", "localhost")
+
+    gob.Register(&ipa.UserRecord{})
+    gob.Register(&ipa.IpaDateTime{})
 }
 
 func Server() {

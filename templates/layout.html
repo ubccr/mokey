@@ -52,13 +52,9 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="http://www.buffalo.edu/ccr/support/ccr-help/accounts/activate.html">Help</a></li>
+            <li><a href="#">Help</a></li>
+            <li class="hidden-lg hidden-md hidden-sm"><a href="#">Change Password</a></li>
           </ul>
-          <p class="navbar-text navbar-right hidden-lg hidden-md hidden-sm">
-            To better serve you we are updating our authentication systems
-            and ask that you accept our new terms of service and set a security
-            question for use in resetting your password.
-          </p>
         </div>
       </div>
     </div>
@@ -66,12 +62,18 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
-            <p><strong>Activate your CCR account</strong></p>
-            <p>To better serve you we are updating our authentication systems
-            and ask that you accept our new terms of service and set a security
-            question for use in resetting your password.</p>
-            <p>Any questions about the process don't hesistate to email us at:<br/> ccr-help@ccr.buffalo.edu.</p>
-            <p>Thank you --CCR Staff</p>
+          {{ with .user }}
+          <ul class="nav nav-sidebar">
+            <li><a href="#">Change Password</a></li>
+          </ul>
+          {{ end }}
+          <ul class="nav nav-sidebar">
+            <li><a href="http://ccr.buffalo.edu/support/ccr-help/accounts/myccr-account-management.html">About MyCCR</a></li>
+            <li><a href="http://ccr.buffalo.edu/support/UserGuide.html">Getting Started</a></li>
+            <li><a href="http://ccr.buffalo.edu/support/ccr-help/faq.html">CCR FAQ</a></li>
+            <li><a href="http://www.buffalo.edu/ccr/support/research_facilities/general_compute/machine-status.html">Machine Status</a></li>
+            <li><a href="http://ccr.buffalo.edu/support/research_facilities.html">Complete list of CCR Resources</a></li>
+          </ul>
         </div>
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 

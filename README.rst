@@ -1,11 +1,9 @@
 ===============================================================================
-mokey - Migrate CCR user accounts to FreeIPA
+mokey - FreeIPA account managment tool
 ===============================================================================
 
-This project is a simple web application to migrate user accounts from CCR's
-old kerberos/ldap systems to FreeIPA. It authenticates users agains the old
-system and requires users to accept new terms of service and set a security
-question.
+This project is web application to manage user accounts in FreeIPA. It provides
+account setup and password reset functionality.
 
 ------------------------------------------------------------------------
 Deployment
@@ -18,7 +16,7 @@ Copy binary and templates to /srv/mokey::
       |- static/      Static css/images
       |- mokey        main binary program
       |- mokey.yaml   config file
-      |- cecrt/       cert/ca-bundle as single PEM
+      |- cert/        cert/ca-bundle as single PEM
       |- private/     private key
 
 The mokey binary will run as non-root user (apache) so need to ensure file
