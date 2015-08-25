@@ -19,6 +19,15 @@ func randToken() string {
     return fmt.Sprintf("%x", b)
 }
 
+func FetchTokenByUser(db *sqlx.DB, uid string, maxAge int) (*Token, error) {
+    t := Token{}
+    err := db.Get(&t, "select user_name,token,attempts,email from token where user_name = ? and timestampdiff(SECOND, created_at, now()) <= ?", uid, maxAge)
+    if err != nil {
+        return nil, err
+    }
+
+    return &t, nil
+}
 
 func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
     t := Token{}

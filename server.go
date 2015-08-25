@@ -167,6 +167,7 @@ func (a *Application) router() *mux.Router {
     router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", a.tmpldir)))))
     router.Path("/auth/login").Handler(LoginHandler(a)).Methods("GET", "POST")
     router.Path("/auth/logout").Handler(LogoutHandler(a)).Methods("GET")
+    router.Path("/auth/forgotpw").Handler(ForgotPasswordHandler(a)).Methods("GET", "POST")
     router.Path("/auth/setup/{token:[0-9a-f]+}").Handler(SetupAccountHandler(a)).Methods("GET", "POST")
     router.Path("/auth/resetpw/{token:[0-9a-f]+}").Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
     router.Path("/").Handler(AuthRequired(a, IndexHandler(a))).Methods("GET")

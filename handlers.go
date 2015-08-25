@@ -204,6 +204,66 @@ func resetPassword(app *Application, answer *model.SecurityAnswer, token *model.
     return nil
 }
 
+func forgotPassword(app *Application, r *http.Request) (error) {
+    uid := r.FormValue("uid")
+
+    _, err := model.FetchTokenByUser(app.db, uid, viper.GetInt("setup_max_age"))
+    if err == nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+        }).Error("Forgotpw: user already has active token")
+        return nil
+    }
+
+    client := NewIpaClient(true)
+    userRec, err := client.UserShow(uid)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: invalid uid")
+        return nil
+    }
+
+    if len(userRec.Email) == 0 {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+        }).Error("Forgotpw: missing email address")
+        return nil
+    }
+
+    _, err = model.FetchAnswer(app.db, uid)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: Failed to fetch security answer")
+        return nil
+    }
+
+    token, err := model.NewToken(app.db, uid, string(userRec.Email))
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: Failed to create token")
+        return nil
+    }
+
+    vars := map[string]interface{}{
+            "link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), token.Token)}
+
+    err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: failed send email to user")
+    }
+
+    return nil
+}
+
 func SetupAccountHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         token, err := model.FetchToken(app.db, mux.Vars(r)["token"], viper.GetInt("setup_max_age"))
@@ -341,6 +401,30 @@ func ResetPasswordHandler(app *Application) http.Handler {
                 "message": message}
 
         renderTemplate(w, app.templates["reset-password.html"], vars)
+    })
+}
+
+func ForgotPasswordHandler(app *Application) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        message := ""
+        completed := false
+
+        if r.Method == "POST" {
+            err := forgotPassword(app, r)
+            if err != nil {
+                message = err.Error()
+                completed = false
+            } else {
+                completed = true
+            }
+        }
+
+        vars := map[string]interface{}{
+                "token": nosurf.Token(r),
+                "completed": completed,
+                "message": message}
+
+        renderTemplate(w, app.templates["forgot-password.html"], vars)
     })
 }
 
