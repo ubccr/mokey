@@ -428,6 +428,26 @@ func LoginHandler(app *Application) http.Handler {
     })
 }
 
+func LogoutHandler(app *Application) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+        delete(session.Values, MOKEY_COOKIE_SID)
+        delete(session.Values, MOKEY_COOKIE_USER)
+        session.Options.MaxAge = -1
+
+        err := session.Save(r, w)
+        if err != nil {
+            logrus.WithFields(logrus.Fields{
+                "error": err.Error(),
+            }).Error("logouthandler: failed to save session")
+            errorHandler(app, w, http.StatusInternalServerError)
+            return
+        }
+
+        http.Redirect(w, r, "/auth/login", 302)
+    })
+}
+
 func IndexHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         user := context.Get(r, "user").(*ipa.UserRecord)
