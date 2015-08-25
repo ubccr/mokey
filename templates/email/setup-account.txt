@@ -1,6 +1,4 @@
-Dear {{ .user.First }},
-
-Use the link below to setup your CCR account. 
+Use the following link within the next 72 hours to setup your CCR account. 
 
     {{ .link }}
 

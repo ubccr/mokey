@@ -120,10 +120,9 @@ func NewIpaClient(withKeytab bool) (*ipa.Client) {
     return c
 }
 
-func (a *Application) SendEmail(user *ipa.UserRecord, subject, template string, data interface{}) (error) {
+func (a *Application) SendEmail(email, subject, template string, data interface{}) (error) {
     logrus.WithFields(logrus.Fields{
-        "uid": user.Uid,
-        "email": user.Email,
+        "email": email,
     }).Info("Sending email to user")
 
     t := a.emails[template]
@@ -136,7 +135,7 @@ func (a *Application) SendEmail(user *ipa.UserRecord, subject, template string, 
 
     m := gomail.NewMessage()
     m.SetHeader("From", viper.GetString("email_from"))
-    m.SetHeader("To", string(user.Email))
+    m.SetHeader("To", email)
     m.SetHeader("Subject", subject)
 
     m.SetBody("text/plain", buf.String())
@@ -168,6 +167,7 @@ func (a *Application) router() *mux.Router {
     router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", a.tmpldir)))))
     router.Path("/auth/login").Handler(LoginHandler(a)).Methods("GET", "POST")
     router.Path("/auth/setup/{token:[0-9a-f]+}").Handler(SetupAccountHandler(a)).Methods("GET", "POST")
+    router.Path("/auth/resetpw/{token:[0-9a-f]+}").Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
     router.Path("/").Handler(AuthRequired(a, IndexHandler(a))).Methods("GET")
 
     return router
@@ -180,7 +180,10 @@ func init() {
     viper.SetDefault("smtp_port", 25)
     viper.SetDefault("email_link_base", "http://localhost")
     viper.SetDefault("email_from", "helpdesk@example.com")
+    viper.SetDefault("email_prefix", "mokey")
     viper.SetDefault("setup_max_age", 86400)
+    viper.SetDefault("reset_max_age", 3600)
+    viper.SetDefault("max_attempts", 10)
     viper.SetDefault("bind", "")
     viper.SetDefault("secret", "change-me")
     viper.SetDefault("driver", "mysql")

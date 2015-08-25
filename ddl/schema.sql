@@ -1,8 +1,10 @@
 DROP TABLE IF EXISTS `token`;
 CREATE TABLE `token` (
-    `user_name`      varchar(255) NOT NULL,
-    `token`          char(64)     NOT NULL,
-    `created_at`     datetime     NOT NULL,
+    `user_name`      varchar(255)      NOT NULL,
+    `email`          varchar(255)      NOT NULL,
+    `token`          char(64)          NOT NULL,
+    `attempts`       tinyint unsigned  NOT NULL,
+    `created_at`     datetime          NOT NULL,
     PRIMARY KEY      (`user_name`),
     UNIQUE           (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

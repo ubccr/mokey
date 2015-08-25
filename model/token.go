@@ -1,14 +1,16 @@
 package model
 
 import (
-    "fmt" 
+    "fmt"
     "crypto/rand"
     "github.com/jmoiron/sqlx"
 )
 
 type Token struct {
     UserName             string      `db:"user_name"`
+    Email                string      `db:"email"`
     Token                string      `db:"token"`
+    Attempts             int         `db:"attempts"`
 }
 
 func randToken() string {
@@ -20,7 +22,7 @@ func randToken() string {
 
 func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
     t := Token{}
-    err := db.Get(&t, "select user_name,token from token where token = ? and timestampdiff(SECOND, created_at, now()) <= ?", token, maxAge)
+    err := db.Get(&t, "select user_name,token,attempts,email from token where token = ? and timestampdiff(SECOND, created_at, now()) <= ?", token, maxAge)
     if err != nil {
         return nil, err
     }
@@ -28,14 +30,23 @@ func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
     return &t, nil
 }
 
-func SaveToken(db *sqlx.DB, uid string) (string, error) {
-    t := Token{UserName: uid, Token: randToken()}
-    _, err := db.NamedExec("replace into token (user_name,token,created_at) values (:user_name, :token, now())", t)
+func NewToken(db *sqlx.DB, uid, email string) (*Token, error) {
+    t := Token{UserName: uid, Email: email, Token: randToken()}
+    _, err := db.NamedExec("replace into token (user_name,email, token,attempts,created_at) values (:user_name, :email, :token, 0, now())", t)
     if err != nil {
-        return "", err
+        return nil, err
     }
 
-    return t.Token, nil
+    return &t, nil
+}
+
+func IncrementToken(db *sqlx.DB, token string) (error) {
+    _, err := db.Exec("update token set attempts = attempts + 1 where token = ?", token)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
 
 func DestroyToken(db *sqlx.DB, token string) (error) {

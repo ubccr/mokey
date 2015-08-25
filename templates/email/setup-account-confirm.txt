@@ -1,0 +1,14 @@
+This is a confirmation that your CCR account was activated at {{ .Format "15:04:05 MST on Jan 02, 2006" }} 
+
+Didn't activate your CCR account?  Contact ccr-help@ccr.buffalo.edu so we can
+make sure no one else is trying to access your account.
+
+Thank you,
+
+Center for Computational Research
+State University of New York at Buffalo
+Center of Excellence in Bioinformatics & Life Sciences
+701 Ellicott Street
+Buffalo, NY 14203
+(716) 645-6500
+http://buffalo.edu/ccr
