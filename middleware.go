@@ -1,12 +1,15 @@
 package main
 
 import (
+    "net"
     "net/http"
 
     "github.com/Sirupsen/logrus"
     "github.com/gorilla/context"
     "github.com/justinas/nosurf"
     "github.com/ubccr/goipa"
+    "github.com/garyburd/redigo/redis"
+    "github.com/spf13/viper"
 )
 
 
@@ -45,6 +48,69 @@ func AuthRequired(app *Application, next http.Handler) http.Handler {
 
         context.Set(r, "user", user)
         context.Set(r, "ipa", c)
+
+        next.ServeHTTP(w, r)
+    })
+}
+
+func RateLimit(app *Application, next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        remoteIP := r.Header.Get("X-Forwarded-For")
+        if len(remoteIP) == 0 {
+            remoteIP, _, _ = net.SplitHostPort(r.RemoteAddr)
+        }
+        path := r.URL.Path
+
+        conn, err := redis.Dial("tcp", viper.GetString("redis"))
+        if err != nil {
+            logrus.WithFields(logrus.Fields{
+                "path": path,
+                "remoteIP": remoteIP,
+                "err": err.Error(),
+            }).Error("Failed connecting to redis server")
+            next.ServeHTTP(w, r)
+            return
+        }
+        defer conn.Close()
+
+
+        current, err := redis.Int(conn.Do("INCR", path+remoteIP))
+        if err != nil {
+            logrus.WithFields(logrus.Fields{
+                "path": path,
+                "remoteIP": remoteIP,
+                "err": err.Error(),
+            }).Error("Failed to increment counter in redis")
+            next.ServeHTTP(w, r)
+            return
+        }
+
+        if current > viper.GetInt("rate_limit") {
+            logrus.WithFields(logrus.Fields{
+                "path": path,
+                "remoteIP": remoteIP,
+                "counter": current,
+            }).Warn("Too many connections")
+            w.WriteHeader(429)
+            return
+        }
+
+        if current == 1 {
+            _, err := conn.Do("SETEX", path+remoteIP, 1, 1)
+            if err != nil {
+                logrus.WithFields(logrus.Fields{
+                    "path": path,
+                    "remoteIP": remoteIP,
+                    "err": err.Error(),
+                }).Error("Failed to set expiry on counter in redis")
+            }
+        }
+
+        logrus.WithFields(logrus.Fields{
+            "path": path,
+            "remoteIP": remoteIP,
+            "counter": current,
+        }).Info("rate limiting")
 
         next.ServeHTTP(w, r)
     })
