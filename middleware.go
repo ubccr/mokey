@@ -96,7 +96,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
         }
 
         if current == 1 {
-            _, err := conn.Do("SETEX", path+remoteIP, 1, 1)
+            _, err := conn.Do("SETEX", path+remoteIP, viper.GetInt("rate_expire"), 1)
             if err != nil {
                 logrus.WithFields(logrus.Fields{
                     "path": path,
