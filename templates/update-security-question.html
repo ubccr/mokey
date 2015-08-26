@@ -1,7 +1,7 @@
 {{define "content"}}
 
 {{ if .completed }}
-    <div class="alert alert-success">Your password has been changed.</div>
+    <div class="alert alert-success">Your security question has been updated.</div>
 {{ else }}
 
 {{ with .message }}
@@ -13,36 +13,41 @@
 
 <div class="panel panel-primary">
   <div class="panel-heading">
-      <h3 class="panel-title"><i class="fa fa-lock fa-lg"></i> Change Password </h3>
+      <h3 class="panel-title"><i class="fa fa-lock fa-lg"></i> Update security question</h3>
   </div>
   <div class="panel-body">
     <form class="form-horizontal" role="form" method="POST">
 
       <div class="form-group">
-        <label class="col-sm-2 control-label" for="password">Current Password</label>
+        <label class="col-sm-2 control-label">&nbsp;</label>
         <div class="col-sm-6">
-            <input class="form-control" id="password" name="password" rows="5" type="password" value="">
+            <span class="help-block">Please set a security question to use for resetting your password in the future.</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="col-sm-2 control-label" for="new_password">New Password</label>
+        <label class="col-sm-2 control-label" for="qid">Question</label>
         <div class="col-sm-6">
-            <input class="form-control" id="new_password" name="new_password" rows="5" type="password" value="">
+            <select class="form-control" id="qid" name="qid" rows="5">
+            {{ range $q := .questions }}
+                <option value="{{ $q.Id }}">{{ $q.Question }}</option>
+            {{ end }}
+            </select>
         </div>
       </div>
-
+      
       <div class="form-group">
-        <label class="col-sm-2 control-label" for="new_password2">Confirm Password</label>
+        <label class="col-sm-2 control-label" for="answer">Answer</label>
         <div class="col-sm-6">
-            <input class="form-control" id="new_password2" name="new_password2" rows="5" type="password" value="">
+            <input class="form-control" id="answer" name="answer" rows="5" type="text" value="">
+            
         </div>
       </div>
 
       <div class="form-group">
           <div class="col-sm-offset-2 col-sm-6">
               <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
-              <button type="submit" class="btn btn-primary">Change</button>
+              <button type="submit" class="btn btn-primary">Update</button>
           </div>
       </div>
     </form>

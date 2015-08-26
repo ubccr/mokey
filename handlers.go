@@ -599,7 +599,7 @@ func ChangePasswordHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         user := context.Get(r, "user").(*ipa.UserRecord)
         if user == nil {
-            logrus.Error("index handler: user not found in request context")
+            logrus.Error("changepw handler: user not found in request context")
             errorHandler(app, w, http.StatusInternalServerError)
             return
         }
@@ -637,5 +637,102 @@ func ChangePasswordHandler(app *Application) http.Handler {
                 "message": message}
 
         renderTemplate(w, app.templates["change-password.html"], vars)
+    })
+}
+
+func updateSecurityQuestion(app *Application, questions []*model.SecurityQuestion, user *ipa.UserRecord, r *http.Request) (error) {
+    qid := r.FormValue("qid")
+    answer := r.FormValue("answer")
+
+    if len(qid) == 0 || len(answer) == 0 {
+        return errors.New("Please choose a security question and answer.")
+    }
+
+    if utf8.RuneCountInString(answer) < 2 || utf8.RuneCountInString(answer) > 100 {
+        return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
+    }
+
+    q, err := strconv.Atoi(qid)
+    if err != nil {
+        return errors.New("Invalid security question")
+    }
+
+    found := false
+    for _, sq := range questions {
+        if sq.Id == q {
+            found = true
+            break
+        }
+    }
+
+    if found == false {
+        return errors.New("Invalid security question")
+    }
+
+    hash, err := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": user.Uid,
+            "error": err.Error(),
+        }).Error("failed to generate bcrypt hash of answer")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+    a := &model.SecurityAnswer{
+        UserName: string(user.Uid),
+        QuestionId: q,
+        Answer: string(hash), }
+
+    err = model.StoreAnswer(app.db, a)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": user.Uid,
+            "error": err.Error(),
+        }).Error("failed to save answer to the database")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+    return nil
+}
+
+func UpdateSecurityQuestionHandler(app *Application) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        user := context.Get(r, "user").(*ipa.UserRecord)
+        if user == nil {
+            logrus.Error("securityquestion handler: user not found in request context")
+            errorHandler(app, w, http.StatusInternalServerError)
+            return
+        }
+
+        questions, err := model.FetchQuestions(app.db)
+        if err != nil {
+            logrus.WithFields(logrus.Fields{
+                "error": err.Error(),
+            }).Error("Failed to fetch questions from database")
+            errorHandler(app, w, http.StatusInternalServerError)
+            return
+        }
+
+        message := ""
+        completed := false
+
+        if r.Method == "POST" {
+            err := updateSecurityQuestion(app, questions, user, r)
+            if err != nil {
+                message = err.Error()
+                completed = false
+            } else {
+                completed = true
+            }
+        }
+
+        vars := map[string]interface{}{
+                "token": nosurf.Token(r),
+                "completed": completed,
+                "user": user,
+                "questions": questions,
+                "message": message}
+
+        renderTemplate(w, app.templates["update-security-question.html"], vars)
     })
 }
