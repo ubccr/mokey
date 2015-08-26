@@ -55,6 +55,11 @@ func AuthRequired(app *Application, next http.Handler) http.Handler {
 
 func RateLimit(app *Application, next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.Method != "POST" {
+            next.ServeHTTP(w, r)
+            return
+        }
+
         remoteIP := r.Header.Get("X-Forwarded-For")
         if len(remoteIP) == 0 {
             remoteIP, _, _ = net.SplitHostPort(r.RemoteAddr)
