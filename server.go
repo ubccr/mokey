@@ -26,6 +26,7 @@ const (
     MOKEY_COOKIE_SESSION = "mokey-session"
     MOKEY_COOKIE_SID     = "sid"
     MOKEY_COOKIE_USER    = "uid"
+    MAX_PASS_LENGTH      = 8
 )
 
 type Application struct {
@@ -170,6 +171,7 @@ func (a *Application) router() *mux.Router {
     router.Path("/auth/forgotpw").Handler(RateLimit(a, ForgotPasswordHandler(a))).Methods("GET", "POST")
     router.Path("/auth/setup/{token:[0-9a-f]+}").Handler(SetupAccountHandler(a)).Methods("GET", "POST")
     router.Path("/auth/resetpw/{token:[0-9a-f]+}").Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
+    router.Path("/changepw").Handler(AuthRequired(a, ChangePasswordHandler(a))).Methods("GET", "POST")
     router.Path("/").Handler(AuthRequired(a, IndexHandler(a))).Methods("GET")
 
     return router

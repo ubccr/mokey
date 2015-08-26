@@ -45,8 +45,8 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
     pass := r.FormValue("password")
     pass2 := r.FormValue("password2")
 
-    if len(pass) < 8 || len(pass2) < 8 {
-        return errors.New("Please set a password at least 8 characters in length.")
+    if len(pass) < MAX_PASS_LENGTH || len(pass2) < MAX_PASS_LENGTH {
+        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", MAX_PASS_LENGTH))
     }
 
     if pass != pass2 {
@@ -143,127 +143,6 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
     return nil
 }
 
-func resetPassword(app *Application, answer *model.SecurityAnswer, token *model.Token, r *http.Request) (error) {
-    ans := r.FormValue("answer")
-    pass := r.FormValue("password")
-    pass2 := r.FormValue("password2")
-
-    if len(pass) < 8 || len(pass2) < 8 {
-        return errors.New("Please set a password at least 8 characters in length.")
-    }
-
-    if pass != pass2 {
-        return errors.New("Password do not match. Please confirm your password.")
-    }
-
-    if utf8.RuneCountInString(ans) < 2 || utf8.RuneCountInString(ans) > 100 {
-        return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
-    }
-
-    err := bcrypt.CompareHashAndPassword([]byte(answer.Answer), []byte(ans))
-    if err != nil {
-        return errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
-    }
-
-    // Setup password in FreeIPA
-    err = setPassword(token.UserName, "", pass)
-    if err != nil {
-        if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
-            logrus.WithFields(logrus.Fields{
-                "uid": token.UserName,
-                "error": ierr.Error(),
-            }).Error("password does not conform to policy")
-            return errors.New("Your password is too weak. Please ensure your password includes a number and lower/upper case character")
-        }
-
-        if ierr, ok :=  err.(*ipa.ErrInvalidPassword); ok {
-            logrus.WithFields(logrus.Fields{
-                "uid": token.UserName,
-                "error": ierr.Error(),
-            }).Error("invalid password from FreeIPA")
-            return errors.New("Invalid password.")
-        }
-
-        logrus.WithFields(logrus.Fields{
-            "uid": token.UserName,
-            "error": err.Error(),
-        }).Error("failed to set user password in FreeIPA")
-        return errors.New("Fatal system error. Please contact ccr-help.")
-    }
-
-    // Destroy token
-    err = model.DestroyToken(app.db, token.Token)
-    if err != nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": token.UserName,
-            "error": err.Error(),
-        }).Error("failed to remove token from database")
-        return errors.New("Fatal system error. Please contact ccr-help.")
-    }
-
-    return nil
-}
-
-func forgotPassword(app *Application, r *http.Request) (error) {
-    uid := r.FormValue("uid")
-
-    _, err := model.FetchTokenByUser(app.db, uid, viper.GetInt("setup_max_age"))
-    if err == nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-        }).Error("Forgotpw: user already has active token")
-        return nil
-    }
-
-    client := NewIpaClient(true)
-    userRec, err := client.UserShow(uid)
-    if err != nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-            "error": err,
-        }).Error("Forgotpw: invalid uid")
-        return nil
-    }
-
-    if len(userRec.Email) == 0 {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-        }).Error("Forgotpw: missing email address")
-        return nil
-    }
-
-    _, err = model.FetchAnswer(app.db, uid)
-    if err != nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-            "error": err,
-        }).Error("Forgotpw: Failed to fetch security answer")
-        return nil
-    }
-
-    token, err := model.NewToken(app.db, uid, string(userRec.Email))
-    if err != nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-            "error": err,
-        }).Error("Forgotpw: Failed to create token")
-        return nil
-    }
-
-    vars := map[string]interface{}{
-            "link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), token.Token)}
-
-    err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
-    if err != nil {
-        logrus.WithFields(logrus.Fields{
-            "uid": uid,
-            "error": err,
-        }).Error("Forgotpw: failed send email to user")
-    }
-
-    return nil
-}
-
 func SetupAccountHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         token, err := model.FetchToken(app.db, mux.Vars(r)["token"], viper.GetInt("setup_max_age"))
@@ -331,6 +210,67 @@ func SetupAccountHandler(app *Application) http.Handler {
 
         renderTemplate(w, app.templates["setup-account.html"], vars)
     })
+}
+
+func resetPassword(app *Application, answer *model.SecurityAnswer, token *model.Token, r *http.Request) (error) {
+    ans := r.FormValue("answer")
+    pass := r.FormValue("password")
+    pass2 := r.FormValue("password2")
+
+    if len(pass) < MAX_PASS_LENGTH || len(pass2) < MAX_PASS_LENGTH {
+        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", MAX_PASS_LENGTH))
+    }
+
+    if pass != pass2 {
+        return errors.New("Password do not match. Please confirm your password.")
+    }
+
+    if utf8.RuneCountInString(ans) < 2 || utf8.RuneCountInString(ans) > 100 {
+        return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
+    }
+
+    err := bcrypt.CompareHashAndPassword([]byte(answer.Answer), []byte(ans))
+    if err != nil {
+        return errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
+    }
+
+    // Setup password in FreeIPA
+    err = setPassword(token.UserName, "", pass)
+    if err != nil {
+        if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
+            logrus.WithFields(logrus.Fields{
+                "uid": token.UserName,
+                "error": ierr.Error(),
+            }).Error("password does not conform to policy")
+            return errors.New("Your password is too weak. Please ensure your password includes a number and lower/upper case character")
+        }
+
+        if ierr, ok :=  err.(*ipa.ErrInvalidPassword); ok {
+            logrus.WithFields(logrus.Fields{
+                "uid": token.UserName,
+                "error": ierr.Error(),
+            }).Error("invalid password from FreeIPA")
+            return errors.New("Invalid password.")
+        }
+
+        logrus.WithFields(logrus.Fields{
+            "uid": token.UserName,
+            "error": err.Error(),
+        }).Error("failed to set user password in FreeIPA")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+    // Destroy token
+    err = model.DestroyToken(app.db, token.Token)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": token.UserName,
+            "error": err.Error(),
+        }).Error("failed to remove token from database")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+    return nil
 }
 
 func ResetPasswordHandler(app *Application) http.Handler {
@@ -404,6 +344,66 @@ func ResetPasswordHandler(app *Application) http.Handler {
     })
 }
 
+func forgotPassword(app *Application, r *http.Request) (error) {
+    uid := r.FormValue("uid")
+
+    _, err := model.FetchTokenByUser(app.db, uid, viper.GetInt("setup_max_age"))
+    if err == nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+        }).Error("Forgotpw: user already has active token")
+        return nil
+    }
+
+    client := NewIpaClient(true)
+    userRec, err := client.UserShow(uid)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: invalid uid")
+        return nil
+    }
+
+    if len(userRec.Email) == 0 {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+        }).Error("Forgotpw: missing email address")
+        return nil
+    }
+
+    _, err = model.FetchAnswer(app.db, uid)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: Failed to fetch security answer")
+        return nil
+    }
+
+    token, err := model.NewToken(app.db, uid, string(userRec.Email))
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: Failed to create token")
+        return nil
+    }
+
+    vars := map[string]interface{}{
+            "link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), token.Token)}
+
+    err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
+    if err != nil {
+        logrus.WithFields(logrus.Fields{
+            "uid": uid,
+            "error": err,
+        }).Error("Forgotpw: failed send email to user")
+    }
+
+    return nil
+}
+
 func ForgotPasswordHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         message := ""
@@ -427,6 +427,7 @@ func ForgotPasswordHandler(app *Application) http.Handler {
         renderTemplate(w, app.templates["forgot-password.html"], vars)
     })
 }
+
 
 func setPassword(uid, oldPass, newPass string) (error) {
     c := NewIpaClient(true)
@@ -545,5 +546,96 @@ func IndexHandler(app *Application) http.Handler {
                 "user": user}
 
         renderTemplate(w, app.templates["index.html"], vars)
+    })
+}
+
+func changePassword(app *Application, user *ipa.UserRecord, r *http.Request) (error) {
+    current := r.FormValue("password")
+    pass := r.FormValue("new_password")
+    pass2 := r.FormValue("new_password2")
+
+    if len(current) < MAX_PASS_LENGTH || len(pass) < MAX_PASS_LENGTH || len(pass2) < MAX_PASS_LENGTH {
+        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", MAX_PASS_LENGTH))
+    }
+
+    if pass != pass2 {
+        return errors.New("Password do not match. Please confirm your password.")
+    }
+
+    if current == pass {
+        return errors.New("Current password is the same as new password. Please set a different password.")
+    }
+
+    // Setup password in FreeIPA
+    err := setPassword(string(user.Uid), current, pass)
+    if err != nil {
+        if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
+            logrus.WithFields(logrus.Fields{
+                "uid": user.Uid,
+                "error": ierr.Error(),
+            }).Error("password does not conform to policy")
+            return errors.New("Password policy error. Your password is either too weak or you just changed your password within the last hour. Please ensure your password includes a number and lower/upper case character. You can only update your password once an hour.")
+        }
+
+        if ierr, ok :=  err.(*ipa.ErrInvalidPassword); ok {
+            logrus.WithFields(logrus.Fields{
+                "uid": user.Uid,
+                "error": ierr.Error(),
+            }).Error("invalid password from FreeIPA")
+            return errors.New("Invalid password.")
+        }
+
+        logrus.WithFields(logrus.Fields{
+            "uid": user.Uid,
+            "error": err.Error(),
+        }).Error("failed to set user password in FreeIPA")
+        return errors.New("Fatal system error. Please contact ccr-help.")
+    }
+
+    return nil
+}
+
+func ChangePasswordHandler(app *Application) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        user := context.Get(r, "user").(*ipa.UserRecord)
+        if user == nil {
+            logrus.Error("index handler: user not found in request context")
+            errorHandler(app, w, http.StatusInternalServerError)
+            return
+        }
+
+        message := ""
+        completed := false
+
+        if r.Method == "POST" {
+            err := changePassword(app, user, r)
+            if err != nil {
+                message = err.Error()
+                completed = false
+            } else {
+                completed = true
+                if len(user.Email) > 0 {
+                    err = app.SendEmail(string(user.Email), fmt.Sprintf("[%s] Your password change confirmation", viper.GetString("email_prefix")), "reset-password-confirm.txt", time.Now())
+                    if err != nil {
+                        logrus.WithFields(logrus.Fields{
+                            "uid": user.Uid,
+                            "error": err,
+                        }).Error("failed to send reset confirmation email to user")
+                    }
+                } else {
+                    logrus.WithFields(logrus.Fields{
+                        "uid": user.Uid,
+                    }).Error("changepw: user missing email address")
+                }
+            }
+        }
+
+        vars := map[string]interface{}{
+                "token": nosurf.Token(r),
+                "completed": completed,
+                "user": user,
+                "message": message}
+
+        renderTemplate(w, app.templates["change-password.html"], vars)
     })
 }
