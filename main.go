@@ -21,8 +21,15 @@ func main() {
     app.Version = "0.0.1"
     app.Flags   = []cli.Flag{
         &cli.StringFlag{Name: "conf,c", Usage: "Path to conf file"},
+        &cli.BoolFlag{Name: "debug,d", Usage: "Print debug messages"},
     }
     app.Before  = func(c *cli.Context) error {
+        if c.GlobalBool("debug") {
+            logrus.SetLevel(logrus.InfoLevel)
+        } else {
+            logrus.SetLevel(logrus.WarnLevel)
+        }
+
         conf := c.GlobalString("conf")
         if len(conf) > 0 {
             viper.SetConfigFile(conf)
