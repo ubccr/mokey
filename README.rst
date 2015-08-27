@@ -86,3 +86,9 @@ Next, setup mokey systemd unit file::
 To view mokey logs run::
 
     $ journalctl -u mokey
+
+------------------------------------------------------------------------
+License
+------------------------------------------------------------------------
+
+mokey is released under a BSD style license. See the LICENSE file. 
