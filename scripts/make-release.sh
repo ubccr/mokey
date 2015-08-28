@@ -16,5 +16,5 @@ cp -R ./templates ${REL_DIR}/
 cp -R ./static ${REL_DIR}/ 
 cp -R ./ddl ${REL_DIR}/ 
 
-tar -C $MOKEY_DIR -cvzf mokey-${VERSION}.tar.gz mokey-${VERSION}
+tar -C $MOKEY_DIR -cvzf mokey-${VERSION}-linux-amd64.tar.gz mokey-${VERSION}
 rm -Rf ${MOKEY_DIR}
