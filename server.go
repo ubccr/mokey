@@ -31,6 +31,7 @@ import (
     "github.com/gorilla/schema"
     "github.com/gorilla/sessions"
     "github.com/ubccr/goipa"
+    "github.com/go-ini/ini"
 )
 
 const (
@@ -349,13 +350,34 @@ func init() {
     viper.SetDefault("secret", "change-me")
     viper.SetDefault("driver", "mysql")
     viper.SetDefault("dsn", "/mokey?parseTime=true")
-    viper.SetDefault("ipahost", "localhost")
     viper.SetDefault("redis", ":6379")
     viper.SetDefault("rate_limit", "15")
     viper.SetDefault("rate_expire", "3600")
 
     gob.Register(&ipa.UserRecord{})
     gob.Register(&ipa.IpaDateTime{})
+
+    if !viper.IsSet("ipahost") {
+        cfg, err := ini.Load("/etc/ipa/default.conf")
+        if err != nil {
+            logrus.WithFields(logrus.Fields{
+                "error": err,
+            }).Warn("Failed parse /etc/ipa/default.conf. Defaulting to localhost")
+            viper.SetDefault("ipahost", "localhost")
+            return
+        }
+
+        ipaServer, err := cfg.Section("global").GetKey("server")
+        if err != nil {
+            logrus.WithFields(logrus.Fields{
+                "error": err,
+            }).Warn("Failed read ipahost from /etc/ipa/default.conf. Defaulting to localhost")
+            viper.SetDefault("ipahost", "localhost")
+            return
+        }
+
+        viper.SetDefault("ipahost", ipaServer)
+    }
 }
 
 func Server() {
