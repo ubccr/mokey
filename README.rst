@@ -52,6 +52,7 @@ also assume you're running CentOS 7.1*
 Download the latest binary release `here <https://github.com/ubccr/mokey/releases>`_::
 
   $ sudo tar -C /srv -xvzf mokey-x.x.x.tar.gz
+  $ sudo ln -s /srv/mokey-x.x.x /srv/mokey
 
 The directory structure for a mokey install looks like this::
 
