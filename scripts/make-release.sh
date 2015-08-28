@@ -8,6 +8,7 @@ rm -Rf ${MOKEY_DIR}
 mkdir -p ${REL_DIR}/{cert,private}
 
 cp ./mokey ${REL_DIR}/ 
+cp ./mokey.yaml.sample ${REL_DIR}/ 
 cp ./README.rst ${REL_DIR}/ 
 cp ./AUTHORS.rst ${REL_DIR}/ 
 cp ./LICENSE ${REL_DIR}/ 
