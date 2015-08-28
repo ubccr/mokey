@@ -7,7 +7,6 @@ package main
 import (
     "bytes"
     "errors"
-    "time"
     "fmt"
     "strconv"
     "html/template"
@@ -195,7 +194,7 @@ func SetupAccountHandler(app *Application) http.Handler {
                 }
             } else {
                 completed = true
-                err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Your account confirmation", viper.GetString("email_prefix")), "setup-account-confirm.txt", time.Now())
+                err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Your account confirmation", viper.GetString("email_prefix")), "setup-account-confirm.txt", nil)
                 if err != nil {
                     logrus.WithFields(logrus.Fields{
                         "uid": token.UserName,
@@ -327,7 +326,7 @@ func ResetPasswordHandler(app *Application) http.Handler {
                 }
             } else {
                 completed = true
-                err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Your password change confirmation", viper.GetString("email_prefix")), "reset-password-confirm.txt", time.Now())
+                err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Your password change confirmation", viper.GetString("email_prefix")), "reset-password-confirm.txt", nil)
                 if err != nil {
                     logrus.WithFields(logrus.Fields{
                         "uid": token.UserName,
@@ -619,7 +618,7 @@ func ChangePasswordHandler(app *Application) http.Handler {
             } else {
                 completed = true
                 if len(user.Email) > 0 {
-                    err = app.SendEmail(string(user.Email), fmt.Sprintf("[%s] Your password change confirmation", viper.GetString("email_prefix")), "reset-password-confirm.txt", time.Now())
+                    err = app.SendEmail(string(user.Email), fmt.Sprintf("[%s] Your password change confirmation", viper.GetString("email_prefix")), "reset-password-confirm.txt", nil)
                     if err != nil {
                         logrus.WithFields(logrus.Fields{
                             "uid": user.Uid,

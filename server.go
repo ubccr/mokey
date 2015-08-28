@@ -190,10 +190,18 @@ func sign(qtext []byte, header textproto.MIMEHeader) ([]byte, error) {
     return sig.Bytes(), nil
 }
 
-func (a *Application) SendEmail(email, subject, template string, data interface{}) (error) {
+func (a *Application) SendEmail(email, subject, template string, data map[string]interface{}) (error) {
     logrus.WithFields(logrus.Fields{
         "email": email,
     }).Info("Sending email to user")
+
+    if data == nil {
+        data = make(map[string]interface{})
+    }
+
+    data["date"] = time.Now()
+    data["contact"] = viper.GetString("email_from")
+    data["sig"] = viper.GetString("email_sig")
 
     t := a.emails[template]
     var text bytes.Buffer

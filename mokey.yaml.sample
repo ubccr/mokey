@@ -83,6 +83,11 @@ smtp_port: 25
 email_from: "helpdesk@example.edu"
 
 #------------------------------------------------------------------------------
+# Email signature used when sending emails
+#------------------------------------------------------------------------------
+email_sig: "Mr. System Administrator"
+
+#------------------------------------------------------------------------------
 # Base URL of mokey server. Used for links in emails
 #------------------------------------------------------------------------------
 email_link_base: "http://localhost:8080"

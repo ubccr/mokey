@@ -1,19 +1,9 @@
-Use the following link within the next 72 hours to setup your CCR account. 
+Use the following link to setup your account. 
 
     {{ .link }}
 
-For more information and to verify this email please see:
-
-  https://www.buffalo.edu/ccr/support/ccr-help/accounts/myccr-account-portal.html
-
-Any questions email ccr-help@ccr.buffalo.edu.
+Any questions email: {{ .contact }}
 
 Thank you,
 
-Center for Computational Research
-State University of New York at Buffalo
-Center of Excellence in Bioinformatics & Life Sciences
-701 Ellicott Street
-Buffalo, NY 14203
-(716) 645-6500
-http://buffalo.edu/ccr
+{{ .sig }}
