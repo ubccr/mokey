@@ -82,12 +82,12 @@ func NewApplication() (*Application, error) {
         if err != nil {
             log.Fatal(err)
         }
-        tmpldir = dir
+        tmpldir = dir + "/templates"
     }
 
     logrus.Printf("Using template dir: %s", tmpldir)
 
-    tmpls, err := filepath.Glob(tmpldir + "/templates/*.html")
+    tmpls, err := filepath.Glob(tmpldir + "/*.html")
     if err != nil {
         log.Fatal(err)
     }
@@ -97,11 +97,11 @@ func NewApplication() (*Application, error) {
         base := filepath.Base(t)
         if base != "layout.html" {
             templates[base] = template.Must(template.New("layout").ParseFiles(t,
-                                                        tmpldir + "/templates/layout.html"))
+                                                        tmpldir + "/layout.html"))
         }
     }
 
-    tmpls, err = filepath.Glob(tmpldir + "/templates/email/*.txt")
+    tmpls, err = filepath.Glob(tmpldir + "/email/*.txt")
     if err != nil {
         log.Fatal(err)
     }
