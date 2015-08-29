@@ -163,7 +163,7 @@ Getting Started with admin cli tools
 - Reset user password::
 
     $ kinit admin
-    $ mokey reset --uid capncook 
+    $ mokey resetpw --uid capncook 
     (An email will be sent to jp@example.com with a link to reset their password)
     
 ------------------------------------------------------------------------
