@@ -37,12 +37,12 @@ secret: mysecret
 #------------------------------------------------------------------------------
 # Templates directory
 #------------------------------------------------------------------------------
-# templates: /path/to/templates
+templates: /srv/mokey/templates
 
 #------------------------------------------------------------------------------
-# FreeIPA server hostname (see: /etc/ipa/default.conf)
+# FreeIPA server hostname (defaults to /etc/ipa/default.conf)
 #------------------------------------------------------------------------------
-ipahost: "ipa.example.edu"
+# ipahost: "ipa.example.edu"
 
 #------------------------------------------------------------------------------
 # Keytab file for mokey (should have "Modify users and Reset passwords"
@@ -120,7 +120,7 @@ pgp_sign: false
 #------------------------------------------------------------------------------
 # PGP private key
 #------------------------------------------------------------------------------
-# pgp_key: "/srv/ccr-help-key.gpg"
+# pgp_key: "/path/to/key.gpg"
 
 #------------------------------------------------------------------------------
 # passphrase for PGP private key (if encrypted)
