@@ -49,21 +49,9 @@ Install
 Enrolling a host in FreeIPA is outside the scope of this document. These docs
 also assume you're running CentOS 7.1*
 
-Download the latest binary release `here <https://github.com/ubccr/mokey/releases>`_::
+Install the RPM release `here <https://github.com/ubccr/mokey/releases>`_::
 
-  $ sudo tar -C /srv -xvzf mokey-x.x.x.tar.gz
-  $ sudo ln -s /srv/mokey-x.x.x /srv/mokey
-
-The directory structure for a mokey install looks like this::
-
-    /srv/mokey
-      |- templates/   HTML templates 
-      |- ddl/         Database schema
-      |- static/      Static css/images
-      |- mokey        main binary program
-      |- mokey.yaml   config file
-      |- cert/        cert/ca-bundle as single PEM
-      |- private/     private key
+  $ rpm -Uvh mokey-0.0.2-1.el7.centos.x86_64.rpm
 
 Install MariaDB and/or setup database for mokey::
 
@@ -75,7 +63,7 @@ Install MariaDB and/or setup database for mokey::
     $ mysql> create database mokey;
     $ mysql> grant all on mokey.* to [user]@localhost identified by '[pass]'
     $ mysql> exit
-    $ mysql -u root -p mokey < /srv/mokey/ddl/schema.sql
+    $ mysql -u root -p mokey < /usr/share/mokey/ddl/schema.sql
 
 Install Redis (install from EPEL)::
 
@@ -84,26 +72,27 @@ Install Redis (install from EPEL)::
     $ systemctl restart redis
     $ systecmtl enable redis
 
-Configure mokey (see mokey.yaml.sample for details)::
+Configure mokey (add user/pass for MariaDB database)::
 
-    $ cp /srv/mokey/mokey.yaml.sample /srv/mokey/mokey.yaml
-    $ vim /srv/mokey/mokey.yaml 
+    $ vim /etc/mokey/mokey.yaml 
+    dsn: "user:pass@/dbname?parseTime=true"
     [ edit to taste ]
 
 It's highly recommended to run mokey using HTTPS. You'll need an SSL
 cert/private_key either using FreeIPA's PKI, self-signed, or a commercial
 certificate authority. Creating SSL certs is outside the scope of this
-document. You can also run mokey behind haproxy or Apache/Nginx.  This document
+document. You can also run mokey behind haproxy or Apache/Nginx. This document
 describes how to run mokey using haproxy and SSL passthrough. 
 
 Copy your SSL cert/private_key to the following directories and set correct
-paths in /srv/mokey/mokey.yaml. The mokey binary will run as non-root user
-(apache) so need to ensure file perms are set correctly::
+paths in /etc/mokey/mokey.yaml. The mokey binary will run as non-root user
+(mokey) so need to ensure file perms are set correctly::
 
-    $ cp my.crt /srv/mokey/cert/my.crt
-    $ cp my.key /srv/mokey/private/my.key
-    $ chmod 640 /srv/mokey/private/my.key
-    $ chgrp apache /srv/mokey/private/my.key
+    $ mkdir /etc/mokey/{cert,private}
+    $ cp my.crt /etc/mokey/cert/my.crt
+    $ cp my.key /etc/mokey/private/my.key
+    $ chmod 640 /etc/mokey/private/my.key
+    $ chgrp mokey /etc/mokey/private/my.key
 
 
 Install haproxy. This will listen on port 443 and forward SSL requests to mokey
@@ -137,29 +126,14 @@ process using SNI TLS extensions. This is referred to as SSL passthrough::
         stick store-response payload_lv(43,1) if serverhello
         option ssl-hello-chk
 
-        server mokey_app 127.0.0.1:8089
+        server mokey_app 127.0.0.1:8080
 
 
     $ systemctl restart haproxy
     $ systemctl enable haproxy
 
 
-Next, setup mokey systemd unit file and start service::
-
-    $ vim /etc/systemd/system/mokey.service
-    [Unit]
-    Description=mokey web app
-
-    [Service]
-    PIDFile=/var/run/mokey.pid
-    User=apache
-    Group=apache
-    WorkingDirectory=/srv/mokey
-    ExecStart=/bin/bash -c '/srv/mokey/mokey server'
-    Restart=on-abort
-
-    [Install]
-    WantedBy=multi-user.target
+Start mokey service::
 
     $ systemctl restart mokey
     $ systemctl enable mokey
