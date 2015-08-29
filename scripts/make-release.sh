@@ -6,7 +6,7 @@ NAME=mokey-${VERSION}-linux-amd64
 REL_DIR=${MOKEY_DIR}/${NAME}
 
 rm -Rf ${MOKEY_DIR}
-mkdir -p ${REL_DIR}/{cert,private}
+mkdir -p ${REL_DIR}
 
 cp ./mokey ${REL_DIR}/ 
 cp ./mokey.yaml.sample ${REL_DIR}/ 
