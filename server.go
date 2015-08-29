@@ -401,6 +401,7 @@ func Server() {
     if certFile != "" && keyFile != "" {
         http.ListenAndServeTLS(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), certFile, keyFile, nil)
     } else {
+        logrus.Warn("**WARNING*** listening on non-secure port. Use for development only.")
         http.ListenAndServe(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), nil)
     }
 }
