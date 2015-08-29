@@ -14,7 +14,7 @@ import (
 func init() {
     viper.SetConfigName("mokey")
     viper.SetConfigType("yaml")
-    viper.AddConfigPath("/srv/mokey/")
+    viper.AddConfigPath("/etc/mokey/")
 }
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
     app.Name    = "mokey"
     app.Authors = []cli.Author{cli.Author{Name: "Andrew E. Bruno", Email: "aebruno2@buffalo.edu"}}
     app.Usage   = "mokey"
-    app.Version = "0.0.1"
+    app.Version = "0.0.2"
     app.Flags   = []cli.Flag{
         &cli.StringFlag{Name: "conf,c", Usage: "Path to conf file"},
         &cli.BoolFlag{Name: "debug,d", Usage: "Print debug messages"},
