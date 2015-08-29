@@ -146,9 +146,26 @@ To view mokey logs run::
 Customizing templates
 ------------------------------------------------------------------------
 
-The templates for the web interface and emails are intstalled by default in
+The templates for the web interface and emails are installed by default in
 /usr/share/mokey. Edit to taste and restart mokey.
 
+------------------------------------------------------------------------
+Getting Started with admin cli tools
+------------------------------------------------------------------------
+
+- Account Activation / First time password setup::
+
+    $ kinit admin
+    $ ipa user-add --first="Jesse" --last="Pinkman" --email="jp@example.com" capncook
+    $ mokey newacct --uid capncook 
+    (An email will be sent to jp@example.com with a link to setup their password)
+    
+- Reset user password::
+
+    $ kinit admin
+    $ mokey reset --uid capncook 
+    (An email will be sent to jp@example.com with a link to reset their password)
+    
 ------------------------------------------------------------------------
 License
 ------------------------------------------------------------------------
