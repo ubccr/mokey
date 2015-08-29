@@ -37,7 +37,7 @@ secret: mysecret
 #------------------------------------------------------------------------------
 # Templates directory
 #------------------------------------------------------------------------------
-templates: /srv/mokey/templates
+templates: /usr/share/mokey/templates
 
 #------------------------------------------------------------------------------
 # FreeIPA server hostname (defaults to /etc/ipa/default.conf)
