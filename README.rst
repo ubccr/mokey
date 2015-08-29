@@ -143,6 +143,13 @@ To view mokey logs run::
     $ journalctl -u mokey
 
 ------------------------------------------------------------------------
+Customizing templates
+------------------------------------------------------------------------
+
+The templates for the web interface and emails are intstalled by default in
+/usr/share/mokey. Edit to taste and restart mokey.
+
+------------------------------------------------------------------------
 License
 ------------------------------------------------------------------------
 
