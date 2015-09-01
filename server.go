@@ -352,6 +352,8 @@ func init() {
     viper.SetDefault("dsn", "/mokey?parseTime=true")
     viper.SetDefault("rate_limit", false)
     viper.SetDefault("redis", ":6379")
+    viper.SetDefault("max_requests", 15)
+    viper.SetDefault("rate_limit_expire", 3600)
 
     gob.Register(&ipa.UserRecord{})
     gob.Register(&ipa.IpaDateTime{})
