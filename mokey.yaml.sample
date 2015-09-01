@@ -51,21 +51,26 @@ templates: /usr/share/mokey/templates
 keytab: "/path/to/client.keytab"
 
 #------------------------------------------------------------------------------
+# Enable rate limiting based on remote ip (requires redis)
+#------------------------------------------------------------------------------
+rate_limit: false
+
+#------------------------------------------------------------------------------
 # Redis server (used for rate limiting)
 #------------------------------------------------------------------------------
-redis: ":6379"
+# redis: ":6379"
 
 #------------------------------------------------------------------------------
 # Max POST requests. This value sets a max limit on the number of POST requests
-# made in a given time period. The time is defined by "rate_expire".
+# made in a given time period. The time is defined by "rate_limit_expire".
 #------------------------------------------------------------------------------
-rate_limit: 15
+# max_requests: 15
 
 #------------------------------------------------------------------------------
 # The expire time in seconds for the rate_limit counter. By default the number
 # of post requests from a given IP address is limited to 15 requests per hour.  
 #------------------------------------------------------------------------------
-rate_expire: 3600
+# rate_limit_expire: 3600
 
 #------------------------------------------------------------------------------
 # SMTP server

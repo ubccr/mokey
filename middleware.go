@@ -59,6 +59,13 @@ func AuthRequired(app *Application, next http.Handler) http.Handler {
 
 func RateLimit(app *Application, next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // check if rate limiting is enabled
+        if !viper.GetBool("rate_limit") {
+            next.ServeHTTP(w, r)
+            return
+        }
+
+        // only rate limit POST request
         if r.Method != "POST" {
             next.ServeHTTP(w, r)
             return
@@ -94,7 +101,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
             return
         }
 
-        if current > viper.GetInt("rate_limit") {
+        if current > viper.GetInt("max_requests") {
             logrus.WithFields(logrus.Fields{
                 "path": path,
                 "remoteIP": remoteIP,
@@ -105,7 +112,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
         }
 
         if current == 1 {
-            _, err := conn.Do("SETEX", path+remoteIP, viper.GetInt("rate_expire"), 1)
+            _, err := conn.Do("SETEX", path+remoteIP, viper.GetInt("rate_limit_expire"), 1)
             if err != nil {
                 logrus.WithFields(logrus.Fields{
                     "path": path,
