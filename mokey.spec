@@ -40,7 +40,6 @@ install -d %{buildroot}%{_usr}/lib/systemd/system
 cp -a ./%{name}.yaml.sample %{buildroot}%{_sysconfdir}/%{name}/%{name}.yaml
 cp -a ./%{name} %{buildroot}%{_bindir}/%{name}
 cp -Ra ./templates %{buildroot}%{_datadir}/%{name}
-cp -Ra ./static %{buildroot}%{_datadir}/%{name}
 cp -Ra ./ddl %{buildroot}%{_datadir}/%{name}
 cat << EOF > %{buildroot}%{_usr}/lib/systemd/system/%{name}.service
 [Unit]
@@ -69,7 +68,6 @@ rm -rf %{buildroot}
 %doc README.rst AUTHORS.rst ChangeLog.rst mokey.yaml.sample
 %license LICENSE
 %config(noreplace) %{_datadir}/%{name}/templates/*
-%config(noreplace) %{_datadir}/%{name}/static/*
 %attr(0755,root,root) %{_bindir}/%{name}
 %attr(640,root,mokey) %config(noreplace) %{_sysconfdir}/%{name}/%{name}.yaml
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service

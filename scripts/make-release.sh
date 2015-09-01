@@ -16,7 +16,6 @@ cp ./AUTHORS.rst ${REL_DIR}/
 cp ./ChangeLog.rst ${REL_DIR}/ 
 cp ./LICENSE ${REL_DIR}/ 
 cp -R ./templates ${REL_DIR}/ 
-cp -R ./static ${REL_DIR}/ 
 cp -R ./ddl ${REL_DIR}/ 
 
 tar -C ${MOKEY_DIR} -cvzf ${NAME}.tar.gz ${NAME}
