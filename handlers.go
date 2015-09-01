@@ -349,6 +349,9 @@ func ResetPasswordHandler(app *Application) http.Handler {
 
 func forgotPassword(app *Application, r *http.Request) (error) {
     uid := r.FormValue("uid")
+    if len(uid) == 0 {
+        return errors.New("Please provide a user name.")
+    }
 
     _, err := model.FetchTokenByUser(app.db, uid, viper.GetInt("setup_max_age"))
     if err == nil {
