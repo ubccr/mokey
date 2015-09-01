@@ -67,8 +67,9 @@ rate_limit: false
 # max_requests: 15
 
 #------------------------------------------------------------------------------
-# The expire time in seconds for the rate_limit counter. By default the number
-# of post requests from a given IP address is limited to 15 requests per hour.  
+# The expire time in seconds for the max_requests counter. By default the
+# number of post requests from a given IP address is limited to 15 requests per
+# hour.  
 #------------------------------------------------------------------------------
 # rate_limit_expire: 3600
 

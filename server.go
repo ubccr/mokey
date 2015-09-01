@@ -351,6 +351,7 @@ func init() {
     viper.SetDefault("driver", "mysql")
     viper.SetDefault("dsn", "/mokey?parseTime=true")
     viper.SetDefault("rate_limit", false)
+    viper.SetDefault("redis", ":6379")
 
     gob.Register(&ipa.UserRecord{})
     gob.Register(&ipa.IpaDateTime{})
