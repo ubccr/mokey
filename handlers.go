@@ -28,7 +28,9 @@ func renderTemplate(w http.ResponseWriter, t *template.Template, data interface{
     err := t.ExecuteTemplate(&buf, "layout", data)
 
     if err != nil {
-        logrus.Printf("Error rendering template: %s", err)
+        logrus.WithFields(logrus.Fields{
+            "error": err.Error(),
+        }).Error("failed to render template")
         http.Error(w, "Fatal error rendering template", http.StatusInternalServerError)
         return
     }

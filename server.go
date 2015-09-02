@@ -361,18 +361,12 @@ func init() {
     if !viper.IsSet("ipahost") {
         cfg, err := ini.Load("/etc/ipa/default.conf")
         if err != nil {
-            logrus.WithFields(logrus.Fields{
-                "error": err,
-            }).Warn("Failed parse /etc/ipa/default.conf. Defaulting to localhost")
             viper.SetDefault("ipahost", "localhost")
             return
         }
 
         ipaServer, err := cfg.Section("global").GetKey("server")
         if err != nil {
-            logrus.WithFields(logrus.Fields{
-                "error": err,
-            }).Warn("Failed read ipahost from /etc/ipa/default.conf. Defaulting to localhost")
             viper.SetDefault("ipahost", "localhost")
             return
         }
@@ -393,6 +387,7 @@ func Server() {
     }
 
     logrus.Printf("Running on http://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
+    logrus.Printf("IPA server: %s", viper.GetString("ipahost"))
 
     http.Handle("/", middle)
 
@@ -402,7 +397,7 @@ func Server() {
     if certFile != "" && keyFile != "" {
         http.ListenAndServeTLS(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), certFile, keyFile, nil)
     } else {
-        logrus.Warn("**WARNING*** listening on non-secure port. Use for development only.")
+        logrus.Warn("**WARNING*** SSL/TLS not enabled. HTTP communication will not be encrypted and vulnerable to snooping.")
         http.ListenAndServe(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), nil)
     }
 }
