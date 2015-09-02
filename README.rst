@@ -38,8 +38,8 @@ Requirements
 
 - FreeIPA v4.1.0
 - MariaDB/MySQL
-- Redis
 - Linux x86_64 (CentOS 7.1 preferred)
+- Redis (optional)
 
 ------------------------------------------------------------------------
 Install
@@ -51,7 +51,7 @@ also assume you're running CentOS 7.1*
 
 Install the RPM release `here <https://github.com/ubccr/mokey/releases>`_::
 
-  $ rpm -Uvh mokey-0.0.2-1.el7.centos.x86_64.rpm
+  $ rpm -Uvh mokey-0.0.3-1.el7.centos.x86_64.rpm
 
 Install MariaDB and/or setup database for mokey::
 
@@ -65,13 +65,6 @@ Install MariaDB and/or setup database for mokey::
     $ mysql> exit
     $ mysql -u root -p mokey < /usr/share/mokey/ddl/schema.sql
 
-Install Redis (install from EPEL)::
-
-    $ yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-    $ yum install redis
-    $ systemctl restart redis
-    $ systecmtl enable redis
-
 Configure mokey (add user/pass for MariaDB database)::
 
     $ vim /etc/mokey/mokey.yaml 
@@ -81,8 +74,7 @@ Configure mokey (add user/pass for MariaDB database)::
 It's highly recommended to run mokey using HTTPS. You'll need an SSL
 cert/private_key either using FreeIPA's PKI, self-signed, or a commercial
 certificate authority. Creating SSL certs is outside the scope of this
-document. You can also run mokey behind haproxy or Apache/Nginx. This document
-describes how to run mokey using haproxy and SSL passthrough. 
+document. You can also run mokey behind haproxy or Apache/Nginx.
 
 Copy your SSL cert/private_key to the following directories and set correct
 paths in /etc/mokey/mokey.yaml. The mokey binary will run as non-root user
@@ -94,51 +86,15 @@ paths in /etc/mokey/mokey.yaml. The mokey binary will run as non-root user
     $ chmod 640 /etc/mokey/private/my.key
     $ chgrp mokey /etc/mokey/private/my.key
 
-
-Install haproxy. This will listen on port 443 and forward SSL requests to mokey
-process using SNI TLS extensions. This is referred to as SSL passthrough::
-
-    $ yum install haproxy
-    $ vim /etc/haproxy/haproxy.cfg
-    #---------------------------------------------------------------------
-    # main https frontend which proxys to the backends
-    #---------------------------------------------------------------------
-    frontend  https-in
-        bind *:443
-        mode tcp
-        option socket-stats
-        tcp-request inspect-delay 5s
-        tcp-request content accept if { req_ssl_hello_type 1 }
-        use_backend mokey if { req_ssl_sni -i portal.example.edu }
-
-    #---------------------------------------------------------------------
-    # backend for mokey
-    #---------------------------------------------------------------------
-    backend mokey
-        mode tcp
-        stick-table type binary len 32 size 30k expire 30m
-        acl clienthello req_ssl_hello_type 1
-        acl serverhello rep_ssl_hello_type 2
-        tcp-request inspect-delay 5s
-        tcp-request content accept if clienthello
-        tcp-response content accept if serverhello
-        stick on payload_lv(43,1) if clienthello
-        stick store-response payload_lv(43,1) if serverhello
-        option ssl-hello-chk
-
-        server mokey_app 127.0.0.1:8080
-
-
-    $ systemctl restart haproxy
-    $ systemctl enable haproxy
-
-
 Start mokey service::
 
     $ systemctl restart mokey
     $ systemctl enable mokey
 
-To view mokey logs run::
+Open a web browser to: https://localhost:8080. By default, mokey will listen on
+port 8080.
+
+To view mokey system logs run::
 
     $ journalctl -u mokey
 
@@ -147,7 +103,7 @@ Customizing templates
 ------------------------------------------------------------------------
 
 The templates for the web interface and emails are installed by default in
-/usr/share/mokey. Edit to taste and restart mokey.
+/usr/share/mokey/templates. Edit to taste and restart mokey.
 
 ------------------------------------------------------------------------
 Getting Started with admin cli tools
@@ -165,7 +121,57 @@ Getting Started with admin cli tools
     $ kinit admin
     $ mokey resetpw --uid capncook 
     (An email will be sent to jp@example.com with a link to reset their password)
-    
+
+------------------------------------------------------------------------
+Configure PGP/Mime email 
+------------------------------------------------------------------------
+
+mokey can be configured to send PGP/Mime signed email messages. First generate
+a gpg keypair::
+
+    $ gpg --gen-key
+    $ gpg --armor --output example-key.gpg --export-secret-keys example@example.edu
+    $ gpg --armor --output example-pub.gpg --export example@example.edu
+    $ mkdir /etc/mokey/gpg
+    $ cp example-key.gpg /etc/mokey/gpg
+    $ chmod 640 /etc/mokey/gpg/example-key.gpg
+    $ chgrp mokey /etc/mokey/gpg/example-key.gpg
+
+Next, edit /etc/mokey/mokey.yaml::
+
+    $ vi /etc/mokey/mokey.yaml
+    pgp_sign: true
+    pgp_key: "/etc/mokey/gpg/example-key.gpg"
+    pgp_passphrase: "my-secret"
+
+    $ systecmtl restart mokey
+
+Publish your public key to a keyserver or other means. Emails will now be PGP
+signed using your private key. Users can verify the authenticity of the emails
+sent from mokey using your public key.
+
+------------------------------------------------------------------------
+Configure rate limiting
+------------------------------------------------------------------------
+
+mokey can optionally be configured to rate limit certain paths (login and
+forgot password) to limit the number of requests within a given time period. To
+enable rate limiting first install redis then update /etc/mokey/mokey.yaml.
+
+Install Redis (install from EPEL)::
+
+    $ yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    $ yum install redis
+    $ systemctl restart redis
+    $ systecmtl enable redis
+
+Edit /etc/mokey/mokey.yaml and restart::
+
+    $ vi /etc/mokey/mokey.yaml
+    rate_limit: true
+
+    $ systecmtl restart mokey
+
 ------------------------------------------------------------------------
 License
 ------------------------------------------------------------------------

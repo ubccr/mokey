@@ -3,7 +3,7 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.0.2
+Version:       0.0.3
 Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
@@ -73,5 +73,14 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Wed Sep 02 2015  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.3-1
+- New Features
+    - Make rate limiting optional
+    - Re-locate static template directory
+- Bug Fixes
+    - Add check for empty user name in forgot password
+* Sat Aug 29 2015  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.2-1
+- New Features
+    - Set ipahost from /etc/ipa/default.conf
 * Fri Aug 28 2015  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.1-1
 - Initial release
