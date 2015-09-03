@@ -45,7 +45,7 @@ func checkMAC(salt, message, messageMAC, key []byte) bool {
 }
 
 func SignToken(salt, token string) string {
-    mac := computeMAC([]byte(salt), []byte(token), []byte(viper.GetString("secret")))
+    mac := computeMAC([]byte(salt), []byte(token), []byte(viper.GetString("secret_key")))
     return fmt.Sprintf("%s.%s", token, mac)
 }
 
@@ -66,7 +66,7 @@ func VerifyToken(salt, signedToken string) (string, bool) {
         return "", false
     }
 
-    if checkMAC([]byte(salt), []byte(token), mac, []byte(viper.GetString("secret"))) {
+    if checkMAC([]byte(salt), []byte(token), mac, []byte(viper.GetString("secret_key"))) {
         return token, true
     }
 

@@ -118,7 +118,7 @@ func NewApplication() (*Application, error) {
     app := &Application{}
     app.tmpldir = tmpldir
     app.db = db
-    app.cookieStore = sessions.NewCookieStore([]byte(viper.GetString("secret")))
+    app.cookieStore = sessions.NewCookieStore([]byte(viper.GetString("secret_key")))
     app.decoder = schema.NewDecoder()
     //app.decoder.IgnoreUnknownKeys(true)
     app.templates = templates
@@ -350,7 +350,7 @@ func init() {
     viper.SetDefault("reset_max_age", 3600)
     viper.SetDefault("max_attempts", 10)
     viper.SetDefault("bind", "")
-    viper.SetDefault("secret", "change-me")
+    viper.SetDefault("secret_key", "change-me")
     viper.SetDefault("driver", "mysql")
     viper.SetDefault("dsn", "/mokey?parseTime=true")
     viper.SetDefault("rate_limit", false)
