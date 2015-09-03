@@ -48,7 +48,7 @@ func NewAccountEmail(uid string) {
     }
 
     vars := map[string]interface{}{
-            "link": fmt.Sprintf("%s/auth/setup/%s", viper.GetString("email_link_base"), token.Token)}
+            "link": fmt.Sprintf("%s/auth/setup/%s", viper.GetString("email_link_base"), model.SignToken(ACCOUNT_SETUP_SALT, token.Token))}
 
     err = app.SendEmail(token.Email, fmt.Sprintf("[%s] New Account Setup", viper.GetString("email_prefix")), "setup-account.txt", vars)
     if err != nil {
@@ -85,7 +85,7 @@ func ResetPasswordEmail(uid string) {
     }
 
     vars := map[string]interface{}{
-            "link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), token.Token)}
+            "link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), model.SignToken(RESET_SALT, token.Token))}
 
     err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
     if err != nil {

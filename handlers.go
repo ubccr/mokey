@@ -150,7 +150,14 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
 
 func SetupAccountHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        token, err := model.FetchToken(app.db, mux.Vars(r)["token"], viper.GetInt("setup_max_age"))
+        tk, ok := model.VerifyToken(ACCOUNT_SETUP_SALT, mux.Vars(r)["token"])
+        if !ok {
+            w.WriteHeader(http.StatusNotFound)
+            renderTemplate(w, app.templates["404.html"], nil)
+            return
+        }
+
+        token, err := model.FetchToken(app.db, tk, viper.GetInt("setup_max_age"))
         if err != nil {
             logrus.WithFields(logrus.Fields{
                 "error": err.Error(),
@@ -280,7 +287,14 @@ func resetPassword(app *Application, answer *model.SecurityAnswer, token *model.
 
 func ResetPasswordHandler(app *Application) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        token, err := model.FetchToken(app.db, mux.Vars(r)["token"], viper.GetInt("reset_max_age"))
+        tk, ok := model.VerifyToken(RESET_SALT, mux.Vars(r)["token"])
+        if !ok {
+            w.WriteHeader(http.StatusNotFound)
+            renderTemplate(w, app.templates["404.html"], nil)
+            return
+        }
+
+        token, err := model.FetchToken(app.db, tk, viper.GetInt("reset_max_age"))
         if err != nil {
             logrus.WithFields(logrus.Fields{
                 "error": err.Error(),
@@ -399,7 +413,7 @@ func forgotPassword(app *Application, r *http.Request) (error) {
     }
 
     vars := map[string]interface{}{
-            "link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), token.Token)}
+            "link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), model.SignToken(RESET_SALT, token.Token))}
 
     err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
     if err != nil {

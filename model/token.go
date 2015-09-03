@@ -6,8 +6,14 @@ package model
 
 import (
     "fmt"
+    "strings"
     "crypto/rand"
+    "crypto/sha256"
+    "crypto/hmac"
+    "encoding/base64"
+
     "github.com/jmoiron/sqlx"
+    "github.com/spf13/viper"
 )
 
 type Token struct {
@@ -21,6 +27,50 @@ func randToken() string {
     b := make([]byte, 32)
     rand.Read(b)
     return fmt.Sprintf("%x", b)
+}
+
+func computeMAC(salt, message, key []byte) string {
+    h := hmac.New(sha256.New, key)
+    h.Write(message)
+    h.Write(salt)
+    return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+}
+
+func checkMAC(salt, message, messageMAC, key []byte) bool {
+    mac := hmac.New(sha256.New, key)
+    mac.Write(message)
+    mac.Write(salt)
+    expectedMAC := mac.Sum(nil)
+    return hmac.Equal(messageMAC, expectedMAC)
+}
+
+func SignToken(salt, token string) string {
+    mac := computeMAC([]byte(salt), []byte(token), []byte(viper.GetString("secret")))
+    return fmt.Sprintf("%s.%s", token, mac)
+}
+
+func VerifyToken(salt, signedToken string) (string, bool) {
+    parts := strings.SplitN(signedToken, ".", 2)
+    if len(parts) != 2 {
+        return "", false
+    }
+
+    token, b64mac := parts[0], parts[1]
+
+    if len(token) != 64 || len(b64mac) == 0 {
+        return "", false
+    }
+
+    mac, err := base64.RawURLEncoding.DecodeString(b64mac)
+    if err != nil {
+        return "", false
+    }
+
+    if checkMAC([]byte(salt), []byte(token), mac, []byte(viper.GetString("secret"))) {
+        return token, true
+    }
+
+    return "", false
 }
 
 func FetchTokenByUser(db *sqlx.DB, uid string, maxAge int) (*Token, error) {

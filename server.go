@@ -39,6 +39,9 @@ const (
     MOKEY_COOKIE_SID     = "sid"
     MOKEY_COOKIE_USER    = "uid"
     MAX_PASS_LENGTH      = 8
+    TOKEN_REGEX          = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
+    RESET_SALT           = "resetpw"
+    ACCOUNT_SETUP_SALT   = "acctsetup"
 )
 
 type Application struct {
@@ -325,8 +328,8 @@ func (a *Application) router() *mux.Router {
     router.Path("/auth/login").Handler(RateLimit(a, LoginHandler(a))).Methods("GET", "POST")
     router.Path("/auth/logout").Handler(LogoutHandler(a)).Methods("GET")
     router.Path("/auth/forgotpw").Handler(RateLimit(a, ForgotPasswordHandler(a))).Methods("GET", "POST")
-    router.Path("/auth/setup/{token:[0-9a-f]+}").Handler(SetupAccountHandler(a)).Methods("GET", "POST")
-    router.Path("/auth/resetpw/{token:[0-9a-f]+}").Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
+    router.Path(fmt.Sprintf("/auth/setup/{token:%s}", TOKEN_REGEX)).Handler(SetupAccountHandler(a)).Methods("GET", "POST")
+    router.Path(fmt.Sprintf("/auth/resetpw/{token:%s}", TOKEN_REGEX)).Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
     router.Path("/changepw").Handler(AuthRequired(a, ChangePasswordHandler(a))).Methods("GET", "POST")
     router.Path("/updatesec").Handler(AuthRequired(a, UpdateSecurityQuestionHandler(a))).Methods("GET", "POST")
     router.Path("/").Handler(AuthRequired(a, IndexHandler(a))).Methods("GET")
