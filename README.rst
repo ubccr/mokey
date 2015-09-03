@@ -3,9 +3,9 @@ mokey - FreeIPA self-service account managment tool
 ===============================================================================
 
 mokey is web application that provides self-service user account management
-tools for FreeIPA. The motivation for this project was to implement the
-self-service password reset functionality missing in FreeIPA. This feature is
-not provided by default in FreeIPA, see `here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_ 
+tools for `FreeIPA <http://freeipa.org>`_. The motivation for this project was
+to implement the self-service password reset functionality missing in FreeIPA.
+This feature is not provided by default in FreeIPA, see `here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_ 
 for more info and the rationale behind this decision. mokey is not a FreeIPA
 plugin but a complete standalone application that uses the FreeIPA JSON API.
 mokey requires no changes to the underlying LDAP schema and uses a MariaDB
