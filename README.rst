@@ -46,12 +46,13 @@ Install
 ------------------------------------------------------------------------
 
 *Note mokey needs to be installed on a machine already enrolled in FreeIPA.
-Enrolling a host in FreeIPA is outside the scope of this document. These docs
-also assume you're running CentOS 7.1*
+It's also recommended to have the ipa-admintools package installed. Enrolling
+a host in FreeIPA is outside the scope of this document. These docs also assume
+you're running CentOS 7.1*
 
 Install the RPM release `here <https://github.com/ubccr/mokey/releases>`_::
 
-  $ rpm -Uvh mokey-0.0.3-1.el7.centos.x86_64.rpm
+  $ rpm -Uvh mokey-0.0.4-1.el7.centos.x86_64.rpm
 
 Install MariaDB and/or setup database for mokey::
 
@@ -65,14 +66,33 @@ Install MariaDB and/or setup database for mokey::
     $ mysql> exit
     $ mysql -u root -p mokey < /usr/share/mokey/ddl/schema.sql
 
-Configure mokey (add user/pass for MariaDB database)::
+Create a user account and role in FreeIPA with the "Modify users and Reset
+passwords" privilege. This user account will be used by the mokey application
+to reset users passwords. Run the following commands (requires ipa-admintools
+to be installed)::
+
+    $ mkdir /etc/mokey/keytab
+    $ kinit adminuser
+    $ ipa role-add 'Mokey User Manager' --desc='Mokey User management'
+    $ ipa role-add-privilege 'Mokey User Manager' --privilege='Modify users and Reset passwords'
+    $ ipa user-add mokeyapp --first Mokey --last App
+    $ ipa role-add-member 'Mokey User Manager' --users=mokeyapp
+    $ ipa-getkeytab -s [your.ipa-master.server] -p mokeyapp -k /etc/mokey/keytab/mokeyapp.keytab
+    $ chmod 640 /etc/mokey/keytab/mokeyapp.keytab
+    $ chgrp mokey /etc/mokey/keytab/mokeyapp.keytab
+    
+
+Edit mokey configuration file. Add user/pass for MariaDB database, path to
+keytab, and secret key::
 
     $ vim /etc/mokey/mokey.yaml 
     dsn: "user:pass@/dbname?parseTime=true"
+    keytab: "/etc/mokey/keytab/mokeyapp.keytab"
+    secret_key: "some really long random string"
     [ edit to taste ]
 
 It's highly recommended to run mokey using HTTPS. You'll need an SSL
-cert/private_key either using FreeIPA's PKI, self-signed, or a commercial
+cert/private_key either using FreeIPA's PKI, self-signed, or from a commercial
 certificate authority. Creating SSL certs is outside the scope of this
 document. You can also run mokey behind haproxy or Apache/Nginx.
 
@@ -106,19 +126,23 @@ The templates for the web interface and emails are installed by default in
 /usr/share/mokey/templates. Edit to taste and restart mokey.
 
 ------------------------------------------------------------------------
-Getting Started with admin cli tools
+Getting Started with mokey cli tools
 ------------------------------------------------------------------------
 
-- Account Activation / First time password setup::
+- Account Activation / First time password setup. Use case: create new user and
+  send them an email link to setup their password and security question::
 
-    $ kinit admin
+    $ kinit adminuser
     $ ipa user-add --first="Jesse" --last="Pinkman" --email="jp@example.com" capncook
     $ mokey newacct --uid capncook 
     (An email will be sent to jp@example.com with a link to setup their password)
     
-- Reset user password::
+- Reset user password. Use case: user forgot their password, send the user an
+  email link to reset their password using their previously set security
+  question. Users can also initiate a password reset using the "Forgot
+  Password" link in the web interface::
 
-    $ kinit admin
+    $ kinit adminuser
     $ mokey resetpw --uid capncook 
     (An email will be sent to jp@example.com with a link to reset their password)
 
