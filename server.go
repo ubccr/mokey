@@ -38,7 +38,6 @@ const (
     MOKEY_COOKIE_SESSION = "mokey-session"
     MOKEY_COOKIE_SID     = "sid"
     MOKEY_COOKIE_USER    = "uid"
-    MAX_PASS_LENGTH      = 8
     TOKEN_REGEX          = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
     RESET_SALT           = "resetpw"
     ACCOUNT_SETUP_SALT   = "acctsetup"
@@ -340,6 +339,7 @@ func (a *Application) router() *mux.Router {
 
 func init() {
     viper.SetDefault("port", 8080)
+    viper.SetDefault("min_passwd_len", 8)
     viper.SetDefault("pgp_sign", false)
     viper.SetDefault("smtp_host", "localhost")
     viper.SetDefault("smtp_port", 25)

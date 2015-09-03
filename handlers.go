@@ -50,8 +50,8 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
     pass := r.FormValue("password")
     pass2 := r.FormValue("password2")
 
-    if len(pass) < MAX_PASS_LENGTH || len(pass2) < MAX_PASS_LENGTH {
-        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", MAX_PASS_LENGTH))
+    if len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
+        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
     }
 
     if pass != pass2 {
@@ -229,8 +229,8 @@ func resetPassword(app *Application, answer *model.SecurityAnswer, token *model.
     pass := r.FormValue("password")
     pass2 := r.FormValue("password2")
 
-    if len(pass) < MAX_PASS_LENGTH || len(pass2) < MAX_PASS_LENGTH {
-        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", MAX_PASS_LENGTH))
+    if len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
+        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
     }
 
     if pass != pass2 {
@@ -576,8 +576,8 @@ func changePassword(app *Application, user *ipa.UserRecord, r *http.Request) (er
     pass := r.FormValue("new_password")
     pass2 := r.FormValue("new_password2")
 
-    if len(current) < MAX_PASS_LENGTH || len(pass) < MAX_PASS_LENGTH || len(pass2) < MAX_PASS_LENGTH {
-        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", MAX_PASS_LENGTH))
+    if len(current) < viper.GetInt("min_passwd_len") || len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
+        return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
     }
 
     if pass != pass2 {
