@@ -3,7 +3,7 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.0.3
+Version:       0.0.4
 Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
@@ -73,9 +73,13 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Thu Sep 03 2015  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.4-1
+- New Features
+    - Min password length configurable option
+    - Add HMAC signed tokens
 * Wed Sep 02 2015  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.3-1
 - New Features
-    - Make rate limiting optional
+    - Rate limiting configurable option
     - Re-locate static template directory
 - Bug Fixes
     - Add check for empty user name in forgot password
