@@ -89,7 +89,7 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
             "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to generate bcrypt hash of answer")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
     // Setup password in FreeIPA
@@ -115,7 +115,7 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
             "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to set user password in FreeIPA")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
 
@@ -131,7 +131,7 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
             "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to save answer to the database")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
 
@@ -142,7 +142,7 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
             "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to remove token from database")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
     return nil
@@ -269,7 +269,7 @@ func resetPassword(app *Application, answer *model.SecurityAnswer, token *model.
             "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to set user password in FreeIPA")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
     // Destroy token
@@ -279,7 +279,7 @@ func resetPassword(app *Application, answer *model.SecurityAnswer, token *model.
             "uid": token.UserName,
             "error": err.Error(),
         }).Error("failed to remove token from database")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
     return nil
@@ -611,7 +611,7 @@ func changePassword(app *Application, user *ipa.UserRecord, r *http.Request) (er
             "uid": user.Uid,
             "error": err.Error(),
         }).Error("failed to set user password in FreeIPA")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
     return nil
@@ -697,7 +697,7 @@ func updateSecurityQuestion(app *Application, questions []*model.SecurityQuestio
             "uid": user.Uid,
             "error": err.Error(),
         }).Error("failed to generate bcrypt hash of answer")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
     a := &model.SecurityAnswer{
@@ -711,7 +711,7 @@ func updateSecurityQuestion(app *Application, questions []*model.SecurityQuestio
             "uid": user.Uid,
             "error": err.Error(),
         }).Error("failed to save answer to the database")
-        return errors.New("Fatal system error. Please contact ccr-help.")
+        return errors.New("Fatal system error")
     }
 
     return nil
