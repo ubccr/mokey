@@ -1,6 +1,12 @@
 ===============================================================================
-mokey - FreeIPA self-service account managment tool
+FreeIPA self-service account managment tool
 ===============================================================================
+
+.. image:: docs/mokey-logo.png
+
+------------------------------------------------------------------------
+What is mokey?
+------------------------------------------------------------------------
 
 mokey is web application that provides self-service user account management
 tools for `FreeIPA <http://freeipa.org>`_. The motivation for this project was
