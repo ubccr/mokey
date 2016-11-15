@@ -1,0 +1,25 @@
+package: github.com/ubccr/mokey
+homepage: https://github.com/ubccr/mokey
+license: BSD
+import:
+- package: github.com/Sirupsen/logrus
+- package: github.com/carbocation/interpose
+- package: github.com/codegangsta/cli
+- package: github.com/garyburd/redigo
+  subpackages:
+  - redis
+- package: github.com/go-ini/ini
+- package: github.com/go-sql-driver/mysql
+- package: github.com/gorilla/context
+- package: github.com/gorilla/mux
+- package: github.com/gorilla/schema
+- package: github.com/gorilla/sessions
+- package: github.com/jmoiron/sqlx
+- package: github.com/justinas/nosurf
+- package: github.com/spf13/viper
+- package: github.com/ubccr/goipa
+- package: golang.org/x/crypto
+  subpackages:
+  - bcrypt
+  - openpgp
+  - openpgp/packet

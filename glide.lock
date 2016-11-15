@@ -1,0 +1,97 @@
+hash: 6e8a2c83e247fe4b7c597ac37681438acb0c6c6ea86ff8c6c031674b56746ed6
+updated: 2016-11-15T12:01:46.675782959-05:00
+imports:
+- name: github.com/carbocation/interpose
+  version: 50c09d12f8624ab10532f931cb630d0bf5f7c2c7
+- name: github.com/codegangsta/cli
+  version: b4f4786f378c0c1d3336b5bb798094b166edf5a9
+- name: github.com/fsnotify/fsnotify
+  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+- name: github.com/garyburd/redigo
+  version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
+  subpackages:
+  - internal
+  - redis
+- name: github.com/go-ini/ini
+  version: 6e4869b434bd001f6983749881c7ead3545887d8
+- name: github.com/go-sql-driver/mysql
+  version: 8f6c67f0228a4a6a962008d6c3d1e694e4532e71
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: 757bef944d0f21880861c2dd9c871ca543023cba
+- name: github.com/gorilla/schema
+  version: 0164a00ab4cd01d814d8cd5bf63fd9fcea30e23b
+- name: github.com/gorilla/securecookie
+  version: fa5329f913702981df43dcb2a380bac429c810b5
+- name: github.com/gorilla/sessions
+  version: ca9ada44574153444b00d3fd9c8559e4cc95f896
+- name: github.com/hashicorp/hcl
+  version: c3e054bfd4dcf77b9965ed2b79b22afa2f41d4eb
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
+- name: github.com/jmoiron/sqlx
+  version: 5f97679e23f75f42b265fec8d3bdb1c8de90b79d
+  subpackages:
+  - reflectx
+- name: github.com/justinas/nosurf
+  version: 8e15682772641a1e39c431233e6a9338a32def32
+- name: github.com/magiconair/properties
+  version: 0723e352fa358f9322c938cc2dadda874e9151a9
+- name: github.com/mitchellh/mapstructure
+  version: f3009df150dadf309fdee4a54ed65c124afad715
+- name: github.com/pelletier/go-buffruneio
+  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+- name: github.com/pelletier/go-toml
+  version: 45932ad32dfdd20826f5671da37a5f3ce9f26a8d
+- name: github.com/Sirupsen/logrus
+  version: abc6f20dabf4b10195f233ad21ea6c5ba33acae0
+- name: github.com/spf13/afero
+  version: 06b7e5f50606ecd49148a01a6008942d9b669217
+  subpackages:
+  - mem
+- name: github.com/spf13/cast
+  version: 2580bc98dc0e62908119e4737030cc2fdfc45e4c
+- name: github.com/spf13/jwalterweatherman
+  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
+- name: github.com/spf13/pflag
+  version: 5ccb023bc27df288a957c5e994cd44fd19619465
+- name: github.com/spf13/viper
+  version: 651d9d916abc3c3d6a91a12549495caba5edffd2
+- name: github.com/ubccr/goipa
+  version: d3c42a1e946d33e9cda957dd4d0e60e13d752d49
+- name: github.com/ubccr/kerby
+  version: b55f6370b6198848497943fa1e822a02e0deee3f
+  subpackages:
+  - khttp
+- name: golang.org/x/crypto
+  version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
+  subpackages:
+  - bcrypt
+  - blowfish
+  - cast5
+  - openpgp
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
+- name: golang.org/x/sys
+  version: b699b7032584f0953262cb2788a0ca19bb494703
+  subpackages:
+  - unix
+- name: golang.org/x/text
+  version: a263ba8db058568bb9beba166777d9c9dbe75d68
+  subpackages:
+  - transform
+  - unicode/norm
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+testImports: []
