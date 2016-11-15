@@ -45,6 +45,7 @@ func AuthRequired(app *Application, next http.Handler) http.Handler {
 				"uid":   user.Uid,
 				"error": err.Error(),
 			}).Error("FreeIPA ping failed")
+			logout(app, w, r)
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
@@ -135,4 +136,19 @@ func Nosurf() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return nosurf.New(next)
 	}
+}
+
+// QuestionRequired checks to ensure security question has been answered
+func QuestionRequired(app *Application, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+		question := session.Values[MOKEY_COOKIE_QUESTION]
+
+		if question == nil || "true" != question.(string) {
+			http.Redirect(w, r, "/auth/question", 302)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

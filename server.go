@@ -36,12 +36,13 @@ import (
 )
 
 const (
-	MOKEY_COOKIE_SESSION = "mokey-session"
-	MOKEY_COOKIE_SID     = "sid"
-	MOKEY_COOKIE_USER    = "uid"
-	TOKEN_REGEX          = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
-	RESET_SALT           = "resetpw"
-	ACCOUNT_SETUP_SALT   = "acctsetup"
+	MOKEY_COOKIE_SESSION  = "mokey-session"
+	MOKEY_COOKIE_QUESTION = "question"
+	MOKEY_COOKIE_SID      = "sid"
+	MOKEY_COOKIE_USER     = "uid"
+	TOKEN_REGEX           = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
+	RESET_SALT            = "resetpw"
+	ACCOUNT_SETUP_SALT    = "acctsetup"
 )
 
 type Application struct {
@@ -326,13 +327,15 @@ func (a *Application) router() *mux.Router {
 	})
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", a.tmpldir)))))
 	router.Path("/auth/login").Handler(RateLimit(a, LoginHandler(a))).Methods("GET", "POST")
+	router.Path("/auth/question").Handler(AuthRequired(a, RateLimit(a, LoginQuestionHandler(a)))).Methods("GET", "POST")
+	router.Path("/auth/setsec").Handler(AuthRequired(a, RateLimit(a, SetupQuestionHandler(a)))).Methods("GET", "POST")
 	router.Path("/auth/logout").Handler(LogoutHandler(a)).Methods("GET")
 	router.Path("/auth/forgotpw").Handler(RateLimit(a, ForgotPasswordHandler(a))).Methods("GET", "POST")
 	router.Path(fmt.Sprintf("/auth/setup/{token:%s}", TOKEN_REGEX)).Handler(SetupAccountHandler(a)).Methods("GET", "POST")
 	router.Path(fmt.Sprintf("/auth/resetpw/{token:%s}", TOKEN_REGEX)).Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
-	router.Path("/changepw").Handler(AuthRequired(a, ChangePasswordHandler(a))).Methods("GET", "POST")
-	router.Path("/updatesec").Handler(AuthRequired(a, UpdateSecurityQuestionHandler(a))).Methods("GET", "POST")
-	router.Path("/").Handler(AuthRequired(a, IndexHandler(a))).Methods("GET")
+	router.Path("/changepw").Handler(AuthRequired(a, QuestionRequired(a, ChangePasswordHandler(a)))).Methods("GET", "POST")
+	router.Path("/updatesec").Handler(AuthRequired(a, QuestionRequired(a, UpdateSecurityQuestionHandler(a)))).Methods("GET", "POST")
+	router.Path("/").Handler(AuthRequired(a, QuestionRequired(a, IndexHandler(a)))).Methods("GET")
 
 	return router
 }
