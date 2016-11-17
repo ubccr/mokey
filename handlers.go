@@ -44,19 +44,9 @@ func errorHandler(app *Application, w http.ResponseWriter, status int) {
 	renderTemplate(w, app.templates["error.html"], nil)
 }
 
-func setupAccount(app *Application, questions []*model.SecurityQuestion, token *model.Token, r *http.Request) error {
+func setupQuestion(app *Application, questions []*model.SecurityQuestion, userName string, r *http.Request) error {
 	qid := r.FormValue("qid")
 	answer := r.FormValue("answer")
-	pass := r.FormValue("password")
-	pass2 := r.FormValue("password2")
-
-	if len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
-		return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
-	}
-
-	if pass != pass2 {
-		return errors.New("Password do not match. Please confirm your password.")
-	}
 
 	if len(qid) == 0 || len(answer) == 0 {
 		return errors.New("Please choose a security question and answer.")
@@ -86,10 +76,45 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
 	hash, err := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"uid":   token.UserName,
+			"uid":   userName,
 			"error": err.Error(),
 		}).Error("failed to generate bcrypt hash of answer")
 		return errors.New("Fatal system error")
+	}
+
+	// Save security answer
+	a := &model.SecurityAnswer{
+		UserName:   userName,
+		QuestionId: q,
+		Answer:     string(hash)}
+
+	err = model.StoreAnswer(app.db, a)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"uid":   userName,
+			"error": err.Error(),
+		}).Error("failed to save answer to the database")
+		return errors.New("Fatal system error")
+	}
+
+	return nil
+}
+
+func setupAccount(app *Application, questions []*model.SecurityQuestion, token *model.Token, r *http.Request) error {
+	pass := r.FormValue("password")
+	pass2 := r.FormValue("password2")
+
+	if len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
+		return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
+	}
+
+	if pass != pass2 {
+		return errors.New("Password do not match. Please confirm your password.")
+	}
+
+	err := setupQuestion(app, questions, token.UserName, r)
+	if err != nil {
+		return err
 	}
 
 	// Setup password in FreeIPA
@@ -115,21 +140,6 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
 			"uid":   token.UserName,
 			"error": err.Error(),
 		}).Error("failed to set user password in FreeIPA")
-		return errors.New("Fatal system error")
-	}
-
-	// Save security answer
-	a := &model.SecurityAnswer{
-		UserName:   token.UserName,
-		QuestionId: q,
-		Answer:     string(hash)}
-
-	err = model.StoreAnswer(app.db, a)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"uid":   token.UserName,
-			"error": err.Error(),
-		}).Error("failed to save answer to the database")
 		return errors.New("Fatal system error")
 	}
 
@@ -519,7 +529,7 @@ func LoginHandler(app *Application) http.Handler {
 					return
 				}
 
-				http.Redirect(w, r, "/", 302)
+				http.Redirect(w, r, "/auth/question", 302)
 				return
 			}
 		}
@@ -532,22 +542,78 @@ func LoginHandler(app *Application) http.Handler {
 	})
 }
 
-func LogoutHandler(app *Application) http.Handler {
+func LoginQuestionHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
-		delete(session.Values, MOKEY_COOKIE_SID)
-		delete(session.Values, MOKEY_COOKIE_USER)
-		session.Options.MaxAge = -1
-
-		err := session.Save(r, w)
-		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"error": err.Error(),
-			}).Error("logouthandler: failed to save session")
+		user := context.Get(r, "user").(*ipa.UserRecord)
+		if user == nil {
+			logrus.Error("login question handler: user not found in request context")
 			errorHandler(app, w, http.StatusInternalServerError)
 			return
 		}
 
+		answer, err := model.FetchAnswer(app.db, string(user.Uid))
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"uid":   string(user.Uid),
+				"error": err,
+			}).Error("User can't login. No security answer has been set")
+			http.Redirect(w, r, "/auth/setsec", 302)
+			return
+		}
+
+		message := ""
+
+		if r.Method == "POST" {
+			ans := r.FormValue("answer")
+			err := bcrypt.CompareHashAndPassword([]byte(answer.Answer), []byte(ans))
+			if err != nil {
+				message = "The security answer you provided does not match. Please check that you are entering the correct answer."
+			} else {
+				session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+				session.Values[MOKEY_COOKIE_QUESTION] = "true"
+				err = session.Save(r, w)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"error": err.Error(),
+					}).Error("login question handler: failed to save session")
+					errorHandler(app, w, http.StatusInternalServerError)
+					return
+				}
+
+				http.Redirect(w, r, "/", 302)
+				return
+			}
+		}
+
+		vars := map[string]interface{}{
+			"token":    nosurf.Token(r),
+			"question": answer.Question,
+			"message":  message}
+
+		renderTemplate(w, app.templates["login-question.html"], vars)
+	})
+}
+
+func logout(app *Application, w http.ResponseWriter, r *http.Request) {
+	session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+	delete(session.Values, MOKEY_COOKIE_SID)
+	delete(session.Values, MOKEY_COOKIE_USER)
+	delete(session.Values, MOKEY_COOKIE_QUESTION)
+	session.Options.MaxAge = -1
+
+	err := session.Save(r, w)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"error": err.Error(),
+		}).Error("logouthandler: failed to save session")
+		errorHandler(app, w, http.StatusInternalServerError)
+		return
+	}
+}
+
+func LogoutHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logout(app, w, r)
 		http.Redirect(w, r, "/auth/login", 302)
 	})
 }
@@ -753,5 +819,66 @@ func UpdateSecurityQuestionHandler(app *Application) http.Handler {
 			"message":   message}
 
 		renderTemplate(w, app.templates["update-security-question.html"], vars)
+	})
+}
+
+func SetupQuestionHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.Get(r, "user").(*ipa.UserRecord)
+		if user == nil {
+			logrus.Error("setup question handler: user not found in request context")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		_, err := model.FetchAnswer(app.db, string(user.Uid))
+		if err == nil {
+			logrus.WithFields(logrus.Fields{
+				"uid":   string(user.Uid),
+				"error": err,
+			}).Error("User already has security question set.")
+			w.WriteHeader(http.StatusNotFound)
+			renderTemplate(w, app.templates["404.html"], nil)
+			return
+		}
+
+		questions, err := model.FetchQuestions(app.db)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("Failed to fetch questions from database")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		message := ""
+
+		if r.Method == "POST" {
+			err := setupQuestion(app, questions, string(user.Uid), r)
+			if err != nil {
+				message = err.Error()
+			} else {
+				session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+				session.Values[MOKEY_COOKIE_QUESTION] = "true"
+				err = session.Save(r, w)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"error": err.Error(),
+					}).Error("login question handler: failed to save session")
+					errorHandler(app, w, http.StatusInternalServerError)
+					return
+				}
+
+				http.Redirect(w, r, "/", 302)
+				return
+			}
+		}
+
+		vars := map[string]interface{}{
+			"token":     nosurf.Token(r),
+			"questions": questions,
+			"message":   message}
+
+		renderTemplate(w, app.templates["setup-question.html"], vars)
 	})
 }
