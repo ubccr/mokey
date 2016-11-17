@@ -44,62 +44,6 @@ func errorHandler(app *Application, w http.ResponseWriter, status int) {
 	renderTemplate(w, app.templates["error.html"], nil)
 }
 
-func setupQuestion(app *Application, questions []*model.SecurityQuestion, userName string, r *http.Request) error {
-	qid := r.FormValue("qid")
-	answer := r.FormValue("answer")
-
-	if len(qid) == 0 || len(answer) == 0 {
-		return errors.New("Please choose a security question and answer.")
-	}
-
-	if utf8.RuneCountInString(answer) < 2 || utf8.RuneCountInString(answer) > 100 {
-		return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
-	}
-
-	q, err := strconv.Atoi(qid)
-	if err != nil {
-		return errors.New("Invalid security question")
-	}
-
-	found := false
-	for _, sq := range questions {
-		if sq.Id == q {
-			found = true
-			break
-		}
-	}
-
-	if found == false {
-		return errors.New("Invalid security question")
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"uid":   userName,
-			"error": err.Error(),
-		}).Error("failed to generate bcrypt hash of answer")
-		return errors.New("Fatal system error")
-	}
-
-	// Save security answer
-	a := &model.SecurityAnswer{
-		UserName:   userName,
-		QuestionId: q,
-		Answer:     string(hash)}
-
-	err = model.StoreAnswer(app.db, a)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"uid":   userName,
-			"error": err.Error(),
-		}).Error("failed to save answer to the database")
-		return errors.New("Fatal system error")
-	}
-
-	return nil
-}
-
 func setupAccount(app *Application, questions []*model.SecurityQuestion, token *model.Token, r *http.Request) error {
 	pass := r.FormValue("password")
 	pass2 := r.FormValue("password2")
@@ -112,7 +56,7 @@ func setupAccount(app *Application, questions []*model.SecurityQuestion, token *
 		return errors.New("Password do not match. Please confirm your password.")
 	}
 
-	err := setupQuestion(app, questions, token.UserName, r)
+	err := updateSecurityQuestion(app, questions, token.UserName, r)
 	if err != nil {
 		return err
 	}
@@ -725,7 +669,7 @@ func ChangePasswordHandler(app *Application) http.Handler {
 	})
 }
 
-func updateSecurityQuestion(app *Application, questions []*model.SecurityQuestion, user *ipa.UserRecord, r *http.Request) error {
+func updateSecurityQuestion(app *Application, questions []*model.SecurityQuestion, userName string, r *http.Request) error {
 	qid := r.FormValue("qid")
 	answer := r.FormValue("answer")
 
@@ -757,21 +701,21 @@ func updateSecurityQuestion(app *Application, questions []*model.SecurityQuestio
 	hash, err := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"uid":   user.Uid,
+			"uid":   userName,
 			"error": err.Error(),
 		}).Error("failed to generate bcrypt hash of answer")
 		return errors.New("Fatal system error")
 	}
 
 	a := &model.SecurityAnswer{
-		UserName:   string(user.Uid),
+		UserName:   userName,
 		QuestionId: q,
 		Answer:     string(hash)}
 
 	err = model.StoreAnswer(app.db, a)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
-			"uid":   user.Uid,
+			"uid":   userName,
 			"error": err.Error(),
 		}).Error("failed to save answer to the database")
 		return errors.New("Fatal system error")
@@ -802,7 +746,7 @@ func UpdateSecurityQuestionHandler(app *Application) http.Handler {
 		completed := false
 
 		if r.Method == "POST" {
-			err := updateSecurityQuestion(app, questions, user, r)
+			err := updateSecurityQuestion(app, questions, string(user.Uid), r)
 			if err != nil {
 				message = err.Error()
 				completed = false
@@ -854,7 +798,7 @@ func SetupQuestionHandler(app *Application) http.Handler {
 		message := ""
 
 		if r.Method == "POST" {
-			err := setupQuestion(app, questions, string(user.Uid), r)
+			err := updateSecurityQuestion(app, questions, string(user.Uid), r)
 			if err != nil {
 				message = err.Error()
 			} else {
