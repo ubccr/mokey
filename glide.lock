@@ -1,5 +1,5 @@
-hash: 6e8a2c83e247fe4b7c597ac37681438acb0c6c6ea86ff8c6c031674b56746ed6
-updated: 2016-11-15T12:01:46.675782959-05:00
+hash: e0dcd48f5a4c60186d559e6baca93874321b6e315e5a791b4f2e72edad9ea5f3
+updated: 2016-11-17T11:56:05.772502241-05:00
 imports:
 - name: github.com/carbocation/interpose
   version: 50c09d12f8624ab10532f931cb630d0bf5f7c2c7
@@ -15,7 +15,7 @@ imports:
 - name: github.com/go-ini/ini
   version: 6e4869b434bd001f6983749881c7ead3545887d8
 - name: github.com/go-sql-driver/mysql
-  version: 8f6c67f0228a4a6a962008d6c3d1e694e4532e71
+  version: 665b83488b90b902ce0a305ef6652e599771cdf9
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -58,7 +58,7 @@ imports:
   subpackages:
   - mem
 - name: github.com/spf13/cast
-  version: 2580bc98dc0e62908119e4737030cc2fdfc45e4c
+  version: 24b6558033ffe202bf42f0f3b870dcc798dd2ba8
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
@@ -66,7 +66,7 @@ imports:
 - name: github.com/spf13/viper
   version: 651d9d916abc3c3d6a91a12549495caba5edffd2
 - name: github.com/ubccr/goipa
-  version: d3c42a1e946d33e9cda957dd4d0e60e13d752d49
+  version: 0dd702ed40da344a236e21dc56df4d21223e8cac
 - name: github.com/ubccr/kerby
   version: b55f6370b6198848497943fa1e822a02e0deee3f
   subpackages:
