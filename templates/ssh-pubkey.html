@@ -1,0 +1,39 @@
+{{define "content"}}
+
+{{ with .message }}
+<div class="alert alert-danger alert-dismissable">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ . }}
+</div>
+{{ end }}
+
+<div class="panel panel-primary">
+  <div class="clearfix panel-heading">
+      <h3 style="display: inline" class="panel-title"><i class="fa fa-lock fa-lg"></i> SSH Public Keys </h3>
+         <div class="btn-toolbar pull-right">
+        <div class="btn-group">
+        <button id="newkey" class="btn btn-default btn-sm">New SSH Key</button>
+        </div>
+        </div>
+  </div>
+  <div class="panel-body">
+
+    {{ range $fp := .user.SshPubKeyFps }}
+    <div class="media">
+     <div class="media-left"> 
+        <a href="#"><i class="fa fa-key fa-3x"></i></a>
+     </div>
+     <div class="media-body">
+     <h4 class="media-heading">SSH Fingerprint: </h4>
+     <p><code>{{ $fp }}</code></p>
+     <a class="btn btn-default" href="#" role="button"><i class="fa fa-trash fa-sm"></i> Delete</a>
+     </div> 
+    </div> 
+    {{ else }}
+        <p>No ssh keys uploaded</p>
+    {{ end }}
+
+  </div>
+</div>
+
+{{end}}

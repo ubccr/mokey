@@ -826,3 +826,20 @@ func SetupQuestionHandler(app *Application) http.Handler {
 		renderTemplate(w, app.templates["setup-question.html"], vars)
 	})
 }
+
+func SshPubKeyHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.Get(r, "user").(*ipa.UserRecord)
+		if user == nil {
+			logrus.Error("sshpubkey handler: user not found in request context")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		vars := map[string]interface{}{
+			"user": user}
+
+		renderTemplate(w, app.templates["ssh-pubkey.html"], vars)
+
+	})
+}

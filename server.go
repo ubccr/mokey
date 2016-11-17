@@ -334,6 +334,7 @@ func (a *Application) router() *mux.Router {
 	router.Path(fmt.Sprintf("/auth/setup/{token:%s}", TOKEN_REGEX)).Handler(SetupAccountHandler(a)).Methods("GET", "POST")
 	router.Path(fmt.Sprintf("/auth/resetpw/{token:%s}", TOKEN_REGEX)).Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
 	router.Path("/changepw").Handler(AuthRequired(a, QuestionRequired(a, ChangePasswordHandler(a)))).Methods("GET", "POST")
+	router.Path("/sshpubkey").Handler(AuthRequired(a, QuestionRequired(a, SshPubKeyHandler(a)))).Methods("GET", "POST")
 	router.Path("/").Handler(AuthRequired(a, QuestionRequired(a, IndexHandler(a)))).Methods("GET")
 
 	return router
