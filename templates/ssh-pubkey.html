@@ -1,9 +1,9 @@
 {{define "content"}}
 
-{{ with .message }}
+{{ range $m := .flashes }}
 <div class="alert alert-danger alert-dismissable">
 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-    {{ . }}
+    {{ $m }}
 </div>
 {{ end }}
 
@@ -18,7 +18,7 @@
   </div>
   <div class="panel-body">
 
-    {{ range $fp := .user.SshPubKeyFps }}
+    {{ range $i, $fp := .user.SshPubKeyFps }}
     <div class="media">
      <div class="media-left"> 
         <a href="#"><i class="fa fa-key fa-3x"></i></a>
@@ -26,7 +26,9 @@
      <div class="media-body">
      <h4 class="media-heading">SSH Fingerprint: </h4>
      <p><code>{{ $fp }}</code></p>
-     <a class="btn btn-default" href="#" role="button"><i class="fa fa-trash fa-sm"></i> Delete</a>
+     <button class="btn btn-default" data-href="/sshpubkey/remove/{{ $i }}" data-toggle="modal" data-target="#confirm-delete">
+         Delete
+     </button>
      </div> 
     </div> 
     {{ else }}
@@ -35,5 +37,33 @@
 
   </div>
 </div>
+
+<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Are you sure you want to delete this SSH key?</h4>
+      </div>
+      <div class="modal-body">
+        <p>This action <strong>CANNOT</strong> be undone. This will permanently delete
+        the SSH key and if you'd like to use it in the future, you will
+        need to upload it again.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <a class="btn btn-danger btn-ok">Delete</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+$(function(){
+    $('#confirm-delete').on('show.bs.modal', function(e) {
+        $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+    });
+});
+</script>
 
 {{end}}

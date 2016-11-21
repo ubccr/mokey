@@ -452,6 +452,14 @@ func tryAuth(uid, pass string) (string, *ipa.UserRecord, error) {
 func LoginHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		message := ""
+		session, err := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("loginhandler: failed to get session")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
 
 		if r.Method == "POST" {
 			uid := r.FormValue("uid")
@@ -461,7 +469,6 @@ func LoginHandler(app *Application) http.Handler {
 			if err != nil {
 				message = err.Error()
 			} else {
-				session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
 				session.Values[MOKEY_COOKIE_SID] = sid
 				session.Values[MOKEY_COOKIE_USER] = userRec
 				err = session.Save(r, w)
@@ -488,6 +495,15 @@ func LoginHandler(app *Application) http.Handler {
 
 func LoginQuestionHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("loginquestionhandler: failed to get session")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
 		user := context.Get(r, "user").(*ipa.UserRecord)
 		if user == nil {
 			logrus.Error("login question handler: user not found in request context")
@@ -513,7 +529,6 @@ func LoginQuestionHandler(app *Application) http.Handler {
 			if err != nil {
 				message = "The security answer you provided does not match. Please check that you are entering the correct answer."
 			} else {
-				session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
 				session.Values[MOKEY_COOKIE_QUESTION] = "true"
 				err = session.Save(r, w)
 				if err != nil {
@@ -539,13 +554,20 @@ func LoginQuestionHandler(app *Application) http.Handler {
 }
 
 func logout(app *Application, w http.ResponseWriter, r *http.Request) {
-	session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+	session, err := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"error": err.Error(),
+		}).Error("logouthandler: failed to get session")
+		errorHandler(app, w, http.StatusInternalServerError)
+		return
+	}
 	delete(session.Values, MOKEY_COOKIE_SID)
 	delete(session.Values, MOKEY_COOKIE_USER)
 	delete(session.Values, MOKEY_COOKIE_QUESTION)
 	session.Options.MaxAge = -1
 
-	err := session.Save(r, w)
+	err = session.Save(r, w)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"error": err.Error(),
@@ -768,6 +790,15 @@ func UpdateSecurityQuestionHandler(app *Application) http.Handler {
 
 func SetupQuestionHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("setupquestionhandler: failed to get session")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
 		user := context.Get(r, "user").(*ipa.UserRecord)
 		if user == nil {
 			logrus.Error("setup question handler: user not found in request context")
@@ -775,7 +806,7 @@ func SetupQuestionHandler(app *Application) http.Handler {
 			return
 		}
 
-		_, err := model.FetchAnswer(app.db, string(user.Uid))
+		_, err = model.FetchAnswer(app.db, string(user.Uid))
 		if err == nil {
 			logrus.WithFields(logrus.Fields{
 				"uid":   string(user.Uid),
@@ -802,7 +833,6 @@ func SetupQuestionHandler(app *Application) http.Handler {
 			if err != nil {
 				message = err.Error()
 			} else {
-				session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
 				session.Values[MOKEY_COOKIE_QUESTION] = "true"
 				err = session.Save(r, w)
 				if err != nil {
@@ -836,10 +866,80 @@ func SshPubKeyHandler(app *Application) http.Handler {
 			return
 		}
 
+		session, err := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("sshpubkeyhandler: failed to get session")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
 		vars := map[string]interface{}{
-			"user": user}
+			"flashes": session.Flashes(),
+			"user":    user}
 
+		session.Save(r, w)
 		renderTemplate(w, app.templates["ssh-pubkey.html"], vars)
+	})
+}
 
+func RemoveSshPubKeyHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.Get(r, "user").(*ipa.UserRecord)
+		if user == nil {
+			logrus.Error("removesshpubkey handler: user not found in request context")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		session, err := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("removesshpubkeyhandler: failed to get session")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		index, _ := strconv.Atoi(mux.Vars(r)["index"])
+		if index < 0 || index > len(user.SshPubKeys) {
+			logrus.WithFields(logrus.Fields{
+				"user":  string(user.Uid),
+				"index": index,
+			}).Error("Invalid ssh pub key index")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		pubKeys := make([]string, len(user.SshPubKeys))
+		copy(pubKeys, user.SshPubKeys)
+
+		// Remove key at index
+		pubKeys = append(pubKeys[:index], pubKeys[index+1:]...)
+
+		sid := session.Values[MOKEY_COOKIE_SID]
+		c := NewIpaClient(false)
+		c.SetSession(sid.(string))
+
+		newFps, err := c.UpdateSshPubKeys(string(user.Uid), pubKeys)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"user":  string(user.Uid),
+				"index": index,
+				"error": err,
+			}).Error("Failed to delete ssh pub key")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		user.SshPubKeys = pubKeys
+		user.SshPubKeyFps = newFps
+		session.Values[MOKEY_COOKIE_USER] = user
+		session.AddFlash("SSH Pub Key Deleted")
+		session.Save(r, w)
+
+		http.Redirect(w, r, "/sshpubkey", 302)
+		return
 	})
 }
