@@ -336,6 +336,7 @@ func (a *Application) router() *mux.Router {
 	router.Path("/changepw").Handler(AuthRequired(a, QuestionRequired(a, ChangePasswordHandler(a)))).Methods("GET", "POST")
 	router.Path("/sshpubkey").Handler(AuthRequired(a, QuestionRequired(a, SshPubKeyHandler(a)))).Methods("GET", "POST")
 	router.Path("/sshpubkey/remove/{index:[0-9]+}").Handler(AuthRequired(a, QuestionRequired(a, RemoveSshPubKeyHandler(a)))).Methods("GET")
+	router.Path("/sshpubkey/new").Handler(AuthRequired(a, QuestionRequired(a, NewSshPubKeyHandler(a)))).Methods("GET", "POST")
 	router.Path("/").Handler(AuthRequired(a, QuestionRequired(a, IndexHandler(a)))).Methods("GET")
 
 	return router

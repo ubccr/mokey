@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"unicode/utf8"
@@ -941,5 +942,133 @@ func RemoveSshPubKeyHandler(app *Application) http.Handler {
 
 		http.Redirect(w, r, "/sshpubkey", 302)
 		return
+	})
+}
+
+func addSshPubKey(user *ipa.UserRecord, pubKey, sid string) error {
+	if len(pubKey) == 0 {
+		return errors.New("No ssh key provided. Please provide a valid ssh public key")
+	}
+
+	pubKeys := make([]string, len(user.SshPubKeys))
+	copy(pubKeys, user.SshPubKeys)
+	found := false
+	for _, k := range pubKeys {
+		if k == pubKey {
+			found = true
+		}
+	}
+
+	if found {
+		return errors.New("ssh key already exists.")
+	}
+
+	pubKeys = append(pubKeys, pubKey)
+
+	c := NewIpaClient(false)
+	c.SetSession(sid)
+
+	newFps, err := c.UpdateSshPubKeys(string(user.Uid), pubKeys)
+	if err != nil {
+		if ierr, ok := err.(*ipa.IpaError); ok {
+			// Raised when a parameter value fails a validation rule
+			if ierr.Code == 3009 {
+				return errors.New("Invalid ssh public key")
+			}
+		} else {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+				"user":  string(user.Uid),
+			}).Error("Ipa error when attempting to add new ssh public key")
+			return errors.New("Fatal system error occured.")
+		}
+	}
+
+	user.SshPubKeys = pubKeys
+	user.SshPubKeyFps = newFps
+
+	return nil
+}
+
+func NewSshPubKeyHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.Get(r, "user").(*ipa.UserRecord)
+		if user == nil {
+			logrus.Error("newsshpubkey handler: user not found in request context")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		session, err := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err.Error(),
+			}).Error("newsshpubkeyhandler: failed to get session")
+			errorHandler(app, w, http.StatusInternalServerError)
+			return
+		}
+
+		message := ""
+
+		if r.Method == "POST" {
+			err := r.ParseMultipartForm(4096)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"user": string(user.Uid),
+					"err":  err,
+				}).Error("Failed to parse multipart form")
+				errorHandler(app, w, http.StatusInternalServerError)
+				return
+			}
+
+			pubKey := ""
+
+			files := r.MultipartForm.File["key_file"]
+			if len(files) > 0 {
+				// Only use first file
+				file, err := files[0].Open()
+				defer file.Close()
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"user": string(user.Uid),
+						"err":  err,
+					}).Error("Failed to open ssh pub key file upload")
+					errorHandler(app, w, http.StatusInternalServerError)
+					return
+				}
+				data, err := ioutil.ReadAll(file)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"user": string(user.Uid),
+						"err":  err,
+					}).Error("Failed to read ssh pub key file upload")
+					errorHandler(app, w, http.StatusInternalServerError)
+					return
+				}
+				pubKey = string(data)
+			} else {
+				pubKey = r.FormValue("key")
+			}
+
+			sid := session.Values[MOKEY_COOKIE_SID]
+			err = addSshPubKey(user, pubKey, sid.(string))
+
+			if err == nil {
+				session.Values[MOKEY_COOKIE_USER] = user
+				session.AddFlash("SSH Public Key Added")
+				session.Save(r, w)
+				http.Redirect(w, r, "/sshpubkey", 302)
+				return
+			}
+
+			message = err.Error()
+		}
+
+		vars := map[string]interface{}{
+			"token":   nosurf.Token(r),
+			"message": message,
+			"user":    user}
+
+		renderTemplate(w, app.templates["new-ssh-pubkey.html"], vars)
 	})
 }

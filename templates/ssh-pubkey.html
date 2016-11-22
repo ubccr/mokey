@@ -1,7 +1,7 @@
 {{define "content"}}
 
 {{ range $m := .flashes }}
-<div class="alert alert-danger alert-dismissable">
+<div class="alert alert-success alert-dismissable">
 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
     {{ $m }}
 </div>
@@ -9,10 +9,10 @@
 
 <div class="panel panel-primary">
   <div class="clearfix panel-heading">
-      <h3 style="display: inline" class="panel-title"><i class="fa fa-lock fa-lg"></i> SSH Public Keys </h3>
+      <h3 style="display: inline" class="panel-title"><i class="fa fa-key fa-lg"></i> SSH Public Keys </h3>
          <div class="btn-toolbar pull-right">
         <div class="btn-group">
-        <button id="newkey" class="btn btn-default btn-sm">New SSH Key</button>
+        <a href="/sshpubkey/new" id="newkey" class="btn btn-default btn-sm">New SSH Key</a>
         </div>
         </div>
   </div>
