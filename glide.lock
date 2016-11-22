@@ -1,19 +1,19 @@
 hash: e0dcd48f5a4c60186d559e6baca93874321b6e315e5a791b4f2e72edad9ea5f3
-updated: 2016-11-17T11:56:05.772502241-05:00
+updated: 2016-11-22T14:59:51.726975717-05:00
 imports:
 - name: github.com/carbocation/interpose
   version: 50c09d12f8624ab10532f931cb630d0bf5f7c2c7
 - name: github.com/codegangsta/cli
-  version: b4f4786f378c0c1d3336b5bb798094b166edf5a9
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/garyburd/redigo
-  version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
+  version: d7de57ceb51b029d5c5a61e26587f672e2834178
   subpackages:
   - internal
   - redis
 - name: github.com/go-ini/ini
-  version: 6e4869b434bd001f6983749881c7ead3545887d8
+  version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
 - name: github.com/go-sql-driver/mysql
   version: 665b83488b90b902ce0a305ef6652e599771cdf9
 - name: github.com/gorilla/context
@@ -27,7 +27,7 @@ imports:
 - name: github.com/gorilla/sessions
   version: ca9ada44574153444b00d3fd9c8559e4cc95f896
 - name: github.com/hashicorp/hcl
-  version: c3e054bfd4dcf77b9965ed2b79b22afa2f41d4eb
+  version: 7cb7455c285ca3bf3362aa4ba6a06a6d6f5c3ba0
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -38,7 +38,7 @@ imports:
   - json/scanner
   - json/token
 - name: github.com/jmoiron/sqlx
-  version: 5f97679e23f75f42b265fec8d3bdb1c8de90b79d
+  version: f71d5ee01769df469d115332106ef504ded071dc
   subpackages:
   - reflectx
 - name: github.com/justinas/nosurf
@@ -52,7 +52,7 @@ imports:
 - name: github.com/pelletier/go-toml
   version: 45932ad32dfdd20826f5671da37a5f3ce9f26a8d
 - name: github.com/Sirupsen/logrus
-  version: abc6f20dabf4b10195f233ad21ea6c5ba33acae0
+  version: a437dfd2463eaedbec3dfe443e477d3b0a810b3f
 - name: github.com/spf13/afero
   version: 06b7e5f50606ecd49148a01a6008942d9b669217
   subpackages:
@@ -66,13 +66,13 @@ imports:
 - name: github.com/spf13/viper
   version: 651d9d916abc3c3d6a91a12549495caba5edffd2
 - name: github.com/ubccr/goipa
-  version: 0dd702ed40da344a236e21dc56df4d21223e8cac
+  version: e9c44818ee8698a8e1a460c26f7e30b9fb0757cd
 - name: github.com/ubccr/kerby
   version: b55f6370b6198848497943fa1e822a02e0deee3f
   subpackages:
   - khttp
 - name: golang.org/x/crypto
-  version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
+  version: ede567c8e044a5913dad1d1af3696d9da953104c
   subpackages:
   - bcrypt
   - blowfish

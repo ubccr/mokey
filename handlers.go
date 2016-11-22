@@ -858,7 +858,7 @@ func SetupQuestionHandler(app *Application) http.Handler {
 	})
 }
 
-func SshPubKeyHandler(app *Application) http.Handler {
+func SSHPubKeyHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := context.Get(r, "user").(*ipa.UserRecord)
 		if user == nil {
@@ -885,7 +885,7 @@ func SshPubKeyHandler(app *Application) http.Handler {
 	})
 }
 
-func RemoveSshPubKeyHandler(app *Application) http.Handler {
+func RemoveSSHPubKeyHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := context.Get(r, "user").(*ipa.UserRecord)
 		if user == nil {
@@ -904,7 +904,7 @@ func RemoveSshPubKeyHandler(app *Application) http.Handler {
 		}
 
 		index, _ := strconv.Atoi(mux.Vars(r)["index"])
-		if index < 0 || index > len(user.SshPubKeys) {
+		if index < 0 || index > len(user.SSHPubKeys) {
 			logrus.WithFields(logrus.Fields{
 				"user":  string(user.Uid),
 				"index": index,
@@ -913,8 +913,8 @@ func RemoveSshPubKeyHandler(app *Application) http.Handler {
 			return
 		}
 
-		pubKeys := make([]string, len(user.SshPubKeys))
-		copy(pubKeys, user.SshPubKeys)
+		pubKeys := make([]string, len(user.SSHPubKeys))
+		copy(pubKeys, user.SSHPubKeys)
 
 		// Remove key at index
 		pubKeys = append(pubKeys[:index], pubKeys[index+1:]...)
@@ -923,7 +923,7 @@ func RemoveSshPubKeyHandler(app *Application) http.Handler {
 		c := NewIpaClient(false)
 		c.SetSession(sid.(string))
 
-		newFps, err := c.UpdateSshPubKeys(string(user.Uid), pubKeys)
+		newFps, err := c.UpdateSSHPubKeys(string(user.Uid), pubKeys)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"user":  string(user.Uid),
@@ -934,8 +934,8 @@ func RemoveSshPubKeyHandler(app *Application) http.Handler {
 			return
 		}
 
-		user.SshPubKeys = pubKeys
-		user.SshPubKeyFps = newFps
+		user.SSHPubKeys = pubKeys
+		user.SSHPubKeyFps = newFps
 		session.Values[MOKEY_COOKIE_USER] = user
 		session.AddFlash("SSH Pub Key Deleted")
 		session.Save(r, w)
@@ -945,13 +945,13 @@ func RemoveSshPubKeyHandler(app *Application) http.Handler {
 	})
 }
 
-func addSshPubKey(user *ipa.UserRecord, pubKey, sid string) error {
+func addSSHPubKey(user *ipa.UserRecord, pubKey, sid string) error {
 	if len(pubKey) == 0 {
 		return errors.New("No ssh key provided. Please provide a valid ssh public key")
 	}
 
-	pubKeys := make([]string, len(user.SshPubKeys))
-	copy(pubKeys, user.SshPubKeys)
+	pubKeys := make([]string, len(user.SSHPubKeys))
+	copy(pubKeys, user.SSHPubKeys)
 	found := false
 	for _, k := range pubKeys {
 		if k == pubKey {
@@ -968,7 +968,7 @@ func addSshPubKey(user *ipa.UserRecord, pubKey, sid string) error {
 	c := NewIpaClient(false)
 	c.SetSession(sid)
 
-	newFps, err := c.UpdateSshPubKeys(string(user.Uid), pubKeys)
+	newFps, err := c.UpdateSSHPubKeys(string(user.Uid), pubKeys)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			// Raised when a parameter value fails a validation rule
@@ -984,13 +984,13 @@ func addSshPubKey(user *ipa.UserRecord, pubKey, sid string) error {
 		}
 	}
 
-	user.SshPubKeys = pubKeys
-	user.SshPubKeyFps = newFps
+	user.SSHPubKeys = pubKeys
+	user.SSHPubKeyFps = newFps
 
 	return nil
 }
 
-func NewSshPubKeyHandler(app *Application) http.Handler {
+func NewSSHPubKeyHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := context.Get(r, "user").(*ipa.UserRecord)
 		if user == nil {
@@ -1051,7 +1051,7 @@ func NewSshPubKeyHandler(app *Application) http.Handler {
 			}
 
 			sid := session.Values[MOKEY_COOKIE_SID]
-			err = addSshPubKey(user, pubKey, sid.(string))
+			err = addSSHPubKey(user, pubKey, sid.(string))
 
 			if err == nil {
 				session.Values[MOKEY_COOKIE_USER] = user
