@@ -144,6 +144,13 @@ func (app *AppContext) GetUser(r *http.Request) *ipa.UserRecord {
 	return nil
 }
 
+// Render 404 template
+func (app *AppContext) RenderNotFound(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNotFound)
+
+	app.RenderTemplate(w, "404.html", nil)
+}
+
 // Render template t using template parameters in data.
 func (app *AppContext) RenderTemplate(w http.ResponseWriter, name string, data interface{}) {
 	t := app.templates[name]
@@ -162,8 +169,8 @@ func (app *AppContext) RenderTemplate(w http.ResponseWriter, name string, data i
 	buf.WriteTo(w)
 }
 
-// Render error page
-func (app *AppContext) ErrorHandler(w http.ResponseWriter, status int) {
+// Render error template and write HTTP status
+func (app *AppContext) RenderError(w http.ResponseWriter, status int) {
 	w.WriteHeader(status)
 
 	app.RenderTemplate(w, "error.html", nil)

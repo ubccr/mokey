@@ -49,7 +49,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 		message := ""
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -68,7 +68,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
 					}).Error("loginhandler: failed to save session")
-					ctx.ErrorHandler(w, http.StatusInternalServerError)
+					ctx.RenderError(w, http.StatusInternalServerError)
 					return
 				}
 
@@ -89,13 +89,13 @@ func LoginQuestionHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -123,7 +123,7 @@ func LoginQuestionHandler(ctx *app.AppContext) http.Handler {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
 					}).Error("login question handler: failed to save session")
-					ctx.ErrorHandler(w, http.StatusInternalServerError)
+					ctx.RenderError(w, http.StatusInternalServerError)
 					return
 				}
 
@@ -144,7 +144,7 @@ func LoginQuestionHandler(ctx *app.AppContext) http.Handler {
 func logout(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
 	session, err := ctx.GetSession(r)
 	if err != nil {
-		ctx.ErrorHandler(w, http.StatusInternalServerError)
+		ctx.RenderError(w, http.StatusInternalServerError)
 		return
 	}
 	delete(session.Values, app.CookieKeySID)
@@ -157,7 +157,7 @@ func logout(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
 		log.WithFields(log.Fields{
 			"error": err.Error(),
 		}).Error("logouthandler: failed to save session")
-		ctx.ErrorHandler(w, http.StatusInternalServerError)
+		ctx.RenderError(w, http.StatusInternalServerError)
 		return
 	}
 }
@@ -173,7 +173,7 @@ func IndexHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 

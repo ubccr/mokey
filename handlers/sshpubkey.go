@@ -21,13 +21,13 @@ func SSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -44,13 +44,13 @@ func RemoveSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -60,7 +60,7 @@ func RemoveSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 				"user":  string(user.Uid),
 				"index": index,
 			}).Error("Invalid ssh pub key index")
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -81,7 +81,7 @@ func RemoveSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 				"index": index,
 				"error": err,
 			}).Error("Failed to delete ssh pub key")
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -145,13 +145,13 @@ func NewSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -164,7 +164,7 @@ func NewSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 					"user": string(user.Uid),
 					"err":  err,
 				}).Error("Failed to parse multipart form")
-				ctx.ErrorHandler(w, http.StatusInternalServerError)
+				ctx.RenderError(w, http.StatusInternalServerError)
 				return
 			}
 
@@ -180,7 +180,7 @@ func NewSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 						"user": string(user.Uid),
 						"err":  err,
 					}).Error("Failed to open ssh pub key file upload")
-					ctx.ErrorHandler(w, http.StatusInternalServerError)
+					ctx.RenderError(w, http.StatusInternalServerError)
 					return
 				}
 				data, err := ioutil.ReadAll(file)
@@ -189,7 +189,7 @@ func NewSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 						"user": string(user.Uid),
 						"err":  err,
 					}).Error("Failed to read ssh pub key file upload")
-					ctx.ErrorHandler(w, http.StatusInternalServerError)
+					ctx.RenderError(w, http.StatusInternalServerError)
 					return
 				}
 				pubKey = string(data)

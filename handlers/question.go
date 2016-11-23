@@ -76,7 +76,7 @@ func UpdateSecurityQuestionHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -85,7 +85,7 @@ func UpdateSecurityQuestionHandler(ctx *app.AppContext) http.Handler {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 			}).Error("Failed to fetch questions from database")
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -117,13 +117,13 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -134,7 +134,7 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 				"error": err,
 			}).Error("User already has security question set.")
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -143,7 +143,7 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 			}).Error("Failed to fetch questions from database")
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -160,7 +160,7 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
 					}).Error("login question handler: failed to save session")
-					ctx.ErrorHandler(w, http.StatusInternalServerError)
+					ctx.RenderError(w, http.StatusInternalServerError)
 					return
 				}
 

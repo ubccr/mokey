@@ -81,7 +81,7 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 		tk, ok := model.VerifyToken(app.AccountSetupSalt, mux.Vars(r)["token"])
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -91,7 +91,7 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 				"error": err.Error(),
 			}).Error("Failed to fetch token from database")
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -101,7 +101,7 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 				"uid":   token.UserName,
 			}).Error("Too many attempts for token.")
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -110,7 +110,7 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 			}).Error("Failed to fetch questions from database")
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -218,7 +218,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 		tk, ok := model.VerifyToken(app.ResetSalt, mux.Vars(r)["token"])
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -228,7 +228,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 				"error": err.Error(),
 			}).Error("Failed to fetch token from database")
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -238,7 +238,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 				"uid":   token.UserName,
 			}).Error("Too many attempts for token.")
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -249,7 +249,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 				"error": err,
 			}).Error("Failed to fetch security answer")
 			w.WriteHeader(http.StatusNotFound)
-			ctx.RenderTemplate(w, "404.html", nil)
+			ctx.RenderNotFound(w)
 			return
 		}
 
@@ -447,7 +447,7 @@ func ChangePasswordHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user := ctx.GetUser(r)
 		if user == nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 

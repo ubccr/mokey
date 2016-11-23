@@ -67,8 +67,7 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 	router := mux.NewRouter()
 
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		ctx.RenderTemplate(w, "404.html", nil)
+		ctx.RenderNotFound(w)
 	})
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", ctx.Tmpldir)))))
 	router.Path("/auth/login").Handler(handlers.RateLimit(ctx, handlers.LoginHandler(ctx))).Methods("GET", "POST")

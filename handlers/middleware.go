@@ -22,7 +22,7 @@ func AuthRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
@@ -149,7 +149,7 @@ func QuestionRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
-			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
