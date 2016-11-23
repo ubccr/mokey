@@ -14,7 +14,6 @@ import (
 	"github.com/justinas/nosurf"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/model"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func updateSecurityQuestion(ctx *app.AppContext, questions []*model.SecurityQuestion, userName string, r *http.Request) error {
@@ -46,21 +45,7 @@ func updateSecurityQuestion(ctx *app.AppContext, questions []*model.SecurityQues
 		return errors.New("Invalid security question")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(answer), bcrypt.DefaultCost)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"uid":   userName,
-			"error": err.Error(),
-		}).Error("failed to generate bcrypt hash of answer")
-		return errors.New("Fatal system error")
-	}
-
-	a := &model.SecurityAnswer{
-		UserName:   userName,
-		QuestionId: q,
-		Answer:     string(hash)}
-
-	err = model.StoreAnswer(ctx.Db, a)
+	err = model.StoreAnswer(ctx.Db, userName, answer, q)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":   userName,

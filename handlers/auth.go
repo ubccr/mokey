@@ -13,7 +13,6 @@ import (
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/model"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func tryAuth(uid, pass string) (string, *ipa.UserRecord, error) {
@@ -85,7 +84,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func LoginQuestionHandler(ctx *app.AppContext) http.Handler {
+func SecurityQuestionHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
@@ -113,8 +112,7 @@ func LoginQuestionHandler(ctx *app.AppContext) http.Handler {
 
 		if r.Method == "POST" {
 			ans := r.FormValue("answer")
-			err := bcrypt.CompareHashAndPassword([]byte(answer.Answer), []byte(ans))
-			if err != nil {
+			if !answer.Verify(ans) {
 				message = "The security answer you provided does not match. Please check that you are entering the correct answer."
 			} else {
 				session.Values[app.CookieKeyQuestion] = "true"

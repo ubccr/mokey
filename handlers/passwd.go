@@ -17,7 +17,6 @@ import (
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/model"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func setupAccount(ctx *app.AppContext, questions []*model.SecurityQuestion, token *model.Token, r *http.Request) error {
@@ -169,13 +168,12 @@ func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *mod
 		return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(answer.Answer), []byte(ans))
-	if err != nil {
+	if !answer.Verify(ans) {
 		return errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
 	}
 
 	// Setup password in FreeIPA
-	err = setPassword(token.UserName, "", pass)
+	err := setPassword(token.UserName, "", pass)
 	if err != nil {
 		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
 			log.WithFields(log.Fields{

@@ -5,7 +5,9 @@
 package model
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type SecurityAnswer struct {
@@ -20,6 +22,16 @@ type SecurityQuestion struct {
 	Question string `db:"question"`
 }
 
+// Verify security answer
+func (a *SecurityAnswer) Verify(ans string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(a.Answer), []byte(ans))
+	if err != nil {
+		return false
+	}
+
+	return true
+}
+
 func FetchAnswer(db *sqlx.DB, uid string) (*SecurityAnswer, error) {
 	answer := SecurityAnswer{}
 	err := db.Get(&answer, "select a.user_name,a.question_id,q.question,a.answer from security_answer a join security_question q on a.question_id = q.id  where a.user_name = ?", uid)
@@ -30,8 +42,22 @@ func FetchAnswer(db *sqlx.DB, uid string) (*SecurityAnswer, error) {
 	return &answer, nil
 }
 
-func StoreAnswer(db *sqlx.DB, answer *SecurityAnswer) error {
-	_, err := db.NamedExec("replace into security_answer (user_name,question_id,answer,created_at) values (:user_name, :question_id, :answer, now())", answer)
+func StoreAnswer(db *sqlx.DB, user, ans string, qid int) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(ans), bcrypt.DefaultCost)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uid":   user,
+			"error": err.Error(),
+		}).Error("failed to generate bcrypt hash of answer")
+		return err
+	}
+
+	sa := &SecurityAnswer{
+		UserName:   user,
+		QuestionId: qid,
+		Answer:     string(hash)}
+
+	_, err = db.NamedExec("replace into security_answer (user_name,question_id,answer,created_at) values (:user_name, :question_id, :answer, now())", sa)
 	if err != nil {
 		return err
 	}

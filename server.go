@@ -71,7 +71,7 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 	})
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", ctx.Tmpldir)))))
 	router.Path("/auth/login").Handler(handlers.RateLimit(ctx, handlers.LoginHandler(ctx))).Methods("GET", "POST")
-	router.Path("/auth/question").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.LoginQuestionHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/auth/question").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.SecurityQuestionHandler(ctx)))).Methods("GET", "POST")
 	router.Path("/auth/setsec").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.SetupQuestionHandler(ctx)))).Methods("GET", "POST")
 	router.Path("/auth/logout").Handler(handlers.LogoutHandler(ctx)).Methods("GET")
 	router.Path("/auth/forgotpw").Handler(handlers.RateLimit(ctx, handlers.ForgotPasswordHandler(ctx))).Methods("GET", "POST")
