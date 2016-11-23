@@ -8,13 +8,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/model"
 )
 
 func createToken(uid string) (*model.Token, error) {
-	client := NewIpaClient(true)
+	client := app.NewIpaClient(true)
 	userRec, err := client.UserShow(uid)
 	if err != nil {
 		return nil, err
@@ -24,7 +25,7 @@ func createToken(uid string) (*model.Token, error) {
 		return nil, errors.New("User missing email address")
 	}
 
-	db, err := NewDb()
+	db, err := app.NewDb()
 	if err != nil {
 		return nil, err
 	}
@@ -40,20 +41,20 @@ func createToken(uid string) (*model.Token, error) {
 func NewAccountEmail(uid string) {
 	token, err := createToken(uid)
 	if err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
-	app, err := NewApplication()
+	ctx, err := app.NewAppContext()
 	if err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	vars := map[string]interface{}{
-		"link": fmt.Sprintf("%s/auth/setup/%s", viper.GetString("email_link_base"), model.SignToken(ACCOUNT_SETUP_SALT, token.Token))}
+		"link": fmt.Sprintf("%s/auth/setup/%s", viper.GetString("email_link_base"), model.SignToken(app.AccountSetupSalt, token.Token))}
 
-	err = app.SendEmail(token.Email, fmt.Sprintf("[%s] New Account Setup", viper.GetString("email_prefix")), "setup-account.txt", vars)
+	err = ctx.SendEmail(token.Email, fmt.Sprintf("[%s] New Account Setup", viper.GetString("email_prefix")), "setup-account.txt", vars)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"uid":   uid,
 			"error": err,
 		}).Error("failed send email to user")
@@ -61,14 +62,14 @@ func NewAccountEmail(uid string) {
 }
 
 func ResetPasswordEmail(uid string) {
-	db, err := NewDb()
+	db, err := app.NewDb()
 	if err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	_, err = model.FetchAnswer(db, uid)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"uid":   uid,
 			"error": err,
 		}).Error("Failed to fetch security answer. Please run newacct to setup user account.")
@@ -77,20 +78,20 @@ func ResetPasswordEmail(uid string) {
 
 	token, err := createToken(uid)
 	if err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
-	app, err := NewApplication()
+	ctx, err := app.NewAppContext()
 	if err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	vars := map[string]interface{}{
-		"link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), model.SignToken(RESET_SALT, token.Token))}
+		"link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), model.SignToken(app.ResetSalt, token.Token))}
 
-	err = app.SendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
+	err = ctx.SendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"uid":   uid,
 			"error": err,
 		}).Error("failed send email to user")

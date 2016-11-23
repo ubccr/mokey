@@ -7,7 +7,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/spf13/viper"
 )
@@ -30,9 +30,9 @@ func main() {
 	}
 	app.Before = func(c *cli.Context) error {
 		if c.GlobalBool("debug") {
-			logrus.SetLevel(logrus.InfoLevel)
+			log.SetLevel(log.InfoLevel)
 		} else {
-			logrus.SetLevel(logrus.WarnLevel)
+			log.SetLevel(log.WarnLevel)
 		}
 
 		conf := c.GlobalString("conf")
@@ -64,7 +64,7 @@ func main() {
 			Action: func(c *cli.Context) {
 				uid := c.String("uid")
 				if len(uid) == 0 {
-					logrus.Fatal("Please provide a user uid")
+					log.Fatal("Please provide a user uid")
 				}
 
 				ResetPasswordEmail(uid)
@@ -79,7 +79,7 @@ func main() {
 			Action: func(c *cli.Context) {
 				uid := c.String("uid")
 				if len(uid) == 0 {
-					logrus.Fatal("Please provide a user uid")
+					log.Fatal("Please provide a user uid")
 				}
 
 				NewAccountEmail(uid)

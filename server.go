@@ -5,342 +5,19 @@
 package main
 
 import (
-	"bytes"
-	"crypto"
 	"encoding/gob"
 	"fmt"
-	"html/template"
-	"log"
-	"mime/multipart"
-	"mime/quotedprintable"
 	"net/http"
-	"net/smtp"
-	"net/textproto"
-	"os"
-	"path/filepath"
-	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
-
-	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/carbocation/interpose"
 	"github.com/go-ini/ini"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
-	"github.com/gorilla/sessions"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/packet"
+	"github.com/ubccr/mokey/app"
+	"github.com/ubccr/mokey/handlers"
 )
-
-const (
-	MOKEY_COOKIE_SESSION  = "mokey-session"
-	MOKEY_COOKIE_QUESTION = "question"
-	MOKEY_COOKIE_SID      = "sid"
-	MOKEY_COOKIE_USER     = "uid"
-	TOKEN_REGEX           = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
-	RESET_SALT            = "resetpw"
-	ACCOUNT_SETUP_SALT    = "acctsetup"
-)
-
-type Application struct {
-	dsn         string
-	db          *sqlx.DB
-	cookieStore *sessions.CookieStore
-	decoder     *schema.Decoder
-	templates   map[string]*template.Template
-	emails      map[string]*template.Template
-	tmpldir     string
-}
-
-func NewDb() (*sqlx.DB, error) {
-	db, err := sqlx.Open(viper.GetString("driver"), viper.GetString("dsn"))
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
-func NewApplication() (*Application, error) {
-	db, err := NewDb()
-	if err != nil {
-		return nil, err
-	}
-
-	tmpldir := viper.GetString("templates")
-	if len(tmpldir) == 0 {
-		// default to directory of current executable
-		path, err := filepath.EvalSymlinks(os.Args[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		dir, err := filepath.Abs(filepath.Dir(path))
-		if err != nil {
-			log.Fatal(err)
-		}
-		tmpldir = dir + "/templates"
-	}
-
-	logrus.Printf("Using template dir: %s", tmpldir)
-
-	tmpls, err := filepath.Glob(tmpldir + "/*.html")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	templates := make(map[string]*template.Template)
-	for _, t := range tmpls {
-		base := filepath.Base(t)
-		if base != "layout.html" {
-			templates[base] = template.Must(template.New("layout").ParseFiles(t,
-				tmpldir+"/layout.html"))
-		}
-	}
-
-	tmpls, err = filepath.Glob(tmpldir + "/email/*.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	emails := make(map[string]*template.Template)
-	for _, t := range tmpls {
-		base := filepath.Base(t)
-		emails[base] = template.Must(template.New(base).ParseFiles(t))
-	}
-
-	app := &Application{}
-	app.tmpldir = tmpldir
-	app.db = db
-	app.cookieStore = sessions.NewCookieStore([]byte(viper.GetString("secret_key")))
-	app.decoder = schema.NewDecoder()
-	//app.decoder.IgnoreUnknownKeys(true)
-	app.templates = templates
-	app.emails = emails
-
-	return app, nil
-}
-
-func NewIpaClient(withKeytab bool) *ipa.Client {
-	c := &ipa.Client{Host: viper.GetString("ipahost")}
-	if withKeytab {
-		c.KeyTab = viper.GetString("keytab")
-	}
-
-	return c
-}
-
-func quotedBody(body []byte) ([]byte, error) {
-	var buf bytes.Buffer
-	w := quotedprintable.NewWriter(&buf)
-	_, err := w.Write(body)
-	if err != nil {
-		return nil, err
-	}
-
-	err = w.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-func sign(qtext []byte, header textproto.MIMEHeader) ([]byte, error) {
-	var buf bytes.Buffer
-
-	for k, vv := range header {
-		for _, v := range vv {
-			fmt.Fprintf(&buf, "%s: %s\r\n", k, v)
-		}
-	}
-	fmt.Fprintf(&buf, "\r\n")
-	_, err := buf.Write(qtext)
-	if err != nil {
-		return nil, err
-	}
-
-	file, err := os.Open(viper.GetString("pgp_key"))
-	if err != nil {
-		return nil, err
-	}
-
-	keyring, err := openpgp.ReadArmoredKeyRing(file)
-	if err != nil {
-		return nil, err
-	}
-
-	signingKey := keyring[0]
-
-	if signingKey.PrivateKey.Encrypted {
-		err = signingKey.PrivateKey.Decrypt([]byte(viper.GetString("pgp_passphrase")))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var sig bytes.Buffer
-	err = openpgp.ArmoredDetachSign(&sig, signingKey, &buf, &packet.Config{DefaultHash: crypto.SHA256})
-	if err != nil {
-		return nil, err
-	}
-
-	return sig.Bytes(), nil
-}
-
-func (a *Application) SendEmail(email, subject, template string, data map[string]interface{}) error {
-	logrus.WithFields(logrus.Fields{
-		"email": email,
-	}).Info("Sending email to user")
-
-	if data == nil {
-		data = make(map[string]interface{})
-	}
-
-	data["date"] = time.Now()
-	data["contact"] = viper.GetString("email_from")
-	data["sig"] = viper.GetString("email_sig")
-
-	t := a.emails[template]
-	var text bytes.Buffer
-	err := t.ExecuteTemplate(&text, template, data)
-	if err != nil {
-		return err
-	}
-
-	qtext, err := quotedBody(text.Bytes())
-	if err != nil {
-		return err
-	}
-
-	header := make(textproto.MIMEHeader)
-	header.Set("Mime-Version", "1.0")
-	header.Set("Date", time.Now().Format(time.RFC1123Z))
-	header.Set("To", email)
-	header.Set("Subject", subject)
-	header.Set("From", viper.GetString("email_from"))
-	header.Set("Content-Type", "text/plain; charset=UTF-8")
-	header.Set("Content-Transfer-Encoding", "quoted-printable")
-
-	body := qtext
-
-	if viper.GetBool("pgp_sign") {
-		header.Del("Content-Transfer-Encoding")
-
-		mhead := make(textproto.MIMEHeader)
-		mhead.Add("Content-Type", "text/plain; charset=UTF-8")
-		mhead.Add("Content-Transfer-Encoding", "quoted-printable")
-		sig, err := sign(qtext, mhead)
-		if err != nil {
-			return err
-		}
-
-		var multipartBody bytes.Buffer
-		mp := multipart.NewWriter(&multipartBody)
-		boundary := mp.Boundary()
-		mw, err := mp.CreatePart(mhead)
-		if err != nil {
-			return err
-		}
-		_, err = mw.Write(qtext)
-		if err != nil {
-			return err
-		}
-
-		mw, err = mp.CreatePart(textproto.MIMEHeader(
-			map[string][]string{
-				"Content-Type": []string{"application/pgp-signature; name=signature.asc;"},
-			}))
-		if err != nil {
-			return err
-		}
-
-		_, err = mw.Write(sig)
-		if err != nil {
-			return err
-		}
-
-		err = mp.Close()
-		if err != nil {
-			return err
-		}
-
-		header.Set("Content-Type", fmt.Sprintf(`multipart/signed; boundary="%s"; protocol="application/pgp-signature"; micalg="pgp-sha256"`, boundary))
-		body = multipartBody.Bytes()
-	}
-
-	c, err := smtp.Dial(fmt.Sprintf("%s:%d", viper.GetString("smtp_host"), viper.GetInt("smtp_port")))
-	if err != nil {
-		return err
-	}
-	defer c.Close()
-
-	c.Mail(viper.GetString("email_from"))
-	c.Rcpt(email)
-
-	wc, err := c.Data()
-	if err != nil {
-		return err
-	}
-	defer wc.Close()
-
-	var buf bytes.Buffer
-	for k, vv := range header {
-		for _, v := range vv {
-			fmt.Fprintf(&buf, "%s: %s\r\n", k, v)
-		}
-	}
-	fmt.Fprintf(&buf, "\r\n")
-
-	if _, err = buf.WriteTo(wc); err != nil {
-		return err
-	}
-	if _, err = wc.Write(body); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *Application) middlewareStruct() (*interpose.Middleware, error) {
-	mw := interpose.New()
-	mw.Use(Nosurf())
-
-	mw.UseHandler(a.router())
-
-	return mw, nil
-}
-
-func (a *Application) router() *mux.Router {
-	router := mux.NewRouter()
-
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-		renderTemplate(w, a.templates["404.html"], nil)
-	})
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", a.tmpldir)))))
-	router.Path("/auth/login").Handler(RateLimit(a, LoginHandler(a))).Methods("GET", "POST")
-	router.Path("/auth/question").Handler(AuthRequired(a, RateLimit(a, LoginQuestionHandler(a)))).Methods("GET", "POST")
-	router.Path("/auth/setsec").Handler(AuthRequired(a, RateLimit(a, SetupQuestionHandler(a)))).Methods("GET", "POST")
-	router.Path("/auth/logout").Handler(LogoutHandler(a)).Methods("GET")
-	router.Path("/auth/forgotpw").Handler(RateLimit(a, ForgotPasswordHandler(a))).Methods("GET", "POST")
-	router.Path(fmt.Sprintf("/auth/setup/{token:%s}", TOKEN_REGEX)).Handler(SetupAccountHandler(a)).Methods("GET", "POST")
-	router.Path(fmt.Sprintf("/auth/resetpw/{token:%s}", TOKEN_REGEX)).Handler(ResetPasswordHandler(a)).Methods("GET", "POST")
-	router.Path("/changepw").Handler(AuthRequired(a, QuestionRequired(a, ChangePasswordHandler(a)))).Methods("GET", "POST")
-	router.Path("/sshpubkey").Handler(AuthRequired(a, QuestionRequired(a, SSHPubKeyHandler(a)))).Methods("GET", "POST")
-	router.Path("/sshpubkey/remove/{index:[0-9]+}").Handler(AuthRequired(a, QuestionRequired(a, RemoveSSHPubKeyHandler(a)))).Methods("GET")
-	router.Path("/sshpubkey/new").Handler(AuthRequired(a, QuestionRequired(a, NewSSHPubKeyHandler(a)))).Methods("GET", "POST")
-	router.Path("/").Handler(AuthRequired(a, QuestionRequired(a, IndexHandler(a)))).Methods("GET")
-
-	return router
-}
 
 func init() {
 	viper.SetDefault("port", 8080)
@@ -383,19 +60,45 @@ func init() {
 	}
 }
 
+func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
+	mw := interpose.New()
+	mw.Use(handlers.Nosurf())
+
+	router := mux.NewRouter()
+
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		ctx.RenderTemplate(w, "404.html", nil)
+	})
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", ctx.Tmpldir)))))
+	router.Path("/auth/login").Handler(handlers.RateLimit(ctx, handlers.LoginHandler(ctx))).Methods("GET", "POST")
+	router.Path("/auth/question").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.LoginQuestionHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/auth/setsec").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.SetupQuestionHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/auth/logout").Handler(handlers.LogoutHandler(ctx)).Methods("GET")
+	router.Path("/auth/forgotpw").Handler(handlers.RateLimit(ctx, handlers.ForgotPasswordHandler(ctx))).Methods("GET", "POST")
+	router.Path(fmt.Sprintf("/auth/setup/{token:%s}", app.TokenRegex)).Handler(handlers.SetupAccountHandler(ctx)).Methods("GET", "POST")
+	router.Path(fmt.Sprintf("/auth/resetpw/{token:%s}", app.TokenRegex)).Handler(handlers.ResetPasswordHandler(ctx)).Methods("GET", "POST")
+	router.Path("/changepw").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.ChangePasswordHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/sshpubkey").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.SSHPubKeyHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/sshpubkey/remove/{index:[0-9]+}").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.RemoveSSHPubKeyHandler(ctx)))).Methods("GET")
+	router.Path("/sshpubkey/new").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.NewSSHPubKeyHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.IndexHandler(ctx)))).Methods("GET")
+
+	mw.UseHandler(router)
+
+	return mw
+}
+
 func Server() {
-	app, err := NewApplication()
+	ctx, err := app.NewAppContext()
 	if err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
-	middle, err := app.middlewareStruct()
-	if err != nil {
-		logrus.Fatal(err.Error())
-	}
+	middle := middlewareStruct(ctx)
 
-	logrus.Printf("Running on http://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
-	logrus.Printf("IPA server: %s", viper.GetString("ipahost"))
+	log.Printf("Running on http://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
+	log.Printf("IPA server: %s", viper.GetString("ipahost"))
 
 	http.Handle("/", middle)
 
@@ -405,7 +108,7 @@ func Server() {
 	if certFile != "" && keyFile != "" {
 		http.ListenAndServeTLS(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), certFile, keyFile, nil)
 	} else {
-		logrus.Warn("**WARNING*** SSL/TLS not enabled. HTTP communication will not be encrypted and vulnerable to snooping.")
+		log.Warn("**WARNING*** SSL/TLS not enabled. HTTP communication will not be encrypted and vulnerable to snooping.")
 		http.ListenAndServe(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), nil)
 	}
 }

@@ -2,26 +2,32 @@
 // Use of this source code is governed by a BSD style
 // license that can be found in the LICENSE file.
 
-package main
+package handlers
 
 import (
 	"net"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/context"
 	"github.com/justinas/nosurf"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
+	"github.com/ubccr/mokey/app"
 )
 
 // AuthRequired checks existence of ipa session
-func AuthRequired(app *Application, next http.Handler) http.Handler {
+func AuthRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
-		sid := session.Values[MOKEY_COOKIE_SID]
-		userRec := session.Values[MOKEY_COOKIE_USER]
+		session, err := ctx.GetSession(r)
+		if err != nil {
+			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			return
+		}
+
+		sid := session.Values[app.CookieKeySID]
+		userRec := session.Values[app.CookieKeyUser]
 
 		if sid == nil || userRec == nil {
 			http.Redirect(w, r, "/auth/login", 302)
@@ -29,23 +35,23 @@ func AuthRequired(app *Application, next http.Handler) http.Handler {
 		}
 
 		if _, ok := userRec.(*ipa.UserRecord); !ok {
-			logrus.Error("Invalid user record in session.")
+			log.Error("Invalid user record in session.")
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
 
 		user := userRec.(*ipa.UserRecord)
 
-		c := NewIpaClient(false)
+		c := app.NewIpaClient(false)
 		c.SetSession(sid.(string))
 
-		_, err := c.Ping()
+		_, err = c.Ping()
 		if err != nil {
-			logrus.WithFields(logrus.Fields{
+			log.WithFields(log.Fields{
 				"uid":   user.Uid,
 				"error": err.Error(),
 			}).Error("FreeIPA ping failed")
-			logout(app, w, r)
+			logout(ctx, w, r)
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
@@ -57,7 +63,7 @@ func AuthRequired(app *Application, next http.Handler) http.Handler {
 	})
 }
 
-func RateLimit(app *Application, next http.Handler) http.Handler {
+func RateLimit(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// check if rate limiting is enabled
 		if !viper.GetBool("rate_limit") {
@@ -79,7 +85,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
 
 		conn, err := redis.Dial("tcp", viper.GetString("redis"))
 		if err != nil {
-			logrus.WithFields(logrus.Fields{
+			log.WithFields(log.Fields{
 				"path":     path,
 				"remoteIP": remoteIP,
 				"err":      err.Error(),
@@ -91,7 +97,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
 
 		current, err := redis.Int(conn.Do("INCR", path+remoteIP))
 		if err != nil {
-			logrus.WithFields(logrus.Fields{
+			log.WithFields(log.Fields{
 				"path":     path,
 				"remoteIP": remoteIP,
 				"err":      err.Error(),
@@ -101,7 +107,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
 		}
 
 		if current > viper.GetInt("max_requests") {
-			logrus.WithFields(logrus.Fields{
+			log.WithFields(log.Fields{
 				"path":     path,
 				"remoteIP": remoteIP,
 				"counter":  current,
@@ -113,7 +119,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
 		if current == 1 {
 			_, err := conn.Do("SETEX", path+remoteIP, viper.GetInt("rate_limit_expire"), 1)
 			if err != nil {
-				logrus.WithFields(logrus.Fields{
+				log.WithFields(log.Fields{
 					"path":     path,
 					"remoteIP": remoteIP,
 					"err":      err.Error(),
@@ -121,7 +127,7 @@ func RateLimit(app *Application, next http.Handler) http.Handler {
 			}
 		}
 
-		logrus.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"path":     path,
 			"remoteIP": remoteIP,
 			"counter":  current,
@@ -139,10 +145,15 @@ func Nosurf() func(http.Handler) http.Handler {
 }
 
 // QuestionRequired checks to ensure security question has been answered
-func QuestionRequired(app *Application, next http.Handler) http.Handler {
+func QuestionRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := app.cookieStore.Get(r, MOKEY_COOKIE_SESSION)
-		question := session.Values[MOKEY_COOKIE_QUESTION]
+		session, err := ctx.GetSession(r)
+		if err != nil {
+			ctx.ErrorHandler(w, http.StatusInternalServerError)
+			return
+		}
+
+		question := session.Values[app.CookieKeyQuestion]
 
 		if question == nil || "true" != question.(string) {
 			http.Redirect(w, r, "/auth/question", 302)
