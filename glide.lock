@@ -1,6 +1,11 @@
-hash: e0dcd48f5a4c60186d559e6baca93874321b6e315e5a791b4f2e72edad9ea5f3
-updated: 2016-11-22T14:59:51.726975717-05:00
+hash: 734757206a2b83145dfb2e70b9f071faf864c14e8390a788ffe3aabd48d1ce6b
+updated: 2016-11-23T14:56:25.822120884-05:00
 imports:
+- name: github.com/boombuler/barcode
+  version: 8b1271e880cb66f992a2647ff7940d4dc5a41fee
+  subpackages:
+  - qr
+  - utils
 - name: github.com/carbocation/interpose
   version: 50c09d12f8624ab10532f931cb630d0bf5f7c2c7
 - name: github.com/codegangsta/cli
@@ -50,7 +55,9 @@ imports:
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
-  version: 45932ad32dfdd20826f5671da37a5f3ce9f26a8d
+  version: 7cb988051d5045890cb91402a0b5fddc76c627bc
+- name: github.com/pquerna/otp
+  version: 54653902c20e47f3417541d35435cb6d6162e28a
 - name: github.com/Sirupsen/logrus
   version: a437dfd2463eaedbec3dfe443e477d3b0a810b3f
 - name: github.com/spf13/afero
@@ -84,11 +91,11 @@ imports:
   - openpgp/packet
   - openpgp/s2k
 - name: golang.org/x/sys
-  version: b699b7032584f0953262cb2788a0ca19bb494703
+  version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: a263ba8db058568bb9beba166777d9c9dbe75d68
+  version: b01949dc0793a9af5e4cb3fce4d42999e76e8ca1
   subpackages:
   - transform
   - unicode/norm

@@ -23,3 +23,5 @@ import:
   - bcrypt
   - openpgp
   - openpgp/packet
+- package: github.com/pquerna/otp
+- package: github.com/boombuler/barcode

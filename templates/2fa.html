@@ -1,0 +1,102 @@
+{{define "content"}}
+
+{{ range $m := .flashes }}
+<div class="alert alert-success alert-dismissable">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ $m }}
+</div>
+{{ end }}
+
+<div class="panel panel-primary">
+  <div class="panel-heading">
+      <h3 class="panel-title"><i class="fa fa-hand-peace-o fa-lg"></i> Two-Factor Authentication</h3>
+  </div>
+  <div class="panel-body">
+{{ if .totptoken }}
+    <h3>Two-factor TOTP <span class="label label-success">Enabled</span>
+         <button class="btn btn-danger" data-href="/2fa/disable" data-toggle="modal" data-target="#confirm-disable">
+            Disable Two-Factor TOTP
+         </button>
+    </h3>
+{{ else }}
+    <p>
+         <button class="btn btn-primary" data-href="/2fa/setup" data-toggle="modal" data-target="#confirm-enable">
+            Enable Two-Factor TOTP
+         </button>
+    </p>
+
+    <h3>Configuring two-factor authentication using a TOTP mobile app</h3>
+    <p>
+        A Time-based One-Time Password (TOTP) application automatically
+        generates an authentication code that changes after a certain period of
+        time. Here are few of the recommended apps:
+    <p>
+    <ul>
+        <li>iOS: <a href="https://itunes.apple.com/us/app/freeotp-authenticator/id872559395?mt=8">FreeOTP</a></li>
+        <li>Android: <a href="https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp&hl=en">FreeOTP</a></li>
+        <li>Sailfish: <a href="https://harbour.jolla.com/">SailOTP</a></li>
+        <li>Windows Phone: <a href="https://www.microsoft.com/en-US/store/apps/Authenticator/9WZDNCRFJ3RJ">Authenticator</a></li>
+    </ul>
+{{ end }}
+
+  </div>
+</div>
+
+<div class="modal fade" id="confirm-enable" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Are you sure you want to enable TOPT?</h4>
+      </div>
+      <div class="modal-body">
+        <p>
+        Ensure you've read through the documentation and have installed the
+        appropriate app on your device. Once enabled you will be required to
+        enter in a code each time you login.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <a class="btn btn-danger btn-ok">Enable</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+$(function(){
+    $('#confirm-enable').on('show.bs.modal', function(e) {
+        $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+    });
+});
+</script>
+
+<div class="modal fade" id="confirm-disable" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Are you sure you want to disable TOPT?</h4>
+      </div>
+      <div class="modal-body">
+        <p>This action <strong>CANNOT</strong> be undone. This will permanently delete
+        your TOTP authentication token.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <a class="btn btn-danger btn-ok">Disable</a>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<script>
+$(function(){
+    $('#confirm-disable').on('show.bs.modal', function(e) {
+        $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+    });
+});
+</script>
+
+{{end}}

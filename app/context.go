@@ -22,14 +22,15 @@ import (
 )
 
 const (
-	CookieKeySession  = "mokey-session"
-	CookieKeyQuestion = "question"
-	CookieKeySID      = "sid"
-	CookieKeyUser     = "uid"
-	ContextKeyUser    = "user"
-	TokenRegex        = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
-	ResetSalt         = "resetpw"
-	AccountSetupSalt  = "acctsetup"
+	CookieKeySession       = "mokey-session"
+	CookieKeyAuthenticated = "authenticated"
+	CookieKeySID           = "sid"
+	CookieKeyUser          = "user"
+	CookieKeyOTP           = "otp"
+	ContextKeyUser         = "user"
+	TokenRegex             = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
+	ResetSalt              = "resetpw"
+	AccountSetupSalt       = "acctsetup"
 )
 
 type AppContext struct {

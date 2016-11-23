@@ -60,8 +60,13 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 			if err != nil {
 				message = err.Error()
 			} else {
+				_, err := model.FetchConfirmedOTPToken(ctx.Db, string(userRec.Uid))
+				if err == nil {
+					session.Values[app.CookieKeyOTP] = true
+				}
 				session.Values[app.CookieKeySID] = sid
 				session.Values[app.CookieKeyUser] = userRec
+				session.Values[app.CookieKeyAuthenticated] = false
 				err = session.Save(r, w)
 				if err != nil {
 					log.WithFields(log.Fields{
@@ -71,7 +76,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 					return
 				}
 
-				http.Redirect(w, r, "/auth/question", 302)
+				http.Redirect(w, r, "/auth/2fa", 302)
 				return
 			}
 		}
@@ -84,7 +89,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func SecurityQuestionHandler(ctx *app.AppContext) http.Handler {
+func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
@@ -92,51 +97,119 @@ func SecurityQuestionHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		user := ctx.GetUser(r)
-		if user == nil {
-			ctx.RenderError(w, http.StatusInternalServerError)
+		otp := session.Values[app.CookieKeyOTP]
+
+		if otp != nil && otp.(bool) {
+			AuthOTPHandler(ctx, w, r)
 			return
 		}
 
-		answer, err := model.FetchAnswer(ctx.Db, string(user.Uid))
-		if err != nil {
-			log.WithFields(log.Fields{
-				"uid":   string(user.Uid),
-				"error": err,
-			}).Error("User can't login. No security answer has been set")
-			http.Redirect(w, r, "/auth/setsec", 302)
-			return
-		}
+		AuthQuestionHandler(ctx, w, r)
+	})
+}
 
-		message := ""
+func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
+	user := ctx.GetUser(r)
+	if user == nil {
+		ctx.RenderError(w, http.StatusInternalServerError)
+		return
+	}
 
-		if r.Method == "POST" {
-			ans := r.FormValue("answer")
-			if !answer.Verify(ans) {
-				message = "The security answer you provided does not match. Please check that you are entering the correct answer."
-			} else {
-				session.Values[app.CookieKeyQuestion] = "true"
-				err = session.Save(r, w)
-				if err != nil {
-					log.WithFields(log.Fields{
-						"error": err.Error(),
-					}).Error("login question handler: failed to save session")
-					ctx.RenderError(w, http.StatusInternalServerError)
-					return
-				}
+	session, err := ctx.GetSession(r)
+	if err != nil {
+		ctx.RenderError(w, http.StatusInternalServerError)
+		return
+	}
 
-				http.Redirect(w, r, "/", 302)
+	token, err := model.FetchConfirmedOTPToken(ctx.Db, string(user.Uid))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"user":  string(user.Uid),
+			"error": err,
+		}).Error("Failed to fetch TOTP")
+		ctx.RenderNotFound(w)
+		return
+	}
+
+	message := ""
+	if r.Method == "POST" {
+		code := r.FormValue("code")
+		if token.Validate(code) {
+			session.Values[app.CookieKeyAuthenticated] = true
+			err = session.Save(r, w)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err.Error(),
+				}).Error("failed to save session")
+				ctx.RenderError(w, http.StatusInternalServerError)
 				return
 			}
+
+			http.Redirect(w, r, "/", 302)
+			return
 		}
 
-		vars := map[string]interface{}{
-			"token":    nosurf.Token(r),
-			"question": answer.Question,
-			"message":  message}
+		message = "Invalid code. Try again"
+	}
 
-		ctx.RenderTemplate(w, "login-question.html", vars)
-	})
+	vars := map[string]interface{}{
+		"token":   nosurf.Token(r),
+		"message": message,
+		"user":    user}
+
+	ctx.RenderTemplate(w, "otp.html", vars)
+}
+
+func AuthQuestionHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
+	session, err := ctx.GetSession(r)
+	if err != nil {
+		ctx.RenderError(w, http.StatusInternalServerError)
+		return
+	}
+
+	user := ctx.GetUser(r)
+	if user == nil {
+		ctx.RenderError(w, http.StatusInternalServerError)
+		return
+	}
+
+	answer, err := model.FetchAnswer(ctx.Db, string(user.Uid))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uid": string(user.Uid), "error": err,
+		}).Error("User can't login. No security answer has been set")
+		http.Redirect(w, r, "/auth/setsec", 302)
+		return
+	}
+
+	message := ""
+
+	if r.Method == "POST" {
+		ans := r.FormValue("answer")
+		if !answer.Verify(ans) {
+			message = "The security answer you provided does not match. Please check that you are entering the correct answer."
+		} else {
+			session.Values[app.CookieKeyAuthenticated] = true
+			err = session.Save(r, w)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err.Error(),
+				}).Error("login question handler: failed to save session")
+				ctx.RenderError(w, http.StatusInternalServerError)
+				return
+			}
+
+			http.Redirect(w, r, "/", 302)
+			return
+		}
+	}
+
+	vars := map[string]interface{}{
+		"token":    nosurf.Token(r),
+		"question": answer.Question,
+		"message":  message}
+
+	ctx.RenderTemplate(w, "login-question.html", vars)
 }
 
 func logout(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
@@ -147,7 +220,8 @@ func logout(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
 	}
 	delete(session.Values, app.CookieKeySID)
 	delete(session.Values, app.CookieKeyUser)
-	delete(session.Values, app.CookieKeyQuestion)
+	delete(session.Values, app.CookieKeyAuthenticated)
+	delete(session.Values, app.CookieKeyOTP)
 	session.Options.MaxAge = -1
 
 	err = session.Save(r, w)

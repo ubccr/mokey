@@ -139,7 +139,7 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 			if err != nil {
 				message = err.Error()
 			} else {
-				session.Values[app.CookieKeyQuestion] = "true"
+				session.Values[app.CookieKeyAuthenticated] = true
 				err = session.Save(r, w)
 				if err != nil {
 					log.WithFields(log.Fields{

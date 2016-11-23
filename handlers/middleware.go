@@ -17,8 +17,31 @@ import (
 	"github.com/ubccr/mokey/app"
 )
 
-// AuthRequired checks existence of ipa session
+// AuthRequired ensures the user has successfully completed the authentication
+// process including any 2FA.
 func AuthRequired(ctx *app.AppContext, next http.Handler) http.Handler {
+	return LoginRequired(ctx, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := ctx.GetSession(r)
+		if err != nil {
+			ctx.RenderError(w, http.StatusInternalServerError)
+			return
+		}
+
+		auth := session.Values[app.CookieKeyAuthenticated]
+
+		if auth != nil && auth.(bool) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		http.Redirect(w, r, "/auth/login", 302)
+		return
+	}))
+}
+
+// LoginRequired ensure the user has logged in and has a valid FreeIPA session.
+// Stores the ipa.UserRecord in the request context
+func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
@@ -142,24 +165,4 @@ func Nosurf() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return nosurf.New(next)
 	}
-}
-
-// QuestionRequired checks to ensure security question has been answered
-func QuestionRequired(ctx *app.AppContext, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := ctx.GetSession(r)
-		if err != nil {
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
-
-		question := session.Values[app.CookieKeyQuestion]
-
-		if question == nil || "true" != question.(string) {
-			http.Redirect(w, r, "/auth/question", 302)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }

@@ -1,0 +1,41 @@
+{{define "content"}}
+
+{{ with .message }}
+<div class="alert alert-danger alert-dismissable">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ . }}
+</div>
+{{ end }}
+
+<div class="panel panel-primary">
+  <div class="panel-heading">
+      <h3 class="panel-title"><i class="fa fa-hand-peace-o fa-lg"></i> Enable TOTP</h3>
+  </div>
+  <div class="panel-body">
+    <form class="form-horizontal" role="form" method="POST">
+
+      <div class="form-group">
+        <label class="col-sm-2 control-label">&nbsp;</label>
+        <div class="col-sm-6">
+            <span class="help-block"> Scan the QR code with your mobile device's app. After scanning, the app will display a six-digit code that you can enter below:</span>
+            <img src="/2fa/qrcode" alt="QR" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="code">Code</label>
+        <div class="col-xs-2">
+            <input class="form-control" id="code" name="code" rows="5" type="text" value="">
+        </div>
+      </div>
+
+      <div class="form-group">
+          <div class="col-sm-offset-2 col-sm-6">
+              <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
+              <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{end}}

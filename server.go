@@ -69,19 +69,32 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx.RenderNotFound(w)
 	})
+
+	// Public
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(fmt.Sprintf("%s/static", ctx.Tmpldir)))))
 	router.Path("/auth/login").Handler(handlers.RateLimit(ctx, handlers.LoginHandler(ctx))).Methods("GET", "POST")
-	router.Path("/auth/question").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.SecurityQuestionHandler(ctx)))).Methods("GET", "POST")
-	router.Path("/auth/setsec").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.SetupQuestionHandler(ctx)))).Methods("GET", "POST")
 	router.Path("/auth/logout").Handler(handlers.LogoutHandler(ctx)).Methods("GET")
 	router.Path("/auth/forgotpw").Handler(handlers.RateLimit(ctx, handlers.ForgotPasswordHandler(ctx))).Methods("GET", "POST")
+
+	// Token required
 	router.Path(fmt.Sprintf("/auth/setup/{token:%s}", app.TokenRegex)).Handler(handlers.SetupAccountHandler(ctx)).Methods("GET", "POST")
 	router.Path(fmt.Sprintf("/auth/resetpw/{token:%s}", app.TokenRegex)).Handler(handlers.ResetPasswordHandler(ctx)).Methods("GET", "POST")
-	router.Path("/changepw").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.ChangePasswordHandler(ctx)))).Methods("GET", "POST")
-	router.Path("/sshpubkey").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.SSHPubKeyHandler(ctx)))).Methods("GET", "POST")
-	router.Path("/sshpubkey/remove/{index:[0-9]+}").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.RemoveSSHPubKeyHandler(ctx)))).Methods("GET")
-	router.Path("/sshpubkey/new").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.NewSSHPubKeyHandler(ctx)))).Methods("GET", "POST")
-	router.Path("/").Handler(handlers.AuthRequired(ctx, handlers.QuestionRequired(ctx, handlers.IndexHandler(ctx)))).Methods("GET")
+
+	// LoginRequired
+	router.Path("/auth/2fa").Handler(handlers.LoginRequired(ctx, handlers.RateLimit(ctx, handlers.TwoFactorAuthHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/auth/setsec").Handler(handlers.LoginRequired(ctx, handlers.RateLimit(ctx, handlers.SetupQuestionHandler(ctx)))).Methods("GET", "POST")
+
+	// AuthRequired
+	router.Path("/changepw").Handler(handlers.AuthRequired(ctx, handlers.ChangePasswordHandler(ctx))).Methods("GET", "POST")
+	router.Path("/sshpubkey").Handler(handlers.AuthRequired(ctx, handlers.SSHPubKeyHandler(ctx))).Methods("GET")
+	router.Path("/sshpubkey/remove/{index:[0-9]+}").Handler(handlers.AuthRequired(ctx, handlers.RemoveSSHPubKeyHandler(ctx))).Methods("GET")
+	router.Path("/sshpubkey/new").Handler(handlers.AuthRequired(ctx, handlers.NewSSHPubKeyHandler(ctx))).Methods("GET", "POST")
+	router.Path("/2fa").Handler(handlers.AuthRequired(ctx, handlers.TwoFactorHandler(ctx))).Methods("GET")
+	router.Path("/2fa/setup").Handler(handlers.AuthRequired(ctx, handlers.EnableTOTPHandler(ctx))).Methods("GET")
+	router.Path("/2fa/verify").Handler(handlers.AuthRequired(ctx, handlers.VerifyTOTPHandler(ctx))).Methods("GET", "POST")
+	router.Path("/2fa/disable").Handler(handlers.AuthRequired(ctx, handlers.DisableTOTPHandler(ctx))).Methods("GET")
+	router.Path("/2fa/qrcode").Handler(handlers.AuthRequired(ctx, handlers.QRCodeHandler(ctx))).Methods("GET")
+	router.Path("/").Handler(handlers.AuthRequired(ctx, handlers.IndexHandler(ctx))).Methods("GET")
 
 	mw.UseHandler(router)
 
