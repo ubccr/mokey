@@ -1,5 +1,5 @@
 ===============================================================================
-FreeIPA self-service account managment tool
+FreeIPA self-service account management tool
 ===============================================================================
 
 .. image:: docs/mokey-logo.png
@@ -35,6 +35,8 @@ Features
 - Account Activation / First time password setup
 - Forgot Password
 - Change Password / Set security question
+- Add SSH Public Keys
+- Two-Factort Authentication (TOTP)
 - Easy to install and configure (requires no FreeIPA/LDAP schema changes)
 - PGP/Mime signed emails
 
@@ -54,11 +56,11 @@ Install
 *Note mokey needs to be installed on a machine already enrolled in FreeIPA.
 It's also recommended to have the ipa-admintools package installed. Enrolling
 a host in FreeIPA is outside the scope of this document. These docs also assume
-you're running CentOS 7.1*
+you're running CentOS 7.x*
 
 Install the RPM release `here <https://github.com/ubccr/mokey/releases>`_::
 
-  $ rpm -Uvh mokey-0.0.4-1.el7.centos.x86_64.rpm
+  $ rpm -Uvh mokey-0.x.x-1.el7.centos.x86_64.rpm
 
 Install MariaDB and/or setup database for mokey::
 
@@ -125,6 +127,14 @@ To view mokey system logs run::
     $ journalctl -u mokey
 
 ------------------------------------------------------------------------
+Upgrading
+------------------------------------------------------------------------
+
+Upgrade to v0.0.5 requires manually upgrading the database as follows::
+
+    $ mysql -u root -p mokey < /usr/share/mokey/ddl/upgrade-v0.0.5.sql
+
+------------------------------------------------------------------------
 Customizing templates
 ------------------------------------------------------------------------
 
@@ -151,6 +161,13 @@ Getting Started with mokey cli tools
     $ kinit adminuser
     $ mokey resetpw --uid capncook 
     (An email will be sent to jp@example.com with a link to reset their password)
+
+- Remove TOTP token. Use case: user lost access to their TOTP mobile app and is
+  locked out. This command will remove any TOTP tokens and the user will be
+  required to login with their security question::
+
+    $ kinit adminuser
+    $ mokey removeotp --uid capncook 
 
 ------------------------------------------------------------------------
 Configure PGP/Mime email 

@@ -2,6 +2,12 @@
 ChangeLog
 ===============================================================================
 
+v0.0.5
+----------------------
+
+- Add support for managing SSH Public Keys
+- Add Two-Factor Authentication using TOTP
+
 v0.0.4
 ----------------------
 

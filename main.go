@@ -23,7 +23,7 @@ func main() {
 	app.Name = "mokey"
 	app.Authors = []cli.Author{cli.Author{Name: "Andrew E. Bruno", Email: "aebruno2@buffalo.edu"}}
 	app.Usage = "mokey"
-	app.Version = "0.0.4"
+	app.Version = "0.0.5"
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{Name: "conf,c", Usage: "Path to conf file"},
 		&cli.BoolFlag{Name: "debug,d", Usage: "Print debug messages"},
