@@ -36,7 +36,7 @@ Features
 - Forgot Password
 - Change Password / Set security question
 - Add SSH Public Keys
-- Two-Factort Authentication (TOTP)
+- Two-Factor Authentication (TOTP)
 - Easy to install and configure (requires no FreeIPA/LDAP schema changes)
 - PGP/Mime signed emails
 
