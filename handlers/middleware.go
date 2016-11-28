@@ -52,11 +52,13 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 		user := session.Values[app.CookieKeyUser]
 
 		if sid == nil || user == nil {
+			logout(ctx, w, r)
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
 
 		if _, ok := user.(string); !ok {
+			logout(ctx, w, r)
 			log.Error("Invalid user record in session.")
 			http.Redirect(w, r, "/auth/login", 302)
 			return
@@ -71,6 +73,7 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 				"uid":              user,
 				"ipa_client_error": err,
 			}).Error("Failed to fetch user info from FreeIPA")
+			logout(ctx, w, r)
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}

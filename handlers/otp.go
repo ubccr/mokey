@@ -38,7 +38,7 @@ func TwoFactorHandler(ctx *app.AppContext) http.Handler {
 			sid := session.Values[app.CookieKeySID]
 			action := r.FormValue("action")
 			if action == "remove" {
-				err = disableTOTP(ctx, user, sid.(string))
+				err = DisableTOTP(ctx, string(user.Uid), sid.(string))
 
 				if err == nil {
 					message = "TOTP Disabled"
@@ -192,34 +192,34 @@ func VerifyTOTPHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func disableTOTP(ctx *app.AppContext, user *ipa.UserRecord, sid string) error {
+func DisableTOTP(ctx *app.AppContext, uid, sid string) error {
 	c := app.NewIpaClient(false)
 	c.SetSession(sid)
 
-	err := c.RemoveOTPToken(string(user.Uid))
+	err := c.RemoveOTPToken(uid)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			// 4001 not found means user didn't have a token so we ignore
 			if ierr.Code != 4001 {
 				log.WithFields(log.Fields{
-					"user":  string(user.Uid),
+					"user":  uid,
 					"error": err,
 				}).Error("Failed to remove TOTP from FreeIPA")
 				return err
 			}
 		} else {
 			log.WithFields(log.Fields{
-				"user":  string(user.Uid),
+				"user":  uid,
 				"error": err,
 			}).Error("Failed to remove TOTP from FreeIPA")
 			return err
 		}
 	}
 
-	err = model.RemoveOTPToken(ctx.Db, string(user.Uid))
+	err = model.RemoveOTPToken(ctx.Db, uid)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"user":  string(user.Uid),
+			"user":  uid,
 			"error": err,
 		}).Error("Failed to remove TOTP")
 		return err

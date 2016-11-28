@@ -84,6 +84,21 @@ func main() {
 
 				NewAccountEmail(uid)
 			},
+		},
+		{
+			Name:  "removeotp",
+			Usage: "Disable TOTP",
+			Flags: []cli.Flag{
+				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
+			},
+			Action: func(c *cli.Context) {
+				uid := c.String("uid")
+				if len(uid) == 0 {
+					log.Fatal("Please provide a user uid")
+				}
+
+				DisableTOTP(uid)
+			},
 		}}
 
 	app.RunAndExitOnError()

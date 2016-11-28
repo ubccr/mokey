@@ -11,6 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/app"
+	"github.com/ubccr/mokey/handlers"
 	"github.com/ubccr/mokey/model"
 )
 
@@ -96,4 +97,18 @@ func ResetPasswordEmail(uid string) {
 			"error": err,
 		}).Error("failed send email to user")
 	}
+}
+
+func DisableTOTP(uid string) {
+	ctx, err := app.NewAppContext()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	err = handlers.DisableTOTP(ctx, uid, "")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Infof("TOTP disabled for user: %s", uid)
 }

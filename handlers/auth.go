@@ -48,6 +48,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 		message := ""
 		session, err := ctx.GetSession(r)
 		if err != nil {
+			logout(ctx, w, r)
 			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
@@ -63,6 +64,8 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 				_, err := model.FetchConfirmedOTPToken(ctx.Db, string(userRec.Uid))
 				if err == nil {
 					session.Values[app.CookieKeyOTP] = true
+				} else {
+					session.Values[app.CookieKeyOTP] = false
 				}
 				session.Values[app.CookieKeySID] = sid
 				session.Values[app.CookieKeyUser] = uid
@@ -72,6 +75,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
 					}).Error("loginhandler: failed to save session")
+					logout(ctx, w, r)
 					ctx.RenderError(w, http.StatusInternalServerError)
 					return
 				}
@@ -93,6 +97,7 @@ func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := ctx.GetSession(r)
 		if err != nil {
+			logout(ctx, w, r)
 			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
@@ -111,12 +116,14 @@ func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
 	user := ctx.GetUser(r)
 	if user == nil {
+		logout(ctx, w, r)
 		ctx.RenderError(w, http.StatusInternalServerError)
 		return
 	}
 
 	session, err := ctx.GetSession(r)
 	if err != nil {
+		logout(ctx, w, r)
 		ctx.RenderError(w, http.StatusInternalServerError)
 		return
 	}
@@ -127,6 +134,7 @@ func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request)
 			"user":  string(user.Uid),
 			"error": err,
 		}).Error("Failed to fetch TOTP")
+		logout(ctx, w, r)
 		ctx.RenderNotFound(w)
 		return
 	}
@@ -141,6 +149,7 @@ func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request)
 				log.WithFields(log.Fields{
 					"error": err.Error(),
 				}).Error("failed to save session")
+				logout(ctx, w, r)
 				ctx.RenderError(w, http.StatusInternalServerError)
 				return
 			}
@@ -162,12 +171,14 @@ func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request)
 func AuthQuestionHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
 	session, err := ctx.GetSession(r)
 	if err != nil {
+		logout(ctx, w, r)
 		ctx.RenderError(w, http.StatusInternalServerError)
 		return
 	}
 
 	user := ctx.GetUser(r)
 	if user == nil {
+		logout(ctx, w, r)
 		ctx.RenderError(w, http.StatusInternalServerError)
 		return
 	}
@@ -194,6 +205,7 @@ func AuthQuestionHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Req
 				log.WithFields(log.Fields{
 					"error": err.Error(),
 				}).Error("login question handler: failed to save session")
+				logout(ctx, w, r)
 				ctx.RenderError(w, http.StatusInternalServerError)
 				return
 			}
