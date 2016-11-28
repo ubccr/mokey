@@ -7,6 +7,13 @@
 </div>
 {{ end }}
 
+{{ with .message }}
+<div class="alert alert-danger alert-dismissable">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ . }}
+</div>
+{{ end }}
+
 <div class="panel panel-primary">
   <div class="clearfix panel-heading">
       <h3 style="display: inline" class="panel-title"><i class="fa fa-key fa-lg"></i> SSH Public Keys </h3>
@@ -26,7 +33,7 @@
      <div class="media-body">
      <h4 class="media-heading">SSH Fingerprint: </h4>
      <p><code>{{ $fp }}</code></p>
-     <button class="btn btn-default" data-href="/sshpubkey/remove/{{ $i }}" data-toggle="modal" data-target="#confirm-delete">
+     <button class="btn btn-default" data-record-id="{{ $i }}" data-toggle="modal" data-target="#confirm-delete">
          Delete
      </button>
      </div> 
@@ -51,8 +58,12 @@
         need to upload it again.</p>
       </div>
       <div class="modal-footer">
+      <form role="form" method="post">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <a class="btn btn-danger btn-ok">Delete</a>
+        <input type="hidden" id="delete_pubkey_id" name="index" value="">
+        <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
+        <button type="submit" class="btn btn-danger btn-ok">Delete</a>
+      </form>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -61,7 +72,8 @@
 <script>
 $(function(){
     $('#confirm-delete').on('show.bs.modal', function(e) {
-        $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
+         var data = $(e.relatedTarget).data();
+         $("#delete_pubkey_id").val( data.recordId );
     });
 });
 </script>

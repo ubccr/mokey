@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gorilla/mux"
 	"github.com/justinas/nosurf"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
@@ -31,8 +30,24 @@ func SSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
+		message := ""
+
+		if r.Method == "POST" {
+			sid := session.Values[app.CookieKeySID]
+            idx := r.FormValue("index")
+			err = removeSSHPubKey(user, idx, sid.(string))
+
+			if err == nil {
+				message = "SSH Public Key Deleted"
+			} else {
+                message = err.Error()
+            }
+		}
+
 		vars := map[string]interface{}{
 			"flashes": session.Flashes(),
+			"token":   nosurf.Token(r),
+			"message": message,
 			"user":    user}
 
 		session.Save(r, w)
@@ -40,60 +55,41 @@ func SSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func RemoveSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := ctx.GetUser(r)
-		if user == nil {
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
+func removeSSHPubKey(user *ipa.UserRecord, idx, sid string) error {
+    index, err := strconv.Atoi(idx)
+    if err != nil {
+		return errors.New("Invalid ssh key provided")
+    }
+    if index < 0 || index > len(user.SSHPubKeys) {
+        log.WithFields(log.Fields{
+            "user":  string(user.Uid),
+            "index": index,
+        }).Error("Invalid ssh pub key index")
+		return errors.New("Invalid ssh key provided")
+    }
 
-		session, err := ctx.GetSession(r)
-		if err != nil {
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
+    pubKeys := make([]string, len(user.SSHPubKeys))
+    copy(pubKeys, user.SSHPubKeys)
 
-		index, _ := strconv.Atoi(mux.Vars(r)["index"])
-		if index < 0 || index > len(user.SSHPubKeys) {
-			log.WithFields(log.Fields{
-				"user":  string(user.Uid),
-				"index": index,
-			}).Error("Invalid ssh pub key index")
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
+    // Remove key at index
+    pubKeys = append(pubKeys[:index], pubKeys[index+1:]...)
 
-		pubKeys := make([]string, len(user.SSHPubKeys))
-		copy(pubKeys, user.SSHPubKeys)
+    c := app.NewIpaClient(false)
+    c.SetSession(sid)
 
-		// Remove key at index
-		pubKeys = append(pubKeys[:index], pubKeys[index+1:]...)
+    newFps, err := c.UpdateSSHPubKeys(string(user.Uid), pubKeys)
+    if err != nil {
+        log.WithFields(log.Fields{
+            "user":  string(user.Uid),
+            "index": index,
+            "error": err,
+        }).Error("Failed to delete ssh pub key")
+		return errors.New("Fatal error removing ssh key. Please contact your administrator")
+    }
 
-		sid := session.Values[app.CookieKeySID]
-		c := app.NewIpaClient(false)
-		c.SetSession(sid.(string))
-
-		newFps, err := c.UpdateSSHPubKeys(string(user.Uid), pubKeys)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"user":  string(user.Uid),
-				"index": index,
-				"error": err,
-			}).Error("Failed to delete ssh pub key")
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
-
-		user.SSHPubKeys = pubKeys
-		user.SSHPubKeyFps = newFps
-		session.Values[app.CookieKeyUser] = user
-		session.AddFlash("SSH Pub Key Deleted")
-		session.Save(r, w)
-
-		http.Redirect(w, r, "/sshpubkey", 302)
-		return
-	})
+    user.SSHPubKeys = pubKeys
+    user.SSHPubKeyFps = newFps
+    return nil
 }
 
 func addSSHPubKey(user *ipa.UserRecord, pubKey, sid string) error {
@@ -201,7 +197,6 @@ func NewSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 			err = addSSHPubKey(user, pubKey, sid.(string))
 
 			if err == nil {
-				session.Values[app.CookieKeyUser] = user
 				session.AddFlash("SSH Public Key Added")
 				session.Save(r, w)
 				http.Redirect(w, r, "/sshpubkey", 302)

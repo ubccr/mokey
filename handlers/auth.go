@@ -65,7 +65,7 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 					session.Values[app.CookieKeyOTP] = true
 				}
 				session.Values[app.CookieKeySID] = sid
-				session.Values[app.CookieKeyUser] = userRec
+				session.Values[app.CookieKeyUser] = uid
 				session.Values[app.CookieKeyAuthenticated] = false
 				err = session.Save(r, w)
 				if err != nil {

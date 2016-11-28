@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/context"
 	"github.com/justinas/nosurf"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 )
 
@@ -50,36 +49,33 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 		}
 
 		sid := session.Values[app.CookieKeySID]
-		userRec := session.Values[app.CookieKeyUser]
+		user := session.Values[app.CookieKeyUser]
 
-		if sid == nil || userRec == nil {
+		if sid == nil || user == nil {
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
 
-		if _, ok := userRec.(*ipa.UserRecord); !ok {
+		if _, ok := user.(string); !ok {
 			log.Error("Invalid user record in session.")
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
 
-		user := userRec.(*ipa.UserRecord)
-
 		c := app.NewIpaClient(false)
 		c.SetSession(sid.(string))
 
-		_, err = c.Ping()
-		if err != nil {
-			log.WithFields(log.Fields{
-				"uid":   user.Uid,
-				"error": err.Error(),
-			}).Error("FreeIPA ping failed")
-			logout(ctx, w, r)
+        userRec, err := c.UserShow(user.(string))
+        if err != nil {
+            log.WithFields(log.Fields{
+                "uid":              user,
+                "ipa_client_error": err,
+            }).Error("Failed to fetch user info from FreeIPA")
 			http.Redirect(w, r, "/auth/login", 302)
 			return
-		}
+        }
 
-		context.Set(r, "user", user)
+		context.Set(r, "user", userRec)
 		context.Set(r, "ipa", c)
 
 		next.ServeHTTP(w, r)

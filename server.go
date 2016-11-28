@@ -86,8 +86,7 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 
 	// AuthRequired
 	router.Path("/changepw").Handler(handlers.AuthRequired(ctx, handlers.ChangePasswordHandler(ctx))).Methods("GET", "POST")
-	router.Path("/sshpubkey").Handler(handlers.AuthRequired(ctx, handlers.SSHPubKeyHandler(ctx))).Methods("GET")
-	router.Path("/sshpubkey/remove/{index:[0-9]+}").Handler(handlers.AuthRequired(ctx, handlers.RemoveSSHPubKeyHandler(ctx))).Methods("GET")
+	router.Path("/sshpubkey").Handler(handlers.AuthRequired(ctx, handlers.SSHPubKeyHandler(ctx))).Methods("GET", "POST")
 	router.Path("/sshpubkey/new").Handler(handlers.AuthRequired(ctx, handlers.NewSSHPubKeyHandler(ctx))).Methods("GET", "POST")
 	router.Path("/2fa").Handler(handlers.AuthRequired(ctx, handlers.TwoFactorHandler(ctx))).Methods("GET")
 	router.Path("/2fa/setup").Handler(handlers.AuthRequired(ctx, handlers.EnableTOTPHandler(ctx))).Methods("GET")
