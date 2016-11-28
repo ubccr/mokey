@@ -65,15 +65,15 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 		c := app.NewIpaClient(false)
 		c.SetSession(sid.(string))
 
-        userRec, err := c.UserShow(user.(string))
-        if err != nil {
-            log.WithFields(log.Fields{
-                "uid":              user,
-                "ipa_client_error": err,
-            }).Error("Failed to fetch user info from FreeIPA")
+		userRec, err := c.UserShow(user.(string))
+		if err != nil {
+			log.WithFields(log.Fields{
+				"uid":              user,
+				"ipa_client_error": err,
+			}).Error("Failed to fetch user info from FreeIPA")
 			http.Redirect(w, r, "/auth/login", 302)
 			return
-        }
+		}
 
 		context.Set(r, "user", userRec)
 		context.Set(r, "ipa", c)

@@ -7,6 +7,13 @@
 </div>
 {{ end }}
 
+{{ with .message }}
+<div class="alert alert-danger alert-dismissable">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ . }}
+</div>
+{{ end }}
+
 <div class="panel panel-primary">
   <div class="panel-heading">
       <h3 class="panel-title"><i class="fa fa-hand-peace-o fa-lg"></i> Two-Factor Authentication</h3>
@@ -14,10 +21,13 @@
   <div class="panel-body">
 {{ if .totptoken }}
     <h3>Two-factor TOTP <span class="label label-success">Enabled</span>
-         <button class="btn btn-danger" data-href="/2fa/disable" data-toggle="modal" data-target="#confirm-disable">
-            Disable Two-Factor TOTP
-         </button>
     </h3>
+    <br/>
+    <p>
+    <button class="btn btn-default" data-toggle="modal" data-target="#confirm-disable">
+         <i class="fa fa-trash"></i> Disable Two-Factor TOTP
+     </button>
+     </p>
 {{ else }}
     <p>
          <button class="btn btn-primary" data-href="/2fa/setup" data-toggle="modal" data-target="#confirm-enable">
@@ -57,8 +67,8 @@
         </p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <a class="btn btn-danger btn-ok">Enable</a>
+        <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+        <a class="btn btn-primary btn-ok"><i class="fa fa-check"></i> Enable</a>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
@@ -84,19 +94,15 @@ $(function(){
         your TOTP authentication token.</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <a class="btn btn-danger btn-ok">Disable</a>
+      <form role="form" method="post">
+        <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+        <input type="hidden" id="action" name="action" value="remove">
+        <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
+        <button type="submit" class="btn btn-danger btn-ok"><i class="fa fa-trash"></i> Disable</a>
+      </form>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-
-<script>
-$(function(){
-    $('#confirm-disable').on('show.bs.modal', function(e) {
-        $(this).find('.btn-ok').attr('href', $(e.relatedTarget).data('href'));
-    });
-});
-</script>
 
 {{end}}

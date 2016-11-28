@@ -34,7 +34,7 @@
      <h4 class="media-heading">SSH Fingerprint: </h4>
      <p><code>{{ $fp }}</code></p>
      <button class="btn btn-default" data-record-id="{{ $i }}" data-toggle="modal" data-target="#confirm-delete">
-         Delete
+         <i class="fa fa-trash"></i> Delete
      </button>
      </div> 
     </div> 
@@ -59,10 +59,10 @@
       </div>
       <div class="modal-footer">
       <form role="form" method="post">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="delete_pubkey_id" name="index" value="">
         <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
-        <button type="submit" class="btn btn-danger btn-ok">Delete</a>
+        <button type="submit" class="btn btn-danger btn-ok"><i class="fa fa-trash"></i> Delete</a>
       </form>
       </div>
     </div><!-- /.modal-content -->

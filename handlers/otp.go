@@ -32,11 +32,29 @@ func TwoFactorHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
+		message := ""
+
+		if r.Method == "POST" {
+			sid := session.Values[app.CookieKeySID]
+			action := r.FormValue("action")
+			if action == "remove" {
+				err = disableTOTP(ctx, user, sid.(string))
+
+				if err == nil {
+					message = "TOTP Disabled"
+				} else {
+					message = "Failed to disable TOTP. Please contact your administrator"
+				}
+			}
+		}
+
 		token, _ := model.FetchConfirmedOTPToken(ctx.Db, string(user.Uid))
 
 		vars := map[string]interface{}{
 			"flashes":   session.Flashes(),
 			"totptoken": token,
+			"token":     nosurf.Token(r),
+			"message":   message,
 			"user":      user}
 
 		session.Save(r, w)
@@ -174,62 +192,40 @@ func VerifyTOTPHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func DisableTOTPHandler(ctx *app.AppContext) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := ctx.GetUser(r)
-		if user == nil {
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
+func disableTOTP(ctx *app.AppContext, user *ipa.UserRecord, sid string) error {
+	c := app.NewIpaClient(false)
+	c.SetSession(sid)
 
-		session, err := ctx.GetSession(r)
-		if err != nil {
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
-
-		sid := session.Values[app.CookieKeySID]
-		c := app.NewIpaClient(false)
-		c.SetSession(sid.(string))
-
-		err = c.RemoveOTPToken(string(user.Uid))
-		if err != nil {
-			if ierr, ok := err.(*ipa.IpaError); ok {
-				// 4001 not found means user didn't have a token so we ignore
-				if ierr.Code != 4001 {
-					log.WithFields(log.Fields{
-						"user":  string(user.Uid),
-						"error": err,
-					}).Error("Failed to remove TOTP from FreeIPA")
-					ctx.RenderError(w, http.StatusInternalServerError)
-					return
-				}
-			} else {
+	err := c.RemoveOTPToken(string(user.Uid))
+	if err != nil {
+		if ierr, ok := err.(*ipa.IpaError); ok {
+			// 4001 not found means user didn't have a token so we ignore
+			if ierr.Code != 4001 {
 				log.WithFields(log.Fields{
 					"user":  string(user.Uid),
 					"error": err,
 				}).Error("Failed to remove TOTP from FreeIPA")
-				ctx.RenderError(w, http.StatusInternalServerError)
-				return
+				return err
 			}
-		}
-
-		err = model.RemoveOTPToken(ctx.Db, string(user.Uid))
-		if err != nil {
+		} else {
 			log.WithFields(log.Fields{
 				"user":  string(user.Uid),
 				"error": err,
-			}).Error("Failed to remove TOTP")
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
+			}).Error("Failed to remove TOTP from FreeIPA")
+			return err
 		}
+	}
 
-		session.AddFlash("TOTP Disabled")
-		session.Save(r, w)
+	err = model.RemoveOTPToken(ctx.Db, string(user.Uid))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"user":  string(user.Uid),
+			"error": err,
+		}).Error("Failed to remove TOTP")
+		return err
+	}
 
-		http.Redirect(w, r, "/2fa", 302)
-		return
-	})
+	return nil
 }
 
 func QRCodeHandler(ctx *app.AppContext) http.Handler {

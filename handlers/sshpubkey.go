@@ -34,14 +34,14 @@ func SSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 
 		if r.Method == "POST" {
 			sid := session.Values[app.CookieKeySID]
-            idx := r.FormValue("index")
+			idx := r.FormValue("index")
 			err = removeSSHPubKey(user, idx, sid.(string))
 
 			if err == nil {
 				message = "SSH Public Key Deleted"
 			} else {
-                message = err.Error()
-            }
+				message = err.Error()
+			}
 		}
 
 		vars := map[string]interface{}{
@@ -56,40 +56,40 @@ func SSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 }
 
 func removeSSHPubKey(user *ipa.UserRecord, idx, sid string) error {
-    index, err := strconv.Atoi(idx)
-    if err != nil {
+	index, err := strconv.Atoi(idx)
+	if err != nil {
 		return errors.New("Invalid ssh key provided")
-    }
-    if index < 0 || index > len(user.SSHPubKeys) {
-        log.WithFields(log.Fields{
-            "user":  string(user.Uid),
-            "index": index,
-        }).Error("Invalid ssh pub key index")
+	}
+	if index < 0 || index > len(user.SSHPubKeys) {
+		log.WithFields(log.Fields{
+			"user":  string(user.Uid),
+			"index": index,
+		}).Error("Invalid ssh pub key index")
 		return errors.New("Invalid ssh key provided")
-    }
+	}
 
-    pubKeys := make([]string, len(user.SSHPubKeys))
-    copy(pubKeys, user.SSHPubKeys)
+	pubKeys := make([]string, len(user.SSHPubKeys))
+	copy(pubKeys, user.SSHPubKeys)
 
-    // Remove key at index
-    pubKeys = append(pubKeys[:index], pubKeys[index+1:]...)
+	// Remove key at index
+	pubKeys = append(pubKeys[:index], pubKeys[index+1:]...)
 
-    c := app.NewIpaClient(false)
-    c.SetSession(sid)
+	c := app.NewIpaClient(false)
+	c.SetSession(sid)
 
-    newFps, err := c.UpdateSSHPubKeys(string(user.Uid), pubKeys)
-    if err != nil {
-        log.WithFields(log.Fields{
-            "user":  string(user.Uid),
-            "index": index,
-            "error": err,
-        }).Error("Failed to delete ssh pub key")
+	newFps, err := c.UpdateSSHPubKeys(string(user.Uid), pubKeys)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"user":  string(user.Uid),
+			"index": index,
+			"error": err,
+		}).Error("Failed to delete ssh pub key")
 		return errors.New("Fatal error removing ssh key. Please contact your administrator")
-    }
+	}
 
-    user.SSHPubKeys = pubKeys
-    user.SSHPubKeyFps = newFps
-    return nil
+	user.SSHPubKeys = pubKeys
+	user.SSHPubKeyFps = newFps
+	return nil
 }
 
 func addSSHPubKey(user *ipa.UserRecord, pubKey, sid string) error {

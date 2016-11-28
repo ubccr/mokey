@@ -154,8 +154,7 @@ func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request)
 
 	vars := map[string]interface{}{
 		"token":   nosurf.Token(r),
-		"message": message,
-		"user":    user}
+		"message": message}
 
 	ctx.RenderTemplate(w, "otp.html", vars)
 }
