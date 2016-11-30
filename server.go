@@ -64,6 +64,10 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 	mw := interpose.New()
 	mw.Use(handlers.Nosurf())
 
+	mw.UseHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+	}))
+
 	router := mux.NewRouter()
 
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
