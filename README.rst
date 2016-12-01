@@ -46,7 +46,7 @@ Requirements
 
 - FreeIPA v4.1.0
 - MariaDB/MySQL
-- Linux x86_64 (CentOS 7.1 preferred)
+- Linux x86_64 (CentOS 7.x preferred)
 - Redis (optional)
 
 ------------------------------------------------------------------------
@@ -218,6 +218,17 @@ Edit /etc/mokey/mokey.yaml and restart::
     rate_limit: true
 
     $ systecmtl restart mokey
+
+------------------------------------------------------------------------
+SSH Public Key Management
+------------------------------------------------------------------------
+
+mokey allows users to add/remove ssh public keys. Servers that are enrolled in
+FreeIPA can be configured to have sshd lookup users public keys in LDAP by
+adding the following lines in /etc/ssh/sshd_config and restarting sshd::
+
+    AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys
+    AuthorizedKeysCommandUser nobody
 
 ------------------------------------------------------------------------
 License
