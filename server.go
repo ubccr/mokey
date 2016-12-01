@@ -24,6 +24,7 @@ func init() {
 	viper.SetDefault("min_passwd_len", 8)
 	viper.SetDefault("pgp_sign", false)
 	viper.SetDefault("force_2fa", true)
+	viper.SetDefault("require_question_pwreset", true)
 	viper.SetDefault("smtp_host", "localhost")
 	viper.SetDefault("smtp_port", 25)
 	viper.SetDefault("email_link_base", "http://localhost")
