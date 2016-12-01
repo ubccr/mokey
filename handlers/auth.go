@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gorilla/sessions"
 	"github.com/justinas/nosurf"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
@@ -103,32 +104,46 @@ func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		otp := session.Values[app.CookieKeyOTP]
-
-		if otp != nil && otp.(bool) {
-			AuthOTPHandler(ctx, w, r)
+		user := ctx.GetUser(r)
+		if user == nil {
+			logout(ctx, w, r)
+			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
-		AuthQuestionHandler(ctx, w, r)
+		if user.TwoFactorOnly() {
+			// Two-Factor auth is the only type allowed by FreeIPA for this
+			// user account. So we can assume the user has already provided a
+			// OTP along with their password when they logged in. No need to
+			// prompt them again. Alternatively, we could prompt for their
+			// security question for 3 factor auth?
+			session.Values[app.CookieKeyAuthenticated] = true
+			err = session.Save(r, w)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err.Error(),
+				}).Error("failed to save session")
+				logout(ctx, w, r)
+				ctx.RenderError(w, http.StatusInternalServerError)
+				return
+			}
+
+			http.Redirect(w, r, "/", 302)
+			return
+		}
+
+		otp := session.Values[app.CookieKeyOTP]
+
+		if otp != nil && otp.(bool) {
+			AuthOTPHandler(ctx, session, user, w, r)
+			return
+		}
+
+		AuthQuestionHandler(ctx, session, user, w, r)
 	})
 }
 
-func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
-	user := ctx.GetUser(r)
-	if user == nil {
-		logout(ctx, w, r)
-		ctx.RenderError(w, http.StatusInternalServerError)
-		return
-	}
-
-	session, err := ctx.GetSession(r)
-	if err != nil {
-		logout(ctx, w, r)
-		ctx.RenderError(w, http.StatusInternalServerError)
-		return
-	}
-
+func AuthOTPHandler(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRecord, w http.ResponseWriter, r *http.Request) {
 	token, err := model.FetchConfirmedOTPToken(ctx.Db, string(user.Uid))
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -169,21 +184,7 @@ func AuthOTPHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request)
 	ctx.RenderTemplate(w, "otp.html", vars)
 }
 
-func AuthQuestionHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
-	session, err := ctx.GetSession(r)
-	if err != nil {
-		logout(ctx, w, r)
-		ctx.RenderError(w, http.StatusInternalServerError)
-		return
-	}
-
-	user := ctx.GetUser(r)
-	if user == nil {
-		logout(ctx, w, r)
-		ctx.RenderError(w, http.StatusInternalServerError)
-		return
-	}
-
+func AuthQuestionHandler(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRecord, w http.ResponseWriter, r *http.Request) {
 	answer, err := model.FetchAnswer(ctx.Db, string(user.Uid))
 	if err != nil {
 		log.WithFields(log.Fields{

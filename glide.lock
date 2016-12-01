@@ -73,7 +73,7 @@ imports:
 - name: github.com/spf13/viper
   version: 651d9d916abc3c3d6a91a12549495caba5edffd2
 - name: github.com/ubccr/goipa
-  version: e9c44818ee8698a8e1a460c26f7e30b9fb0757cd
+  version: 0327502c02ec929981f427cfc8df002d4686e8c1
 - name: github.com/ubccr/kerby
   version: b55f6370b6198848497943fa1e822a02e0deee3f
   subpackages:
