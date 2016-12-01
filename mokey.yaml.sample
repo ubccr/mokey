@@ -45,6 +45,13 @@ secret_key: mysecret
 templates: /usr/share/mokey/templates
 
 #------------------------------------------------------------------------------
+# Force Two-Factor authentication on login. If enabled users will be required
+# to provide their security question or TOTP in addition to their password when
+# logging in. Defaults to true
+#------------------------------------------------------------------------------
+force_2fa: true
+
+#------------------------------------------------------------------------------
 # FreeIPA server hostname (defaults to /etc/ipa/default.conf)
 #------------------------------------------------------------------------------
 # ipahost: "ipa.example.edu"

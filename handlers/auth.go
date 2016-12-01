@@ -10,6 +10,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/justinas/nosurf"
+	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/model"
@@ -189,6 +190,23 @@ func AuthQuestionHandler(ctx *app.AppContext, w http.ResponseWriter, r *http.Req
 			"uid": string(user.Uid), "error": err,
 		}).Error("User can't login. No security answer has been set")
 		http.Redirect(w, r, "/auth/setsec", 302)
+		return
+	}
+
+	if !viper.GetBool("force_2fa") {
+		// Forcing Two-factor auth is disabled
+		session.Values[app.CookieKeyAuthenticated] = true
+		err = session.Save(r, w)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err.Error(),
+			}).Error("failed to save session")
+			logout(ctx, w, r)
+			ctx.RenderError(w, http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/", 302)
 		return
 	}
 
