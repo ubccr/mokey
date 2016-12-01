@@ -164,11 +164,11 @@ func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *mod
 		return errors.New("Password do not match. Please confirm your password.")
 	}
 
-	if utf8.RuneCountInString(ans) < 2 || utf8.RuneCountInString(ans) > 100 {
+	if viper.GetBool("require_question_pwreset") && (utf8.RuneCountInString(ans) < 2 || utf8.RuneCountInString(ans) > 100) {
 		return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
 	}
 
-	if !answer.Verify(ans) {
+	if viper.GetBool("require_question_pwreset") && !answer.Verify(ans) {
 		return errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
 	}
 
@@ -241,7 +241,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		answer, err := model.FetchAnswer(ctx.Db, token.UserName)
-		if err != nil {
+		if err != nil && viper.GetBool("require_question_pwreset") {
 			log.WithFields(log.Fields{
 				"uid":   token.UserName,
 				"error": err,
@@ -279,11 +279,12 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":     nosurf.Token(r),
-			"uid":       token.UserName,
-			"completed": completed,
-			"question":  answer.Question,
-			"message":   message}
+			"token":           nosurf.Token(r),
+			"uid":             token.UserName,
+			"completed":       completed,
+			"requireQuestion": viper.GetBool("require_question_pwreset"),
+			"question":        answer.Question,
+			"message":         message}
 
 		ctx.RenderTemplate(w, "reset-password.html", vars)
 	})
