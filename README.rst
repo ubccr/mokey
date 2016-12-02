@@ -231,6 +231,24 @@ adding the following lines in /etc/ssh/sshd_config and restarting sshd::
     AuthorizedKeysCommandUser nobody
 
 ------------------------------------------------------------------------
+Building from source
+------------------------------------------------------------------------
+
+First, you will need:
+
+- `glide <https://glide.sh/>`_ to manage project's dependencies.
+- The krb5-libs/GSSAPI lib installed on your compilation system
+
+Clone the repository in your $GOPATH::
+
+    $ git clone https://github.com/ubccr/mokey $GOPATH/src/github.com/ubccr/mokey
+
+In the project folder you can now resolve the dependencies and build mokey::
+
+    $ glide install
+    $ go build
+
+------------------------------------------------------------------------
 License
 ------------------------------------------------------------------------
 
