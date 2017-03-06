@@ -51,6 +51,7 @@ func NewAccountEmail(uid string) {
 	}
 
 	vars := map[string]interface{}{
+    "uid": uid,
 		"link": fmt.Sprintf("%s/auth/setup/%s", viper.GetString("email_link_base"), model.SignToken(app.AccountSetupSalt, token.Token))}
 
 	err = ctx.SendEmail(token.Email, fmt.Sprintf("[%s] New Account Setup", viper.GetString("email_prefix")), "setup-account.txt", vars)
