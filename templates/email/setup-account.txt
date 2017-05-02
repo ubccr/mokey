@@ -1,4 +1,4 @@
-Use the following link to setup your account. 
+Your account "{{ .uid }}" has been createad, please use the following link to finalize the setup:
 
     {{ .link }}
 
