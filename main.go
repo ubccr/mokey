@@ -83,6 +83,7 @@ func main() {
 				}
 
 				NewAccountEmail(uid)
+				DisableTOTP(uid)
 			},
 		},
 		{
