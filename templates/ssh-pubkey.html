@@ -1,5 +1,14 @@
 {{define "content"}}
 
+<h1 class="page-header">
+ <div class="btn-toolbar pull-right">
+    <div class="btn-group">
+        <a href="/sshpubkey/new" id="newkey" class="btn btn-primary"><i class="fa fa-key"></i> New Key</a>
+    </div>
+</div>
+<i class="fa fa-chain"></i> SSH Public Keys
+</h1>
+
 {{ range $m := .flashes }}
 <div class="alert alert-success alert-dismissable">
 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
@@ -14,26 +23,16 @@
 </div>
 {{ end }}
 
-<div class="panel panel-primary">
-  <div class="clearfix panel-heading">
-      <h3 style="display: inline" class="panel-title"><i class="fa fa-key fa-lg"></i> SSH Public Keys </h3>
-         <div class="btn-toolbar pull-right">
-        <div class="btn-group">
-        <a href="/sshpubkey/new" id="newkey" class="btn btn-default btn-sm">New SSH Key</a>
-        </div>
-        </div>
-  </div>
-  <div class="panel-body">
 
     {{ range $i, $fp := .user.SSHPubKeyFps }}
     <div class="media">
      <div class="media-left"> 
-        <a href="#"><i class="fa fa-key fa-3x"></i></a>
+        <a href="#"><i class="fa fa-key fa-2x"></i></a>
      </div>
      <div class="media-body">
      <h4 class="media-heading">SSH Fingerprint: </h4>
      <p><code>{{ $fp }}</code></p>
-     <button class="btn btn-default" data-record-id="{{ $i }}" data-toggle="modal" data-target="#confirm-delete">
+     <button class="btn btn-danger" data-record-id="{{ $i }}" data-toggle="modal" data-target="#confirm-delete">
          <i class="fa fa-trash"></i> Delete
      </button>
      </div> 
@@ -42,8 +41,6 @@
         <p>No ssh keys uploaded</p>
     {{ end }}
 
-  </div>
-</div>
 
 <div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">

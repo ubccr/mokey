@@ -1,5 +1,7 @@
 {{define "content"}}
 
+  <h1 class="page-header"><i class="fa fa-lock"></i> Update security question</h1>
+
 {{ if .completed }}
     <div class="alert alert-success">Your security question has been updated.</div>
 {{ else }}
@@ -11,11 +13,6 @@
 </div>
 {{ end }}
 
-<div class="panel panel-primary">
-  <div class="panel-heading">
-      <h3 class="panel-title"><i class="fa fa-lock fa-lg"></i> Update security question</h3>
-  </div>
-  <div class="panel-body">
     <form class="form-horizontal" role="form" method="POST">
 
       <div class="form-group">
@@ -51,11 +48,6 @@
           </div>
       </div>
     </form>
-
-  </div>
-</div>
-
-
 
 {{ end }}
 

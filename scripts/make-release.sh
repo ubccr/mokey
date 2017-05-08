@@ -15,6 +15,7 @@ cp ./README.rst ${REL_DIR}/
 cp ./AUTHORS.rst ${REL_DIR}/ 
 cp ./ChangeLog.rst ${REL_DIR}/ 
 cp ./LICENSE ${REL_DIR}/ 
+cp ./NOTICE ${REL_DIR}/ 
 cp -R ./templates ${REL_DIR}/ 
 cp -R ./ddl ${REL_DIR}/ 
 

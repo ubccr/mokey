@@ -7,80 +7,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="referrer" content="origin-when-cross-origin">
     <title>User Portal</title>
+    <link href="/static/css/font-awesome.min.css?v=3" rel="stylesheet">
+    <link href="/static/css/bootstrap.min.css?v=3" rel="stylesheet">
+    <link href="/static/css/styles.css?v=3" rel="stylesheet">
 
-    <!-- Bootstrap -->
-    <link href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css" rel="stylesheet">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link href="/static/css/styles.css?v=2" rel="stylesheet">
-
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
+    <script src="/static/js/jquery.min.js?v=3"></script>
+    <script src="/static/js/bootstrap.min.js?v=3"></script>
   </head>
   <body>
 
-    <div class="navbar navbar-custom navbar-fixed-top" role="navigation">
-      <div class="container-fluid">
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
         <div class="navbar-header">
-          <a class="navbar-brand" href="/"><img src="/static/images/mokey-portal.png" alt="User Portal" border="0"></a>
-        </div>
-      </div>
-    </div>
-
-    <div class="navbar navbar-default navbar-fixed-top secondnavbar" role="navigation">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <!-- <a class="navbar-brand" href="/">MY ID</a> -->
-          {{ with .user }}
-              <p class="navbar-text">Hello {{ .First }} (<a href="/auth/logout">Logout</a>)</p>
-          {{ else }}
-              <p class="navbar-text"><a href="/auth/login">Login</a></p>
-          {{ end }}
+          <a class="navbar-brand" href="/"><img src="/static/images/mokey-portal.png" alt="User Portal" /></a>
         </div>
-        <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="#">Help</a></li>
-            <li class="hidden-lg hidden-md hidden-sm"><a href="/changepw">Change Password</a></li>
-            <li class="hidden-lg hidden-md hidden-sm"><a href="/sshpubkey">SSH Public Keys</a></li>
-            <li class="hidden-lg hidden-md hidden-sm"><a href="/2fa">Two-Factor Auth</a></li>
-          </ul>
+        <div id="navbar" class="navbar-collapse collapse">
+          {{ with .user }}
+              <p class="navbar-text navbar-right">Hello {{ .First }} (<a href="/auth/logout" class="navbar-link">sign out</a>)</p>
+              <ul class="nav navbar-nav navbar-right">
+                <li class="hidden-lg hidden-md hidden-sm"><a href="/changepw">Change Password</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="/sshpubkey">SSH Keys</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="/2fa">Two-Factor Auth</a></li>
+              </ul>
+          {{ else }}
+              <p class="navbar-text navbar-right"><a href="/auth/login">Login</a></p>
+          {{ end }}
+          </p>
         </div>
       </div>
+    </nav>
+
+    <div class="container">
+    <div class="row">
+        {{ with .user }}
+        <div class="col-sm-3 col-lg-3 sidebar">
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Account Settings</strong></div>
+                <div class="list-group">
+                    <a href="/changepw" class="list-group-item">Change Password</a>
+                    <a href="/sshpubkey" class="list-group-item">SSH Keys</a>
+                    <a href="/2fa" class="list-group-item">Two-Factor Auth</a>
+                </div>
+            </div>
+        </div>
+        {{ end }}
+        <div class="col-sm-9 col-lg-9">
+            {{template "content" .}}
+        </div>
     </div>
 
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-sm-3 col-md-2 sidebar">
-          {{ with .user }}
-          <ul class="nav nav-sidebar">
-            <li><a href="/changepw">Change Password</a></li>
-            <li><a href="/sshpubkey">SSH Public Keys</a></li>
-            <li><a href="/2fa">Two-Factor Auth</a></li>
-          </ul>
-          <hr/>
-          {{ else }}
-          <p class="navbar-text">Welcome to the identity management portal. Please login.</p>
-          {{ end }}
-        </div>
-        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    </div><!-- /.container -->
 
-          {{template "content" .}}
-
-        </div>
+    <footer class="footer">
+      <div class="container">
+        <p class="text-muted">Powered by mokey | <a href="https://github.com/ubccr/mokey"><i class="fa fa-github" aria-hidden="true"></i> GitHub</a></p>
       </div>
-    </div>
+    </footer>
+
   </body>
 </html>
 {{end}}

@@ -1,5 +1,7 @@
 {{define "content"}}
 
+<h1 class="page-header"><i class="fa fa-lock"></i> Set Security Question </h1>
+
 {{ with .message }}
 <div class="alert alert-danger alert-dismissable">
 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
@@ -7,11 +9,6 @@
 </div>
 {{ end }}
 
-<div class="panel panel-primary">
-  <div class="panel-heading">
-      <h3 class="panel-title"><i class="fa fa-lock fa-lg"></i> Set Security Question </h3>
-  </div>
-  <div class="panel-body">
     <form class="form-horizontal" role="form" method="POST">
 
       <div class="form-group">
@@ -40,9 +37,5 @@
           </div>
       </div>
     </form>
-
-  </div>
-</div>
-
 
 {{end}}

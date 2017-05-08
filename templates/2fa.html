@@ -1,5 +1,7 @@
 {{define "content"}}
 
+<h1 class="page-header"><i class="fa fa-hand-peace-o"></i> Two-Factor Authentication</h1>
+
 {{ range $m := .flashes }}
 <div class="alert alert-success alert-dismissable">
 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
@@ -14,27 +16,15 @@
 </div>
 {{ end }}
 
-<div class="panel panel-primary">
-  <div class="panel-heading">
-      <h3 class="panel-title"><i class="fa fa-hand-peace-o fa-lg"></i> Two-Factor Authentication</h3>
-  </div>
-  <div class="panel-body">
 {{ if .totptoken }}
-    <h3>Two-factor TOTP <span class="label label-success">Enabled</span>
-    </h3>
+    <h3>Status: <span class="label label-success">On</span></h3>
     <br/>
     <p>
-    <button class="btn btn-default" data-toggle="modal" data-target="#confirm-disable">
+    <button class="btn btn-danger" data-toggle="modal" data-target="#confirm-disable">
          <i class="fa fa-trash"></i> Disable Two-Factor TOTP
      </button>
      </p>
 {{ else }}
-    <p>
-         <button class="btn btn-primary" data-href="/2fa/setup" data-toggle="modal" data-target="#confirm-enable">
-            Enable Two-Factor TOTP
-         </button>
-    </p>
-
     <h3>Configuring two-factor authentication using a TOTP mobile app</h3>
     <p>
         A Time-based One-Time Password (TOTP) application automatically
@@ -47,10 +37,14 @@
         <li>Sailfish: <a href="https://www.seiichiro0185.org/git/SailfishOS/harbour-sailotp">SailOTP</a></li>
         <li>Windows Phone: <a href="https://www.microsoft.com/en-US/store/apps/Authenticator/9WZDNCRFJ3RJ">Authenticator</a></li>
     </ul>
-{{ end }}
 
-  </div>
-</div>
+    <p>
+         <button class="btn btn-primary" data-href="/2fa/setup" data-toggle="modal" data-target="#confirm-enable">
+            Enable Two-Factor TOTP
+         </button>
+    </p>
+
+{{ end }}
 
 <div class="modal fade" id="confirm-enable" tabindex="-1" role="dialog">
   <div class="modal-dialog" role="document">

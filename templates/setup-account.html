@@ -1,5 +1,7 @@
 {{define "content"}}
 
+  <h1 class="page-header"><i class="fa fa-lock"></i> Setup user account </h1>
+
 {{ if .completed }}
     <div class="alert alert-success">Thank you. Your account has been successfully activated. </div>
 {{ else }}
@@ -11,11 +13,6 @@
 </div>
 {{ end }}
 
-<div class="panel panel-primary">
-  <div class="panel-heading">
-      <h3 class="panel-title"><i class="fa fa-lock fa-lg"></i> Setup user account </h3>
-  </div>
-  <div class="panel-body">
     <form class="form-horizontal" role="form" method="POST">
 
       <div class="form-group">
@@ -60,27 +57,12 @@
       </div>
 
       <div class="form-group">
-        <label class="col-sm-2 control-label">&nbsp;</label>
-        <div class="col-sm-6">
-            <span class="help-block">By clicking update below, you agree to the
-            conditions of use and user responsibilities for UB's computing and
-            network resources as established in the University at Buffalo's
-            "Computing and Network Use Policy". You can read the full policy by
-            <a href="http://www.buffalo.edu/content/dam/www/ubit/it-policies/Computing%20and%20Network%20Use%20Policy.pdf" target="_blank">clicking here</a>.</span>
-        </div>
-      </div>
-
-      <div class="form-group">
           <div class="col-sm-offset-2 col-sm-6">
               <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
               <button type="submit" class="btn btn-primary">Update</button>
           </div>
       </div>
     </form>
-
-  </div>
-</div>
-
 
 
 {{ end }}

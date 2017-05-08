@@ -1,5 +1,7 @@
 {{define "content"}}
 
+  <h1 class="page-header"><i class="fa fa-hand-peace-o"></i> Enable TOTP</h1>
+
 {{ with .message }}
 <div class="alert alert-danger alert-dismissable">
 <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
@@ -7,12 +9,7 @@
 </div>
 {{ end }}
 
-<div class="panel panel-primary">
-  <div class="panel-heading">
-      <h3 class="panel-title"><i class="fa fa-hand-peace-o fa-lg"></i> Enable TOTP</h3>
-  </div>
-  <div class="panel-body">
-    <form class="form-horizontal" role="form" method="POST">
+  <form class="form-horizontal" role="form" method="POST">
 
       <div class="form-group">
         <label class="col-sm-2 control-label">&nbsp;</label>
@@ -35,7 +32,5 @@
           </div>
       </div>
     </form>
-  </div>
-</div>
 
 {{end}}

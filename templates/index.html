@@ -1,41 +1,30 @@
 {{define "content"}}
-<div class="panel panel-primary">
-    <div class="panel-heading">
-      <h3 class="panel-title">Hello {{ .user.First }}</h3>
+
+<h1 class="page-header"><i class="fa fa-address-card-o"></i> Account Information</h1>
+
+<form>
+  <div class="form-group">
+    <label>UID</label>
+    <p class="form-control-static">{{ .user.Uid }}</p>
+  </div>
+  <div class="form-group">
+    <label>Password Expiration</label>
+    <p class="form-control-static">{{ .user.PasswdExpire.Format "Jan 02, 2006 15:04:05 MST" }}</p>
+  </div>
+  <div class="form-group">
+    <label>Email address</label>
+    <p class="form-control-static">{{ .user.Email }}</p>
+  </div>
+  <div class="form-group">
+    <label>Groups</label>
+    <div class="form-control-static">
+        {{ range $g := .user.Groups }}
+            <span class="label label-default">{{ $g }}</span> 
+        {{ else }}
+            &nbsp;
+        {{ end }}
     </div>
-    <div class="panel-body">
-      <div class="row">
-        <div class="col-md-2 col-lg-2" align="center"><i class="fa fa-user fa-5x"></i></div>
-        <div class=" col-md-9 col-lg-9 "> 
-          <table class="table table-user-information">
-            <tbody>
-              <tr>
-                <td>UID:</td>
-                <th>{{ .user.Uid }}</th>
-              </tr>
-              <tr>
-                <td>Password Expiration</td>
-                <td>{{ .user.PasswdExpire.Format "Jan 02, 2006 15:04:05 MST" }}</td>
-              </tr>
-              <tr>
-                <td>Email</td>
-                <td>{{ .user.Email }}</td>
-              </tr>
-              <tr>
-                <td>Groups:</td>
-                <td>
-                    {{ range $g := .user.Groups }}
-                        <span class="label label-default">{{ $g }}</span> 
-                    {{ else }}
-                        &nbsp;
-                    {{ end }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-</div>
+  </div>
+</form>
 
 {{end}}
