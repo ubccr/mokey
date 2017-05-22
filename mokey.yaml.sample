@@ -2,22 +2,22 @@
 #------------------------------------------------------------------------------
 # Database connection
 #------------------------------------------------------------------------------
-dsn: "user:pass@/dbname?parseTime=true"
+dsn: "file:/home/vagrant/mokey_db.sqlite?loc=auto"
 
 #------------------------------------------------------------------------------
 # Database driver
 #------------------------------------------------------------------------------
-driver: "mysql"
+driver: "sqlite3"
 
 #------------------------------------------------------------------------------
 # Webserver port to lisen on
 #------------------------------------------------------------------------------
-port: 8080
+port: 8083
 
 #------------------------------------------------------------------------------
 # Webserver interface to lisen on
 #------------------------------------------------------------------------------
-bind: "127.0.0.1"
+bind: ""
 
 #------------------------------------------------------------------------------
 # SSL certificate 
@@ -42,7 +42,7 @@ secret_key: mysecret
 #------------------------------------------------------------------------------
 # Templates directory
 #------------------------------------------------------------------------------
-templates: /usr/share/mokey/templates
+templates: /home/vagrant/go/src/github.com/ubccr/mokey/templates/
 
 #------------------------------------------------------------------------------
 # Force Two-Factor authentication on login. If enabled users will be required
@@ -68,7 +68,7 @@ require_question_pwreset: true
 # Keytab file for mokey (should have "Modify users and Reset passwords"
 # privilege in FreeIPA)
 #------------------------------------------------------------------------------
-keytab: "/path/to/client.keytab"
+keytab: "/home/vagrant/mokey.keytab"
 
 #------------------------------------------------------------------------------
 # Enable rate limiting based on remote ip (requires redis)

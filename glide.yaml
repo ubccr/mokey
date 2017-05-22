@@ -9,7 +9,6 @@ import:
   subpackages:
   - redis
 - package: github.com/go-ini/ini
-- package: github.com/go-sql-driver/mysql
 - package: github.com/gorilla/context
 - package: github.com/gorilla/mux
 - package: github.com/gorilla/schema
@@ -25,3 +24,5 @@ import:
   - openpgp/packet
 - package: github.com/pquerna/otp
 - package: github.com/boombuler/barcode
+- package: github.com/mattn/go-sqlite3
+  version: ^1.2.0

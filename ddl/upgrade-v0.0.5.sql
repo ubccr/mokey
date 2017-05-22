@@ -4,4 +4,4 @@ CREATE TABLE `otp_token` (
     `confirmed`      tinyint      NOT NULL,
     `created_at`     datetime     NOT NULL,
     PRIMARY KEY      (`user_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+);

@@ -45,7 +45,7 @@ Requirements
 ------------------------------------------------------------------------
 
 - FreeIPA v4.1.0
-- MariaDB/MySQL
+- SQLite
 - Linux x86_64 (CentOS 7.x preferred)
 - Redis (optional)
 
@@ -62,17 +62,10 @@ Install the RPM release `here <https://github.com/ubccr/mokey/releases>`_::
 
   $ rpm -Uvh mokey-0.x.x-1.el7.centos.x86_64.rpm
 
-Install MariaDB and/or setup database for mokey::
+Create the initial sqlite database:
 
-    $ yum install mariadb-server
-    $ systemctl restart mariadb
-    $ systemctl enable mariadb
-    $ mysqladmin -u root password 'mypass'
-    $ mysql -u root -p
-    $ mysql> create database mokey;
-    $ mysql> grant all on mokey.* to [user]@localhost identified by '[pass]'
-    $ mysql> exit
-    $ mysql -u root -p mokey < /usr/share/mokey/ddl/schema.sql
+    $ yum install sqlite
+    $ sqlite3 /path/to/database.file < /usr/share/mokey/ddl/sqlite.sql
 
 Create a user account and role in FreeIPA with the "Modify users and Reset
 passwords" privilege. This user account will be used by the mokey application
@@ -132,7 +125,7 @@ Upgrading
 
 Upgrade to v0.0.5 requires manually upgrading the database as follows::
 
-    $ mysql -u root -p mokey < /usr/share/mokey/ddl/upgrade-v0.0.5.sql
+    $ sqlite3 /path/to/database.file < /usr/share/mokey/ddl/upgrade-v0.0.5.sql
 
 ------------------------------------------------------------------------
 Customizing templates
