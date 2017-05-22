@@ -75,7 +75,7 @@ func VerifyToken(salt, signedToken string) (string, bool) {
 
 func FetchTokenByUser(db *sqlx.DB, uid string, maxAge int) (*Token, error) {
 	t := Token{}
-	err := db.Get(&t, "select user_name,token,attempts,email from token where user_name = ? and timestampdiff(SECOND, created_at, now()) <= ?", uid, maxAge)
+	err := db.Get(&t, "select user_name,token,attempts,email from token where user_name = ? and timestampdiff(SECOND, created_at, datetime('now')) <= ?", uid, maxAge)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func FetchTokenByUser(db *sqlx.DB, uid string, maxAge int) (*Token, error) {
 
 func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
 	t := Token{}
-	err := db.Get(&t, "select user_name,token,attempts,email from token where token = ? and timestampdiff(SECOND, created_at, now()) <= ?", token, maxAge)
+	err := db.Get(&t, "select user_name,token,attempts,email from token where token = ? and timestampdiff(SECOND, created_at, datetime('now')) <= ?", token, maxAge)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
 
 func NewToken(db *sqlx.DB, uid, email string) (*Token, error) {
 	t := Token{UserName: uid, Email: email, Token: randToken()}
-	_, err := db.NamedExec("replace into token (user_name,email, token,attempts,created_at) values (:user_name, :email, :token, 0, now())", t)
+	_, err := db.NamedExec("replace into token (user_name,email, token,attempts,created_at) values (:user_name, :email, :token, 0, datetime('now'))", t)
 	if err != nil {
 		return nil, err
 	}

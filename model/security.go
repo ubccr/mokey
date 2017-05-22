@@ -57,7 +57,7 @@ func StoreAnswer(db *sqlx.DB, user, ans string, qid int) error {
 		QuestionId: qid,
 		Answer:     string(hash)}
 
-	_, err = db.NamedExec("replace into security_answer (user_name,question_id,answer,created_at) values (:user_name, :question_id, :answer, now())", sa)
+	_, err = db.NamedExec("replace into security_answer (user_name,question_id,answer,created_at) values (:user_name, :question_id, :answer, datetime('now'))", sa)
 	if err != nil {
 		return err
 	}

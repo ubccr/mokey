@@ -1,5 +1,5 @@
-hash: 734757206a2b83145dfb2e70b9f071faf864c14e8390a788ffe3aabd48d1ce6b
-updated: 2016-11-23T14:56:25.822120884-05:00
+hash: f5a0aaea8e6e4cb81ac03feead4d076014951711027a5bc9eb4db31746406398
+updated: 2017-05-21T20:57:14.227700925-07:00
 imports:
 - name: github.com/boombuler/barcode
   version: 8b1271e880cb66f992a2647ff7940d4dc5a41fee
@@ -19,8 +19,6 @@ imports:
   - redis
 - name: github.com/go-ini/ini
   version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
-- name: github.com/go-sql-driver/mysql
-  version: 665b83488b90b902ce0a305ef6652e599771cdf9
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -50,6 +48,8 @@ imports:
   version: 8e15682772641a1e39c431233e6a9338a32def32
 - name: github.com/magiconair/properties
   version: 0723e352fa358f9322c938cc2dadda874e9151a9
+- name: github.com/mattn/go-sqlite3
+  version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
 - name: github.com/mitchellh/mapstructure
   version: f3009df150dadf309fdee4a54ed65c124afad715
 - name: github.com/pelletier/go-buffruneio
@@ -58,6 +58,9 @@ imports:
   version: 7cb988051d5045890cb91402a0b5fddc76c627bc
 - name: github.com/pquerna/otp
   version: 54653902c20e47f3417541d35435cb6d6162e28a
+  subpackages:
+  - hotp
+  - totp
 - name: github.com/Sirupsen/logrus
   version: a437dfd2463eaedbec3dfe443e477d3b0a810b3f
 - name: github.com/spf13/afero
@@ -90,6 +93,10 @@ imports:
   - openpgp/errors
   - openpgp/packet
   - openpgp/s2k
+- name: golang.org/x/net
+  version: 513929065c19401a1c7b76ecd942f9f86a0c061b
+  subpackages:
+  - context
 - name: golang.org/x/sys
   version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
   subpackages:

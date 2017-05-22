@@ -47,7 +47,7 @@ func FetchUnconfirmedOTPToken(db *sqlx.DB, uid string) (*OTPToken, error) {
 }
 
 func StoreOTPToken(db *sqlx.DB, uid, uri string) error {
-	_, err := db.Exec("replace into otp_token (user_name,uri,created_at, confirmed) values (?, ?, now(), 0)", uid, uri)
+	_, err := db.Exec("replace into otp_token (user_name,uri,created_at, confirmed) values (?, ?, datetime('now'), 0)", uid, uri)
 	if err != nil {
 		return err
 	}
