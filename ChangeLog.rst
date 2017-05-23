@@ -6,7 +6,8 @@ v0.0.5
 ----------------------
 
 - Add support for managing SSH Public Keys
-- Add Two-Factor Authentication using TOTP
+- Add support for managing OTP Tokens
+- Add support for enabling Two-Factor Authentication
 - Refresh UI
 
 v0.0.4

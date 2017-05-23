@@ -35,7 +35,7 @@ func updateSecurityQuestion(ctx *app.AppContext, questions []*model.SecurityQues
 
 	found := false
 	for _, sq := range questions {
-		if sq.Id == q {
+		if sq.ID == q {
 			found = true
 			break
 		}
@@ -45,7 +45,7 @@ func updateSecurityQuestion(ctx *app.AppContext, questions []*model.SecurityQues
 		return errors.New("Invalid security question")
 	}
 
-	err = model.StoreAnswer(ctx.Db, userName, answer, q)
+	err = model.StoreAnswer(ctx.DB, userName, answer, q)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":   userName,
@@ -65,7 +65,7 @@ func UpdateSecurityQuestionHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		questions, err := model.FetchQuestions(ctx.Db)
+		questions, err := model.FetchQuestions(ctx.DB)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
@@ -112,7 +112,7 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		_, err = model.FetchAnswer(ctx.Db, string(user.Uid))
+		_, err = model.FetchAnswer(ctx.DB, string(user.Uid))
 		if err == nil {
 			log.WithFields(log.Fields{
 				"uid":   string(user.Uid),
@@ -123,7 +123,7 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		questions, err := model.FetchQuestions(ctx.Db)
+		questions, err := model.FetchQuestions(ctx.DB)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),

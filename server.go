@@ -95,9 +95,7 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 	router.Path("/sshpubkey").Handler(handlers.AuthRequired(ctx, handlers.SSHPubKeyHandler(ctx))).Methods("GET", "POST")
 	router.Path("/sshpubkey/new").Handler(handlers.AuthRequired(ctx, handlers.NewSSHPubKeyHandler(ctx))).Methods("GET", "POST")
 	router.Path("/2fa").Handler(handlers.AuthRequired(ctx, handlers.TwoFactorHandler(ctx))).Methods("GET", "POST")
-	router.Path("/2fa/setup").Handler(handlers.AuthRequired(ctx, handlers.EnableTOTPHandler(ctx))).Methods("GET")
-	router.Path("/2fa/verify").Handler(handlers.AuthRequired(ctx, handlers.VerifyTOTPHandler(ctx))).Methods("GET", "POST")
-	router.Path("/2fa/qrcode").Handler(handlers.AuthRequired(ctx, handlers.QRCodeHandler(ctx))).Methods("GET")
+	router.Path("/otptokens").Handler(handlers.AuthRequired(ctx, handlers.OTPTokensHandler(ctx))).Methods("GET", "POST")
 	router.Path("/").Handler(handlers.AuthRequired(ctx, handlers.IndexHandler(ctx))).Methods("GET")
 
 	mw.UseHandler(router)

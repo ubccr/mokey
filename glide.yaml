@@ -18,6 +18,7 @@ import:
 - package: github.com/justinas/nosurf
 - package: github.com/spf13/viper
 - package: github.com/ubccr/goipa
+  version: b2203a761cb79fcddcdacb5708fc454df0ff101d
 - package: golang.org/x/crypto
   subpackages:
   - bcrypt

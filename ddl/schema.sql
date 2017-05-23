@@ -26,16 +26,6 @@ CREATE TABLE `security_question` (
     UNIQUE KEY  `question` (`question`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS `otp_token`;
-CREATE TABLE `otp_token` (
-    `user_name`      varchar(255) NOT NULL,
-    `uri`            varchar(255) NOT NULL,
-    `confirmed`      tinyint      NOT NULL,
-    `created_at`     datetime     NOT NULL,
-    PRIMARY KEY      (`user_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
 INSERT INTO security_question SET question = "In what city or town does your nearest sibling live";
 INSERT INTO security_question SET question = "In what year was your father born";
 INSERT INTO security_question SET question = "In what year was your mother born";

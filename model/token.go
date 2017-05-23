@@ -93,9 +93,9 @@ func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
 	return &t, nil
 }
 
-func NewToken(db *sqlx.DB, uid, email string) (*Token, error) {
+func CreateToken(db *sqlx.DB, uid, email string) (*Token, error) {
 	t := Token{UserName: uid, Email: email, Token: randToken()}
-	_, err := db.NamedExec("replace into token (user_name,email, token,attempts,created_at) values (:user_name, :email, :token, 0, now())", t)
+	_, err := db.NamedExec("replace into token (user_name,email,token,attempts,created_at) values (:user_name, :email, :token, 0, now())", t)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +114,15 @@ func IncrementToken(db *sqlx.DB, token string) error {
 
 func DestroyToken(db *sqlx.DB, token string) error {
 	_, err := db.Exec("delete from token where token = ?", token)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DestroyTokenByUser(db *sqlx.DB, uid string) error {
+	_, err := db.Exec("delete from token where user_name = ?", uid)
 	if err != nil {
 		return err
 	}

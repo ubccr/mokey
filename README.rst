@@ -35,10 +35,11 @@ Features
 - Account Activation / First time password setup
 - Forgot Password
 - Change Password / Set security question
-- Add SSH Public Keys
-- Two-Factor Authentication (TOTP)
-- Easy to install and configure (requires no FreeIPA/LDAP schema changes)
+- Add/Remove SSH Public Keys
+- Add/Remove TOTP Tokens
+- Enable/Disable Two-Factor Authentication
 - PGP/Mime signed emails
+- Easy to install and configure (requires no FreeIPA/LDAP schema changes)
 
 ------------------------------------------------------------------------
 Requirements
@@ -127,14 +128,6 @@ To view mokey system logs run::
     $ journalctl -u mokey
 
 ------------------------------------------------------------------------
-Upgrading
-------------------------------------------------------------------------
-
-Upgrade to v0.0.5 requires manually upgrading the database as follows::
-
-    $ mysql -u root -p mokey < /usr/share/mokey/ddl/upgrade-v0.0.5.sql
-
-------------------------------------------------------------------------
 Customizing templates
 ------------------------------------------------------------------------
 
@@ -161,13 +154,6 @@ Getting Started with mokey cli tools
     $ kinit adminuser
     $ mokey resetpw --uid capncook 
     (An email will be sent to jp@example.com with a link to reset their password)
-
-- Remove TOTP token. Use case: user lost access to their TOTP mobile app and is
-  locked out. This command will remove any TOTP tokens and the user will be
-  required to login with their security question::
-
-    $ kinit adminuser
-    $ mokey removeotp --uid capncook 
 
 ------------------------------------------------------------------------
 Configure PGP/Mime email 

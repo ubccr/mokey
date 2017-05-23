@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
 	log "github.com/Sirupsen/logrus"
@@ -19,6 +18,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
+	"github.com/ubccr/mokey/model"
 )
 
 const (
@@ -26,7 +26,6 @@ const (
 	CookieKeyAuthenticated = "authenticated"
 	CookieKeySID           = "sid"
 	CookieKeyUser          = "user"
-	CookieKeyOTP           = "otp"
 	ContextKeyUser         = "user"
 	TokenRegex             = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
 	ResetSalt              = "resetpw"
@@ -34,30 +33,15 @@ const (
 )
 
 type AppContext struct {
-	Db          *sqlx.DB
+	DB          *sqlx.DB
 	Tmpldir     string
-	dsn         string
 	cookieStore *sessions.CookieStore
 	templates   map[string]*template.Template
 	emails      map[string]*template.Template
 }
 
-func NewDb() (*sqlx.DB, error) {
-	db, err := sqlx.Open(viper.GetString("driver"), viper.GetString("dsn"))
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
 func NewAppContext() (*AppContext, error) {
-	db, err := NewDb()
+	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
 	if err != nil {
 		return nil, err
 	}
@@ -86,9 +70,10 @@ func NewAppContext() (*AppContext, error) {
 	templates := make(map[string]*template.Template)
 	for _, t := range tmpls {
 		base := filepath.Base(t)
-		if base != "layout.html" {
+		if base != "layout.html" && base != "otp-info.html" {
 			templates[base] = template.Must(template.New("layout").ParseFiles(t,
-				tmpldir+"/layout.html"))
+				tmpldir+"/layout.html",
+				tmpldir+"/otp-info.html"))
 		}
 	}
 
@@ -105,7 +90,7 @@ func NewAppContext() (*AppContext, error) {
 
 	app := &AppContext{}
 	app.Tmpldir = tmpldir
-	app.Db = db
+	app.DB = db
 	app.cookieStore = sessions.NewCookieStore([]byte(viper.GetString("secret_key")))
 	app.templates = templates
 	app.emails = emails

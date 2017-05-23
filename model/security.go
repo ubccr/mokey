@@ -12,13 +12,13 @@ import (
 
 type SecurityAnswer struct {
 	UserName   string `db:"user_name"`
-	QuestionId int    `db:"question_id"`
+	QuestionID int    `db:"question_id"`
 	Question   string `db:"question"`
 	Answer     string `db:"answer"`
 }
 
 type SecurityQuestion struct {
-	Id       int    `db:"id"`
+	ID       int    `db:"id"`
 	Question string `db:"question"`
 }
 
@@ -54,7 +54,7 @@ func StoreAnswer(db *sqlx.DB, user, ans string, qid int) error {
 
 	sa := &SecurityAnswer{
 		UserName:   user,
-		QuestionId: qid,
+		QuestionID: qid,
 		Answer:     string(hash)}
 
 	_, err = db.NamedExec("replace into security_answer (user_name,question_id,answer,created_at) values (:user_name, :question_id, :answer, now())", sa)
@@ -73,4 +73,13 @@ func FetchQuestions(db *sqlx.DB) ([]*SecurityQuestion, error) {
 	}
 
 	return questions, nil
+}
+
+func RemoveAnswer(db *sqlx.DB, uid string) error {
+	_, err := db.Exec("delete from security_answer where user_name = ?", uid)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

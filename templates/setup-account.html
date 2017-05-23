@@ -1,10 +1,43 @@
 {{define "content"}}
 
-  <h1 class="page-header"><i class="fa fa-lock"></i> Setup user account </h1>
 
 {{ if .completed }}
-    <div class="alert alert-success">Thank you. Your account has been successfully activated. </div>
+    {{ if .otptoken }}
+      <h1 class="page-header"><i class="fa fa-lock"></i> Setup Two-Factor Authentication </h1>
+        <div class="col-sm-6">
+            <span class="help-block"> Scan the QR code with your mobile device's app. For more information <a data-toggle="modal" data-target="#twofa-info" href="#twofa-info">click here</a>:</span>
+            <img alt="QRCode" src="data:image/png;base64,{{ .otpdata }}" />
+
+            <p><a data-toggle="modal" data-target="#qrcode-info" href="#qrcode-info">Show URI</a></p>
+        </div>
+
+    <div class="modal fade" id="qrcode-info" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Two-Factor Auth URI</h4>
+          </div>
+          <div class="modal-body">
+                <samp>
+                    {{ .otptoken.URI }}
+                <samp>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    {{ else }}
+      <h1 class="page-header"><i class="fa fa-lock"></i> Setup Complete</h1>
+      <div class="alert alert-success">Thank you. Your account has been successfully activated. </div>
+    {{ end }}
+
 {{ else }}
+
+  <h1 class="page-header"><i class="fa fa-lock"></i> Setup user account </h1>
 
 {{ with .message }}
 <div class="alert alert-danger alert-dismissable">
@@ -14,6 +47,20 @@
 {{ end }}
 
     <form class="form-horizontal" role="form" method="POST">
+
+      {{ if .otpRequired }}
+      <div class="form-group">
+        <label class="col-sm-2 control-label">&nbsp;</label>
+        <div class="col-sm-6">
+            <span class="help-block"><span class="label label-danger">Action Required</span> 
+            You will be required to setup Two-Factor authentication on the next
+            step. After clicking the Save button below you will need to scan a QR
+            code with your mobile device's authenticator app. For futher
+            instructions <a data-toggle="modal" data-target="#twofa-info" href="#twofa-info">click here</a>
+            </span>
+        </div>
+      </div>
+      {{ end }}
 
       <div class="form-group">
         <label class="col-sm-2 control-label" for="password">Password</label>
@@ -33,7 +80,7 @@
       <div class="form-group">
         <label class="col-sm-2 control-label">&nbsp;</label>
         <div class="col-sm-6">
-            <span class="help-block">Please set a security question to use for resetting your password in the future.</span>
+            <span class="help-block">Please set a security question to use for verifying your identity in the future.</span>
         </div>
       </div>
 
@@ -42,7 +89,7 @@
         <div class="col-sm-6">
             <select class="form-control" id="qid" name="qid" rows="5">
             {{ range $q := .questions }}
-                <option value="{{ $q.Id }}">{{ $q.Question }}</option>
+                <option value="{{ $q.ID }}">{{ $q.Question }}</option>
             {{ end }}
             </select>
         </div>
@@ -59,7 +106,7 @@
       <div class="form-group">
           <div class="col-sm-offset-2 col-sm-6">
               <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
-              <button type="submit" class="btn btn-primary">Update</button>
+              <button type="submit" class="btn btn-primary">Save {{ if .otpRequired }}&amp; Setup Two-Factor Auth {{ end }}</button>
           </div>
       </div>
     </form>
@@ -67,5 +114,22 @@
 
 {{ end }}
 
+
+<div class="modal fade" id="twofa-info" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Setting up Two-Factor Authentication</h4>
+      </div>
+      <div class="modal-body">
+            {{template "otp-info.html" .}}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">OK Got it!</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
 {{end}}

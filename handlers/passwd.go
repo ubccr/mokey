@@ -19,21 +19,21 @@ import (
 	"github.com/ubccr/mokey/model"
 )
 
-func setupAccount(ctx *app.AppContext, questions []*model.SecurityQuestion, token *model.Token, r *http.Request) error {
+func setupAccount(ctx *app.AppContext, questions []*model.SecurityQuestion, token *model.Token, r *http.Request) (*ipa.OTPToken, error) {
 	pass := r.FormValue("password")
 	pass2 := r.FormValue("password2")
 
 	if len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
-		return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
+		return nil, errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
 	}
 
 	if pass != pass2 {
-		return errors.New("Password do not match. Please confirm your password.")
+		return nil, errors.New("Password do not match. Please confirm your password.")
 	}
 
 	err := updateSecurityQuestion(ctx, questions, token.UserName, r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Setup password in FreeIPA
@@ -44,7 +44,7 @@ func setupAccount(ctx *app.AppContext, questions []*model.SecurityQuestion, toke
 				"uid":   token.UserName,
 				"error": ierr.Error(),
 			}).Error("password does not conform to policy")
-			return errors.New("Your password is too weak. Please ensure your password includes a number and lower/upper case character")
+			return nil, errors.New("Your password is too weak. Please ensure your password includes a number and lower/upper case character")
 		}
 
 		if ierr, ok := err.(*ipa.ErrInvalidPassword); ok {
@@ -52,27 +52,37 @@ func setupAccount(ctx *app.AppContext, questions []*model.SecurityQuestion, toke
 				"uid":   token.UserName,
 				"error": ierr.Error(),
 			}).Error("invalid password from FreeIPA")
-			return errors.New("Invalid password.")
+			return nil, errors.New("Invalid password.")
 		}
 
 		log.WithFields(log.Fields{
 			"uid":   token.UserName,
 			"error": err.Error(),
 		}).Error("failed to set user password in FreeIPA")
-		return errors.New("Fatal system error")
+		return nil, errors.New("Fatal system error")
+	}
+
+	// Create new TOTP token if required
+	otptoken, err := setTOTP(token.UserName, pass)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uid":   token.UserName,
+			"error": err.Error(),
+		}).Error("failed to create TOTP")
+		return nil, errors.New("Fatal system error")
 	}
 
 	// Destroy token
-	err = model.DestroyToken(ctx.Db, token.Token)
+	err = model.DestroyToken(ctx.DB, token.Token)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":   token.UserName,
 			"error": err.Error(),
 		}).Error("failed to remove token from database")
-		return errors.New("Fatal system error")
+		return nil, errors.New("Fatal system error")
 	}
 
-	return nil
+	return otptoken, nil
 }
 
 func SetupAccountHandler(ctx *app.AppContext) http.Handler {
@@ -84,7 +94,7 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		token, err := model.FetchToken(ctx.Db, tk, viper.GetInt("setup_max_age"))
+		token, err := model.FetchToken(ctx.DB, tk, viper.GetInt("setup_max_age"))
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
@@ -104,25 +114,40 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		questions, err := model.FetchQuestions(ctx.Db)
+		questions, err := model.FetchQuestions(ctx.DB)
 		if err != nil {
 			log.WithFields(log.Fields{
+				"uid":   token.UserName,
 				"error": err.Error(),
 			}).Error("Failed to fetch questions from database")
 			ctx.RenderError(w, http.StatusInternalServerError)
 			return
 		}
 
+		client := app.NewIpaClient(true)
+		userRec, err := client.UserShow(token.UserName)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"uid":   token.UserName,
+				"error": err.Error(),
+			}).Error("Failed to fetch user record from freeipa")
+			ctx.RenderError(w, http.StatusInternalServerError)
+			return
+		}
+
 		message := ""
 		completed := false
+		var otptoken *ipa.OTPToken
+		otpdata := ""
 
 		if r.Method == "POST" {
-			err := setupAccount(ctx, questions, token, r)
+			var err error
+			otptoken, err = setupAccount(ctx, questions, token, r)
 			if err != nil {
 				message = err.Error()
 				completed = false
 
-				err := model.IncrementToken(ctx.Db, token.Token)
+				err := model.IncrementToken(ctx.DB, token.Token)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
@@ -137,22 +162,33 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 						"error": err,
 					}).Error("failed to send setup confirmation email to user")
 				}
+
+				otpdata, err = QRCode(otptoken)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"uid":   token.UserName,
+						"error": err,
+					}).Error("failed to render TOTP token as QRCode image")
+				}
 			}
 		}
 
 		vars := map[string]interface{}{
-			"token":     nosurf.Token(r),
-			"uid":       token.UserName,
-			"completed": completed,
-			"questions": questions,
-			"message":   message}
+			"token":       nosurf.Token(r),
+			"uid":         token.UserName,
+			"completed":   completed,
+			"questions":   questions,
+			"otpRequired": userRec.OTPOnly(),
+			"otpdata":     otpdata,
+			"otptoken":    otptoken,
+			"message":     message}
 
 		ctx.RenderTemplate(w, "setup-account.html", vars)
 	})
 }
 
 func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *model.Token, r *http.Request) error {
-	ans := r.FormValue("answer")
+	challenge := r.FormValue("challenge")
 	pass := r.FormValue("password")
 	pass2 := r.FormValue("password2")
 
@@ -164,11 +200,11 @@ func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *mod
 		return errors.New("Password do not match. Please confirm your password.")
 	}
 
-	if viper.GetBool("require_question_pwreset") && (utf8.RuneCountInString(ans) < 2 || utf8.RuneCountInString(ans) > 100) {
+	if viper.GetBool("require_question_pwreset") && (utf8.RuneCountInString(challenge) < 2 || utf8.RuneCountInString(challenge) > 100) {
 		return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
 	}
 
-	if viper.GetBool("require_question_pwreset") && !answer.Verify(ans) {
+	if viper.GetBool("require_question_pwreset") && !answer.Verify(challenge) {
 		return errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
 	}
 
@@ -199,7 +235,7 @@ func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *mod
 	}
 
 	// Destroy token
-	err = model.DestroyToken(ctx.Db, token.Token)
+	err = model.DestroyToken(ctx.DB, token.Token)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":   token.UserName,
@@ -220,7 +256,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		token, err := model.FetchToken(ctx.Db, tk, viper.GetInt("reset_max_age"))
+		token, err := model.FetchToken(ctx.DB, tk, viper.GetInt("reset_max_age"))
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
@@ -240,7 +276,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		answer, err := model.FetchAnswer(ctx.Db, token.UserName)
+		answer, err := model.FetchAnswer(ctx.DB, token.UserName)
 		if err != nil && viper.GetBool("require_question_pwreset") {
 			log.WithFields(log.Fields{
 				"uid":   token.UserName,
@@ -260,7 +296,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 				message = err.Error()
 				completed = false
 
-				err := model.IncrementToken(ctx.Db, token.Token)
+				err := model.IncrementToken(ctx.DB, token.Token)
 				if err != nil {
 					log.WithFields(log.Fields{
 						"error": err.Error(),
@@ -296,7 +332,7 @@ func forgotPassword(ctx *app.AppContext, r *http.Request) error {
 		return errors.New("Please provide a user name.")
 	}
 
-	_, err := model.FetchTokenByUser(ctx.Db, uid, viper.GetInt("setup_max_age"))
+	_, err := model.FetchTokenByUser(ctx.DB, uid, viper.GetInt("setup_max_age"))
 	if err == nil {
 		log.WithFields(log.Fields{
 			"uid": uid,
@@ -321,7 +357,7 @@ func forgotPassword(ctx *app.AppContext, r *http.Request) error {
 		return nil
 	}
 
-	_, err = model.FetchAnswer(ctx.Db, uid)
+	_, err = model.FetchAnswer(ctx.DB, uid)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":   uid,
@@ -330,7 +366,7 @@ func forgotPassword(ctx *app.AppContext, r *http.Request) error {
 		return nil
 	}
 
-	token, err := model.NewToken(ctx.Db, uid, string(userRec.Email))
+	token, err := model.CreateToken(ctx.DB, uid, string(userRec.Email))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":   uid,
@@ -394,6 +430,26 @@ func setPassword(uid, oldPass, newPass string) error {
 	}
 
 	return nil
+}
+
+func setTOTP(uid, pass string) (*ipa.OTPToken, error) {
+	c := app.NewIpaClient(true)
+
+	_, err := c.Login(uid, pass)
+	if err != nil {
+		return nil, err
+	}
+
+	userRec, err := c.UserShow(uid)
+	if err != nil {
+		return nil, err
+	}
+
+	if userRec.OTPOnly() {
+		return c.AddTOTPToken(uid, ipa.AlgorithmSHA1, ipa.DigitsSix, 30)
+	}
+
+	return nil, nil
 }
 
 func changePassword(ctx *app.AppContext, user *ipa.UserRecord, r *http.Request) error {

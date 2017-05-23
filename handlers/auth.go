@@ -59,22 +59,17 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 			uid := r.FormValue("uid")
 			pass := r.FormValue("password")
 
-			sid, userRec, err := tryAuth(uid, pass)
+			sid, _, err := tryAuth(uid, pass)
 			if err != nil {
 				message = err.Error()
 			} else {
-				_, err := model.FetchConfirmedOTPToken(ctx.Db, string(userRec.Uid))
-				if err == nil {
-					session.Values[app.CookieKeyOTP] = true
-				} else {
-					session.Values[app.CookieKeyOTP] = false
-				}
 				session.Values[app.CookieKeySID] = sid
 				session.Values[app.CookieKeyUser] = uid
 				session.Values[app.CookieKeyAuthenticated] = false
-				err = session.Save(r, w)
+				err := session.Save(r, w)
 				if err != nil {
 					log.WithFields(log.Fields{
+						"user":  uid,
 						"error": err.Error(),
 					}).Error("loginhandler: failed to save session")
 					logout(ctx, w, r)
@@ -111,12 +106,10 @@ func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		if user.TwoFactorOnly() {
+		if user.OTPOnly() {
 			// Two-Factor auth is the only type allowed by FreeIPA for this
 			// user account. So we can assume the user has already provided a
-			// OTP along with their password when they logged in. No need to
-			// prompt them again. Alternatively, we could prompt for their
-			// security question for 3 factor auth?
+			// TOTP along with their password when they logged in.
 			session.Values[app.CookieKeyAuthenticated] = true
 			err = session.Save(r, w)
 			if err != nil {
@@ -132,60 +125,13 @@ func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		otp := session.Values[app.CookieKeyOTP]
-
-		if otp != nil && otp.(bool) {
-			AuthOTPHandler(ctx, session, user, w, r)
-			return
-		}
-
+		// Default challenge with security question
 		AuthQuestionHandler(ctx, session, user, w, r)
 	})
 }
 
-func AuthOTPHandler(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRecord, w http.ResponseWriter, r *http.Request) {
-	token, err := model.FetchConfirmedOTPToken(ctx.Db, string(user.Uid))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"user":  string(user.Uid),
-			"error": err,
-		}).Error("Failed to fetch TOTP")
-		logout(ctx, w, r)
-		ctx.RenderNotFound(w)
-		return
-	}
-
-	message := ""
-	if r.Method == "POST" {
-		code := r.FormValue("code")
-		if token.Validate(code) {
-			session.Values[app.CookieKeyAuthenticated] = true
-			err = session.Save(r, w)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err.Error(),
-				}).Error("failed to save session")
-				logout(ctx, w, r)
-				ctx.RenderError(w, http.StatusInternalServerError)
-				return
-			}
-
-			http.Redirect(w, r, "/", 302)
-			return
-		}
-
-		message = "Invalid code. Try again"
-	}
-
-	vars := map[string]interface{}{
-		"token":   nosurf.Token(r),
-		"message": message}
-
-	ctx.RenderTemplate(w, "otp.html", vars)
-}
-
 func AuthQuestionHandler(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRecord, w http.ResponseWriter, r *http.Request) {
-	answer, err := model.FetchAnswer(ctx.Db, string(user.Uid))
+	answer, err := model.FetchAnswer(ctx.DB, string(user.Uid))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid": string(user.Uid), "error": err,
@@ -251,7 +197,6 @@ func logout(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
 	delete(session.Values, app.CookieKeySID)
 	delete(session.Values, app.CookieKeyUser)
 	delete(session.Values, app.CookieKeyAuthenticated)
-	delete(session.Values, app.CookieKeyOTP)
 	session.Options.MaxAge = -1
 
 	err = session.Save(r, w)

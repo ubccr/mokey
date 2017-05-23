@@ -26,12 +26,12 @@ func createToken(uid string) (*model.Token, error) {
 		return nil, errors.New("User missing email address")
 	}
 
-	db, err := app.NewDb()
+	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := model.NewToken(db, uid, string(userRec.Email))
+	token, err := model.CreateToken(db, uid, string(userRec.Email))
 	if err != nil {
 		return nil, err
 	}
@@ -40,12 +40,12 @@ func createToken(uid string) (*model.Token, error) {
 }
 
 func NewAccountEmail(uid string) {
-	token, err := createToken(uid)
+	ctx, err := app.NewAppContext()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	ctx, err := app.NewAppContext()
+	token, err := createToken(uid)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -61,10 +61,26 @@ func NewAccountEmail(uid string) {
 			"error": err,
 		}).Error("failed send email to user")
 	}
+
+	err = model.RemoveAnswer(ctx.DB, uid)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uid":   uid,
+			"error": err,
+		}).Error("failed to remove security answer")
+	}
+
+	err = handlers.RemoveAllOTPTokens(uid, "")
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uid":   uid,
+			"error": err,
+		}).Error("failed to remove all OTP tokens")
+	}
 }
 
 func ResetPasswordEmail(uid string) {
-	db, err := app.NewDb()
+	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -98,18 +114,4 @@ func ResetPasswordEmail(uid string) {
 			"error": err,
 		}).Error("failed send email to user")
 	}
-}
-
-func DisableTOTP(uid string) {
-	ctx, err := app.NewAppContext()
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	err = handlers.DisableTOTP(ctx, uid, "")
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	log.Infof("TOTP disabled for user: %s", uid)
 }
