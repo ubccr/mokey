@@ -28,7 +28,7 @@
     {{ range $i, $tok := .otptokens }}
     <div class="media">
      <div class="media-left"> 
-        <a href="#" data-record-id="{{ $tok.UUID }}" data-toggle="modal" data-target="#confirm-{{if $tok.Enabled}}disable{{else}}enable{{end}}">
+        <a href="#" title="{{if $tok.Enabled}}Disable{{else}}Enable{{end}}" data-record-id="{{ $tok.UUID }}" data-toggle="modal" data-target="#confirm-{{if $tok.Enabled}}disable{{else}}enable{{end}}">
             <i class="fa fa-toggle-{{if $tok.Enabled}}on{{else}}off{{end}} fa-2x"></i>
         </a>
      </div>

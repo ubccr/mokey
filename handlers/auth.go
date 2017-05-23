@@ -5,6 +5,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"errors"
 	"net/http"
 
@@ -17,32 +18,50 @@ import (
 	"github.com/ubccr/mokey/model"
 )
 
-func tryAuth(uid, pass string) (string, *ipa.UserRecord, error) {
-	if len(uid) == 0 || len(pass) == 0 {
-		return "", nil, errors.New("Please provide a uid/password")
+func tryAuth(user *ipa.UserRecord, answer *model.SecurityAnswer, password, challenge, code string) (string, error) {
+	if len(password) == 0 {
+		return "", errors.New("Please provide a password")
+	}
+	if user.OTPOnly() && len(code) == 0 {
+		return "", errors.New("Please provide a six-digit authentication code")
+	}
+	if user.OTPOnly() {
+		password += code
+	} else if viper.GetBool("force_2fa") && answer != nil && !answer.Verify(challenge) {
+		return "", errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
 	}
 
 	c := app.NewIpaClient(true)
 
-	sess, err := c.Login(uid, pass)
+	sess, err := c.Login(string(user.Uid), password)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"uid":              uid,
+			"uid":              string(user.Uid),
 			"ipa_client_error": err,
 		}).Error("tryauth: failed login attempt")
-		return "", nil, errors.New("Invalid login")
+		return "", errors.New("Invalid login")
 	}
+
+	return sess, nil
+}
+
+func checkUser(uid string) (*ipa.UserRecord, error) {
+	if len(uid) == 0 {
+		return nil, errors.New("Please provide a username")
+	}
+
+	c := app.NewIpaClient(true)
 
 	userRec, err := c.UserShow(uid)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":              uid,
 			"ipa_client_error": err,
-		}).Error("tryauth: failed to fetch user info")
-		return "", nil, errors.New("Invalid login")
+		}).Error("failed to check user")
+		return nil, errors.New("Invalid login")
 	}
 
-	return sess, userRec, nil
+	return userRec, nil
 }
 
 func LoginHandler(ctx *app.AppContext) http.Handler {
@@ -57,15 +76,12 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 
 		if r.Method == "POST" {
 			uid := r.FormValue("uid")
-			pass := r.FormValue("password")
 
-			sid, _, err := tryAuth(uid, pass)
+			_, err = checkUser(uid)
 			if err != nil {
 				message = err.Error()
 			} else {
-				session.Values[app.CookieKeySID] = sid
 				session.Values[app.CookieKeyUser] = uid
-				session.Values[app.CookieKeyAuthenticated] = false
 				err := session.Save(r, w)
 				if err != nil {
 					log.WithFields(log.Fields{
@@ -99,21 +115,45 @@ func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
-		user := ctx.GetUser(r)
-		if user == nil {
+		uid := session.Values[app.CookieKeyUser]
+		user, err := checkUser(uid.(string))
+		if err != nil {
 			logout(ctx, w, r)
-			ctx.RenderError(w, http.StatusInternalServerError)
+			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
 
-		if user.OTPOnly() {
-			// Two-Factor auth is the only type allowed by FreeIPA for this
-			// user account. So we can assume the user has already provided a
-			// TOTP along with their password when they logged in.
-			session.Values[app.CookieKeyAuthenticated] = true
-			err = session.Save(r, w)
+		checkAuth(ctx, session, user, w, r)
+	})
+}
+
+func checkAuth(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRecord, w http.ResponseWriter, r *http.Request) {
+	answer, err := model.FetchAnswer(ctx.DB, string(user.Uid))
+	if err != nil && err != sql.ErrNoRows {
+		log.WithFields(log.Fields{
+			"uid":   string(user.Uid),
+			"error": err,
+		}).Error("Failed to fetch security question")
+		logout(ctx, w, r)
+		http.Redirect(w, r, "/auth/login", 302)
+		return
+	}
+
+	message := ""
+
+	if r.Method == "POST" {
+		sid, err := tryAuth(user, answer, r.FormValue("password"), r.FormValue("answer"), r.FormValue("code"))
+		if err != nil {
+			message = err.Error()
+		} else {
+			session.Values[app.CookieKeySID] = sid
+			if answer != nil {
+				session.Values[app.CookieKeyAuthenticated] = true
+			}
+			err := session.Save(r, w)
 			if err != nil {
 				log.WithFields(log.Fields{
+					"user":  string(user.Uid),
 					"error": err.Error(),
 				}).Error("failed to save session")
 				logout(ctx, w, r)
@@ -121,71 +161,23 @@ func TwoFactorAuthHandler(ctx *app.AppContext) http.Handler {
 				return
 			}
 
-			http.Redirect(w, r, "/", 302)
-			return
-		}
-
-		// Default challenge with security question
-		AuthQuestionHandler(ctx, session, user, w, r)
-	})
-}
-
-func AuthQuestionHandler(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRecord, w http.ResponseWriter, r *http.Request) {
-	answer, err := model.FetchAnswer(ctx.DB, string(user.Uid))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"uid": string(user.Uid), "error": err,
-		}).Error("User can't login. No security answer has been set")
-		http.Redirect(w, r, "/auth/setsec", 302)
-		return
-	}
-
-	if !viper.GetBool("force_2fa") {
-		// Forcing Two-factor auth is disabled
-		session.Values[app.CookieKeyAuthenticated] = true
-		err = session.Save(r, w)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err.Error(),
-			}).Error("failed to save session")
-			logout(ctx, w, r)
-			ctx.RenderError(w, http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/", 302)
-		return
-	}
-
-	message := ""
-
-	if r.Method == "POST" {
-		ans := r.FormValue("answer")
-		if !answer.Verify(ans) {
-			message = "The security answer you provided does not match. Please check that you are entering the correct answer."
-		} else {
-			session.Values[app.CookieKeyAuthenticated] = true
-			err = session.Save(r, w)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err.Error(),
-				}).Error("login question handler: failed to save session")
-				logout(ctx, w, r)
-				ctx.RenderError(w, http.StatusInternalServerError)
-				return
+			if answer != nil {
+				http.Redirect(w, r, "/", 302)
+			} else {
+				http.Redirect(w, r, "/auth/setsec", 302)
 			}
-
-			http.Redirect(w, r, "/", 302)
 			return
 		}
 	}
 
 	vars := map[string]interface{}{
-		"token":    nosurf.Token(r),
-		"question": answer.Question,
-		"message":  message}
+		"token":            nosurf.Token(r),
+		"answer":           answer,
+		"otpRequired":      user.OTPOnly(),
+		"questionRequired": viper.GetBool("force_2fa"),
+		"message":          message}
 
-	ctx.RenderTemplate(w, "login-question.html", vars)
+	ctx.RenderTemplate(w, "login-2fa.html", vars)
 }
 
 func logout(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {

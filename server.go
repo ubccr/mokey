@@ -86,8 +86,10 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 	router.Path(fmt.Sprintf("/auth/setup/{token:%s}", app.TokenRegex)).Handler(handlers.SetupAccountHandler(ctx)).Methods("GET", "POST")
 	router.Path(fmt.Sprintf("/auth/resetpw/{token:%s}", app.TokenRegex)).Handler(handlers.ResetPasswordHandler(ctx)).Methods("GET", "POST")
 
+	// UserNameRequired
+	router.Path("/auth/2fa").Handler(handlers.UserNameRequired(ctx, handlers.RateLimit(ctx, handlers.TwoFactorAuthHandler(ctx)))).Methods("GET", "POST")
+
 	// LoginRequired
-	router.Path("/auth/2fa").Handler(handlers.LoginRequired(ctx, handlers.RateLimit(ctx, handlers.TwoFactorAuthHandler(ctx)))).Methods("GET", "POST")
 	router.Path("/auth/setsec").Handler(handlers.LoginRequired(ctx, handlers.RateLimit(ctx, handlers.SetupQuestionHandler(ctx)))).Methods("GET", "POST")
 
 	// AuthRequired

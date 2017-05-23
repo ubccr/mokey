@@ -1,6 +1,6 @@
 {{define "content"}}
 
-<h1 class="page-header"><i class="fa fa-lock"></i> Answer Security Question </h1>
+<h1 class="page-header"><i class="fa fa-lock"></i> Please complete login</h1>
 
 {{ with .message }}
 <div class="alert alert-danger alert-dismissable">
@@ -10,11 +10,26 @@
 {{ end }}
 
     <form class="form-horizontal" role="form" method="POST">
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="password">Password</label>
+        <div class="col-sm-6">
+            <input class="form-control" id="password" name="password" rows="25" type="password" value="">
+        </div>
+      </div>
 
+      {{ if .otpRequired }}
+      <div class="form-group">
+        <label class="col-sm-2 control-label" for="answer">Code</label>
+        <div class="col-sm-6">
+            <span class="help-block">Enter the six-digit auth code from your mobile app</span>
+            <input class="form-control" id="code" name="code" rows="5" type="text" value="">
+        </div>
+      </div>
+      {{ else if and (.answer) (.questionRequired) }}
       <div class="form-group">
         <label class="col-sm-2 control-label">Question:</label>
         <div class="col-sm-6">
-             <p class="form-control-static">{{ .question }}?</p>
+             <p class="form-control-static">{{ .answer.Question }}?</p>
         </div>
       </div>
       <div class="form-group">
@@ -23,6 +38,7 @@
             <input class="form-control" id="answer" name="answer" rows="5" type="password" value="">
         </div>
       </div>
+      {{ end }}
 
       <div class="form-group">
           <div class="col-sm-offset-2 col-sm-6">
@@ -34,7 +50,7 @@
 
 <script>
 $(function(){
-    $('#answer').focus();
+    $('#password').focus();
 });
 </script>
 

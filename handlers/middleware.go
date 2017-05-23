@@ -85,6 +85,34 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 	})
 }
 
+// UserNameRequired ensure the user has submitted a valid username.
+func UserNameRequired(ctx *app.AppContext, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, err := ctx.GetSession(r)
+		if err != nil {
+			ctx.RenderError(w, http.StatusInternalServerError)
+			return
+		}
+
+		user := session.Values[app.CookieKeyUser]
+
+		if user == nil {
+			logout(ctx, w, r)
+			http.Redirect(w, r, "/auth/login", 302)
+			return
+		}
+
+		if _, ok := user.(string); !ok {
+			logout(ctx, w, r)
+			log.Error("Invalid user record in session.")
+			http.Redirect(w, r, "/auth/login", 302)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func RateLimit(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// check if rate limiting is enabled

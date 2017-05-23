@@ -16,7 +16,7 @@
         <div class="col-sm-6">
             <select class="form-control" id="qid" name="qid" rows="5">
             {{ range $q := .questions }}
-                <option value="{{ $q.Id }}">{{ $q.Question }}</option>
+                <option value="{{ $q.ID }}">{{ $q.Question }}</option>
             {{ end }}
             </select>
         </div>
