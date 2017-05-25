@@ -5,9 +5,11 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/gob"
 	"fmt"
 	"net/http"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/carbocation/interpose"
@@ -68,6 +70,7 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 
 	mw.UseHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		rw.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+		rw.Header().Set("Strict-Transport-Security", "max-age=15768000;")
 	}))
 
 	router := mux.NewRouter()
@@ -113,18 +116,63 @@ func Server() {
 
 	middle := middlewareStruct(ctx)
 
-	log.Printf("Running on http://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
 	log.Printf("IPA server: %s", viper.GetString("ipahost"))
 
-	http.Handle("/", middle)
+	if viper.IsSet("insecure_redirect_port") && viper.IsSet("insecure_redirect_host") {
+		log.Infof("Redirecting insecure http requests on port %d to https://%s:%d",
+			viper.GetInt("insecure_redirect_port"),
+			viper.GetString("insecure_redirect_host"),
+			viper.GetInt("port"))
+
+		srv := &http.Server{
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+			IdleTimeout:  120 * time.Second,
+			Addr:         fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("insecure_redirect_port")),
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				w.Header().Set("Connection", "close")
+				url := fmt.Sprintf("https://%s:%d%s", viper.GetString("insecure_redirect_host"), viper.GetInt("port"), req.URL.String())
+				http.Redirect(w, req, url, http.StatusMovedPermanently)
+			}),
+		}
+		go func() { log.Fatal(srv.ListenAndServe()) }()
+	}
+
+	srv := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		Addr:         fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")),
+		Handler:      middle,
+	}
 
 	certFile := viper.GetString("cert")
 	keyFile := viper.GetString("key")
-
 	if certFile != "" && keyFile != "" {
-		http.ListenAndServeTLS(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), certFile, keyFile, nil)
+		cfg := &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			CurvePreferences: []tls.CurveID{
+				tls.CurveP256,
+				tls.X25519,
+			},
+			PreferServerCipherSuites: true,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			},
+		}
+
+		srv.TLSConfig = cfg
+
+		log.Printf("Running on https://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
+		log.Fatal(srv.ListenAndServeTLS(certFile, keyFile))
 	} else {
 		log.Warn("**WARNING*** SSL/TLS not enabled. HTTP communication will not be encrypted and vulnerable to snooping.")
-		http.ListenAndServe(fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")), nil)
+		log.Printf("Running on http://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
+		log.Fatal(srv.ListenAndServe())
 	}
 }

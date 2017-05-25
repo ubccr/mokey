@@ -10,12 +10,18 @@ dsn: "user:pass@/dbname?parseTime=true"
 driver: "mysql"
 
 #------------------------------------------------------------------------------
-# Webserver port to lisen on
+# Secure webserver port to listen on
 #------------------------------------------------------------------------------
 port: 8080
 
 #------------------------------------------------------------------------------
-# Webserver interface to lisen on
+# Insecure redirect host and port. If set will redirect http to https
+#------------------------------------------------------------------------------
+# insecure_redirect_port: 80
+# insecure_redirect_host: localhost
+
+#------------------------------------------------------------------------------
+# Webserver interface to listen on
 #------------------------------------------------------------------------------
 bind: "127.0.0.1"
 
