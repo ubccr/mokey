@@ -5,6 +5,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -449,11 +450,11 @@ func setTOTP(uid, pass string) (*ipa.OTPToken, error) {
 	return nil, nil
 }
 
-func changePassword(ctx *app.AppContext, sid string, user *ipa.UserRecord, r *http.Request) error {
+func changePassword(ctx *app.AppContext, sid string, user *ipa.UserRecord, answer *model.SecurityAnswer, r *http.Request) error {
 	current := r.FormValue("password")
 	pass := r.FormValue("new_password")
 	pass2 := r.FormValue("new_password2")
-	code := r.FormValue("code")
+	challenge := r.FormValue("challenge")
 
 	if len(current) < viper.GetInt("min_passwd_len") || len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
 		return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
@@ -467,15 +468,24 @@ func changePassword(ctx *app.AppContext, sid string, user *ipa.UserRecord, r *ht
 		return errors.New("Current password is the same as new password. Please set a different password.")
 	}
 
-	if user.OTPOnly() && len(code) == 0 {
+	if user.OTPOnly() && len(challenge) == 0 {
 		return errors.New("Please provide a six-digit authentication code")
+	}
+
+	if !user.OTPOnly() && viper.GetBool("force_2fa") && answer != nil && !answer.Verify(challenge) {
+		return errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
+	}
+
+	if !user.OTPOnly() {
+		// Don't send the security answer as OTP
+		challenge = ""
 	}
 
 	// Change password in FreeIPA
 	c := app.NewIpaClient(false)
 	c.SetSession(sid)
 
-	err := c.ChangePassword(string(user.Uid), current, pass, code)
+	err := c.ChangePassword(string(user.Uid), current, pass, challenge)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
@@ -510,12 +520,22 @@ func ChangePasswordHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
+		answer, err := model.FetchAnswer(ctx.DB, string(user.Uid))
+		if err != nil && err != sql.ErrNoRows {
+			log.WithFields(log.Fields{
+				"uid":   string(user.Uid),
+				"error": err,
+			}).Error("Failed to fetch security question")
+			ctx.RenderError(w, http.StatusInternalServerError)
+			return
+		}
+
 		message := ""
 		completed := false
 
 		if r.Method == "POST" {
 			sid := session.Values[app.CookieKeySID]
-			err := changePassword(ctx, sid.(string), user, r)
+			err := changePassword(ctx, sid.(string), user, answer, r)
 			if err != nil {
 				message = err.Error()
 				completed = false
@@ -538,10 +558,12 @@ func ChangePasswordHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":     nosurf.Token(r),
-			"completed": completed,
-			"user":      user,
-			"message":   message}
+			"token":            nosurf.Token(r),
+			"completed":        completed,
+			"user":             user,
+			"answer":           answer,
+			"questionRequired": viper.GetBool("force_2fa"),
+			"message":          message}
 
 		ctx.RenderTemplate(w, "change-password.html", vars)
 	})
