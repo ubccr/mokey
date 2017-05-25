@@ -24,9 +24,9 @@ type Token struct {
 }
 
 func randToken() string {
-	b := make([]byte, 32)
+	b := make([]byte, 16)
 	rand.Read(b)
-	return fmt.Sprintf("%x", b)
+	return base64.RawURLEncoding.EncodeToString(b)
 }
 
 func computeMAC(salt, message, key []byte) string {
