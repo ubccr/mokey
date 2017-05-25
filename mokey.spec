@@ -73,10 +73,12 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
-* Mon Nov 28 2016  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.5-1
+* Thu May 25 2017  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.5-1
 - New Features
     - Add support for managing SSH Public Keys
-    - Add Two-Factor Authentication using TOTP
+    - Add support for managing OTP Tokens
+    - Add support for enabling Two-Factor Authentication
+    - Refresh UI
 * Thu Sep 03 2015  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.4-1
 - New Features
     - Min password length configurable option
