@@ -1,5 +1,5 @@
-hash: 471eb70c459a663313a9d4ca7b30cbc2df679d9b831b2b86a879b65520fb2cfb
-updated: 2017-05-23T11:50:24.812521858-04:00
+hash: 79c47aba60de2fce81c6bd6985897cef8ce8909420a39510869670cf9c892e07
+updated: 2017-05-25T15:30:20.770685182-04:00
 imports:
 - name: github.com/boombuler/barcode
   version: 8b1271e880cb66f992a2647ff7940d4dc5a41fee
@@ -73,7 +73,7 @@ imports:
 - name: github.com/spf13/viper
   version: 651d9d916abc3c3d6a91a12549495caba5edffd2
 - name: github.com/ubccr/goipa
-  version: b2203a761cb79fcddcdacb5708fc454df0ff101d
+  version: 4f40be281e7669afe648403dc99d08101a5d8b69
 - name: github.com/ubccr/kerby
   version: b55f6370b6198848497943fa1e822a02e0deee3f
   subpackages:

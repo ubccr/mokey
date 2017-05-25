@@ -37,7 +37,7 @@ func setupAccount(ctx *app.AppContext, questions []*model.SecurityQuestion, toke
 	}
 
 	// Setup password in FreeIPA
-	err = setPassword(token.UserName, "", pass)
+	err = setPassword(token.UserName, pass)
 	if err != nil {
 		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
 			log.WithFields(log.Fields{
@@ -209,7 +209,7 @@ func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *mod
 	}
 
 	// Setup password in FreeIPA
-	err := setPassword(token.UserName, "", pass)
+	err := setPassword(token.UserName, pass)
 	if err != nil {
 		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
 			log.WithFields(log.Fields{
@@ -413,18 +413,15 @@ func ForgotPasswordHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func setPassword(uid, oldPass, newPass string) error {
+func setPassword(uid, password string) error {
 	c := app.NewIpaClient(true)
 
-	if len(oldPass) == 0 {
-		rand, err := c.ResetPassword(uid)
-		if err != nil {
-			return err
-		}
-		oldPass = rand
+	rand, err := c.ResetPassword(uid)
+	if err != nil {
+		return err
 	}
 
-	err := c.ChangePassword(uid, oldPass, newPass)
+	err = c.SetPassword(uid, rand, password)
 	if err != nil {
 		return err
 	}
@@ -452,10 +449,11 @@ func setTOTP(uid, pass string) (*ipa.OTPToken, error) {
 	return nil, nil
 }
 
-func changePassword(ctx *app.AppContext, user *ipa.UserRecord, r *http.Request) error {
+func changePassword(ctx *app.AppContext, sid string, user *ipa.UserRecord, r *http.Request) error {
 	current := r.FormValue("password")
 	pass := r.FormValue("new_password")
 	pass2 := r.FormValue("new_password2")
+	code := r.FormValue("code")
 
 	if len(current) < viper.GetInt("min_passwd_len") || len(pass) < viper.GetInt("min_passwd_len") || len(pass2) < viper.GetInt("min_passwd_len") {
 		return errors.New(fmt.Sprintf("Please set a password at least %d characters in length.", viper.GetInt("min_passwd_len")))
@@ -469,23 +467,23 @@ func changePassword(ctx *app.AppContext, user *ipa.UserRecord, r *http.Request) 
 		return errors.New("Current password is the same as new password. Please set a different password.")
 	}
 
-	// Setup password in FreeIPA
-	err := setPassword(string(user.Uid), current, pass)
-	if err != nil {
-		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
-			log.WithFields(log.Fields{
-				"uid":   user.Uid,
-				"error": ierr.Error(),
-			}).Error("password does not conform to policy")
-			return errors.New("Password policy error. Your password is either too weak or you just changed your password within the last hour. Please ensure your password includes a number and lower/upper case character. You can only update your password once an hour.")
-		}
+	if user.OTPOnly() && len(code) == 0 {
+		return errors.New("Please provide a six-digit authentication code")
+	}
 
-		if ierr, ok := err.(*ipa.ErrInvalidPassword); ok {
+	// Change password in FreeIPA
+	c := app.NewIpaClient(false)
+	c.SetSession(sid)
+
+	err := c.ChangePassword(string(user.Uid), current, pass, code)
+	if err != nil {
+		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
-				"uid":   user.Uid,
-				"error": ierr.Error(),
-			}).Error("invalid password from FreeIPA")
-			return errors.New("Invalid password.")
+				"uid":     user.Uid,
+				"message": ierr.Message,
+				"code":    ierr.Code,
+			}).Error("IPA Error changing password")
+			return errors.New(ierr.Message)
 		}
 
 		log.WithFields(log.Fields{
@@ -506,11 +504,18 @@ func ChangePasswordHandler(ctx *app.AppContext) http.Handler {
 			return
 		}
 
+		session, err := ctx.GetSession(r)
+		if err != nil {
+			ctx.RenderError(w, http.StatusInternalServerError)
+			return
+		}
+
 		message := ""
 		completed := false
 
 		if r.Method == "POST" {
-			err := changePassword(ctx, user, r)
+			sid := session.Values[app.CookieKeySID]
+			err := changePassword(ctx, sid.(string), user, r)
 			if err != nil {
 				message = err.Error()
 				completed = false
