@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"unicode/utf8"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
@@ -37,8 +36,8 @@ func setupAccount(ctx *app.AppContext, questions []*model.SecurityQuestion, toke
 		return nil, err
 	}
 
-	// Setup password in FreeIPA
-	err = setPassword(token.UserName, pass)
+	// Setup password in FreeIPA. Assumed user has no OTP tokens.
+	err = setPassword(token.UserName, pass, "")
 	if err != nil {
 		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
 			log.WithFields(log.Fields{
@@ -90,7 +89,6 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tk, ok := model.VerifyToken(app.AccountSetupSalt, mux.Vars(r)["token"])
 		if !ok {
-			w.WriteHeader(http.StatusNotFound)
 			ctx.RenderNotFound(w)
 			return
 		}
@@ -100,7 +98,6 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 			}).Error("Failed to fetch token from database")
-			w.WriteHeader(http.StatusNotFound)
 			ctx.RenderNotFound(w)
 			return
 		}
@@ -110,7 +107,6 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 				"token": token.Token,
 				"uid":   token.UserName,
 			}).Error("Too many attempts for token.")
-			w.WriteHeader(http.StatusNotFound)
 			ctx.RenderNotFound(w)
 			return
 		}
@@ -188,7 +184,7 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *model.Token, r *http.Request) error {
+func resetPassword(ctx *app.AppContext, user *ipa.UserRecord, answer *model.SecurityAnswer, token *model.Token, r *http.Request) error {
 	challenge := r.FormValue("challenge")
 	pass := r.FormValue("password")
 	pass2 := r.FormValue("password2")
@@ -201,16 +197,21 @@ func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *mod
 		return errors.New("Password do not match. Please confirm your password.")
 	}
 
-	if viper.GetBool("require_question_pwreset") && (utf8.RuneCountInString(challenge) < 2 || utf8.RuneCountInString(challenge) > 100) {
-		return errors.New("Invalid answer. Must be between 2 and 100 characters long.")
+	if user.OTPOnly() && len(challenge) == 0 {
+		return errors.New("Please provide a six-digit authentication code")
 	}
 
-	if viper.GetBool("require_question_pwreset") && !answer.Verify(challenge) {
+	if !user.OTPOnly() && viper.GetBool("force_2fa") && answer != nil && !answer.Verify(challenge) {
 		return errors.New("The security answer you provided does not match. Please check that you are entering the correct answer.")
 	}
 
+	if !user.OTPOnly() {
+		// Don't send the security answer as OTP
+		challenge = ""
+	}
+
 	// Setup password in FreeIPA
-	err := setPassword(token.UserName, pass)
+	err := setPassword(token.UserName, pass, challenge)
 	if err != nil {
 		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
 			log.WithFields(log.Fields{
@@ -225,7 +226,7 @@ func resetPassword(ctx *app.AppContext, answer *model.SecurityAnswer, token *mod
 				"uid":   token.UserName,
 				"error": ierr.Error(),
 			}).Error("invalid password from FreeIPA")
-			return errors.New("Invalid password.")
+			return errors.New("Invalid OTP code.")
 		}
 
 		log.WithFields(log.Fields{
@@ -252,7 +253,6 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tk, ok := model.VerifyToken(app.ResetSalt, mux.Vars(r)["token"])
 		if !ok {
-			w.WriteHeader(http.StatusNotFound)
 			ctx.RenderNotFound(w)
 			return
 		}
@@ -262,7 +262,6 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 			log.WithFields(log.Fields{
 				"error": err.Error(),
 			}).Error("Failed to fetch token from database")
-			w.WriteHeader(http.StatusNotFound)
 			ctx.RenderNotFound(w)
 			return
 		}
@@ -272,7 +271,6 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 				"token": token.Token,
 				"uid":   token.UserName,
 			}).Error("Too many attempts for token.")
-			w.WriteHeader(http.StatusNotFound)
 			ctx.RenderNotFound(w)
 			return
 		}
@@ -283,7 +281,17 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 				"uid":   token.UserName,
 				"error": err,
 			}).Error("Failed to fetch security answer")
-			w.WriteHeader(http.StatusNotFound)
+			ctx.RenderNotFound(w)
+			return
+		}
+
+		client := app.NewIpaClient(true)
+		userRec, err := client.UserShow(token.UserName)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"uid":   token.UserName,
+				"error": err.Error(),
+			}).Error("Failed to fetch user record from freeipa")
 			ctx.RenderNotFound(w)
 			return
 		}
@@ -292,7 +300,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 		completed := false
 
 		if r.Method == "POST" {
-			err := resetPassword(ctx, answer, token, r)
+			err := resetPassword(ctx, userRec, answer, token, r)
 			if err != nil {
 				message = err.Error()
 				completed = false
@@ -316,12 +324,13 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":           nosurf.Token(r),
-			"uid":             token.UserName,
-			"completed":       completed,
-			"requireQuestion": viper.GetBool("require_question_pwreset"),
-			"question":        answer.Question,
-			"message":         message}
+			"token":            nosurf.Token(r),
+			"uid":              token.UserName,
+			"completed":        completed,
+			"otpRequired":      userRec.OTPOnly(),
+			"questionRequired": viper.GetBool("require_question_pwreset"),
+			"answer":           answer,
+			"message":          message}
 
 		ctx.RenderTemplate(w, "reset-password.html", vars)
 	})
@@ -414,7 +423,7 @@ func ForgotPasswordHandler(ctx *app.AppContext) http.Handler {
 	})
 }
 
-func setPassword(uid, password string) error {
+func setPassword(uid, password, otpcode string) error {
 	c := app.NewIpaClient(true)
 
 	rand, err := c.ResetPassword(uid)
@@ -422,7 +431,7 @@ func setPassword(uid, password string) error {
 		return err
 	}
 
-	err = c.SetPassword(uid, rand, password)
+	err = c.SetPassword(uid, rand, password, otpcode)
 	if err != nil {
 		return err
 	}

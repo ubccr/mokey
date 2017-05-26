@@ -52,8 +52,8 @@ templates: /usr/share/mokey/templates
 
 #------------------------------------------------------------------------------
 # Force Two-Factor authentication on login. If enabled users will be required
-# to provide their security question or TOTP in addition to their password when
-# logging in. Defaults to true
+# to provide their security question (if OTP is disabled) in addition to their
+# password when logging in. Defaults to true
 #------------------------------------------------------------------------------
 force_2fa: true
 
