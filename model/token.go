@@ -57,7 +57,7 @@ func VerifyToken(salt, signedToken string) (string, bool) {
 
 	token, b64mac := parts[0], parts[1]
 
-	if len(token) != 64 || len(b64mac) == 0 {
+	if len(token) != 22 || len(b64mac) == 0 {
 		return "", false
 	}
 
