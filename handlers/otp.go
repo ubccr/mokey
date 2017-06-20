@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"image/png"
 	"net/http"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/justinas/nosurf"
@@ -129,7 +130,13 @@ func OTPTokensHandler(ctx *app.AppContext) http.Handler {
 						"uuid":  uuid,
 						"error": err,
 					}).Error("failed to remove OTP Token")
-					message = "Failed to remove OTP Token"
+
+					// Raised when there's an operations error
+					if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4203 && strings.Contains(ierr.Message, "last active token") {
+						message = "Can't delete last active token"
+					} else {
+						message = "Failed to remove OTP Token"
+					}
 				}
 			} else if action == "enable" && len(uuid) > 0 {
 				err := c.EnableOTPToken(uuid)
