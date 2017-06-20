@@ -18,7 +18,7 @@ mokey requires no changes to the underlying LDAP schema and uses a MariaDB
 database to store security questions and access tokens. The user experience and
 web interface can be customized to fit the requirements of an organization's
 look and feel. mokey is written in Go and released under a modified BSD
-license.
+license. For screenshots `see here <docs/>`_ 
 
 ------------------------------------------------------------------------
 Project status
