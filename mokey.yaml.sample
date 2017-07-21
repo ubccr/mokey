@@ -41,9 +41,14 @@ bind: "127.0.0.1"
 # min_passwd_len: 8
 
 #------------------------------------------------------------------------------
-# Secret key used for HMAC token signing and secure cookies 
+# Authentication key used for HMAC token signing and secure cookies 
 #------------------------------------------------------------------------------
-secret_key: mysecret
+auth_key: mysecret
+
+#------------------------------------------------------------------------------
+# Encryption key used for encrypting cookies 
+#------------------------------------------------------------------------------
+enc_key: mysecret
 
 #------------------------------------------------------------------------------
 # Templates directory

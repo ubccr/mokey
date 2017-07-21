@@ -92,12 +92,13 @@ to be installed)::
     
 
 Edit mokey configuration file. Add user/pass for MariaDB database, path to
-keytab, and secret key::
+keytab, auth and encryption keys::
 
     $ vim /etc/mokey/mokey.yaml 
     dsn: "user:pass@/dbname?parseTime=true"
     keytab: "/etc/mokey/keytab/mokeyapp.keytab"
-    secret_key: "some really long random string"
+    auth_key: "32 or 64 bytes random key"
+    enc_key: "16, 24, or 32 byte random key"
     [ edit to taste ]
 
 It's highly recommended to run mokey using HTTPS. You'll need an SSL

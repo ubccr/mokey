@@ -45,6 +45,10 @@ func main() {
 			return fmt.Errorf("Failed reading config file - %s", err)
 		}
 
+		if !viper.IsSet("enc_key") || !viper.IsSet("auth_key") {
+			log.Fatal("Please ensure authentication and encryption keys are set")
+		}
+
 		return nil
 	}
 	app.Commands = []cli.Command{

@@ -35,7 +35,7 @@ func TestToken(t *testing.T) {
 	uid := "mokeytestuser"
 	email := "mokeytestuser@localhost"
 
-	viper.Set("secret_key", goodSecret)
+	viper.Set("auth_key", goodSecret)
 	token, err := CreateToken(db, uid, email)
 	if err != nil {
 		t.Error(err)
@@ -57,13 +57,13 @@ func TestToken(t *testing.T) {
 		t.Errorf("Validated token with bad salt")
 	}
 
-	viper.Set("secret_key", badSecret)
+	viper.Set("auth_key", badSecret)
 	_, check = VerifyToken(goodSalt, st)
 	if check {
 		t.Errorf("Validated token with bad secret")
 	}
 
-	viper.Set("secret_key", goodSecret)
+	viper.Set("auth_key", goodSecret)
 	vt, check := VerifyToken(goodSalt, st)
 	if !check {
 		t.Errorf("Failed to validate good signed token")

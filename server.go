@@ -36,7 +36,6 @@ func init() {
 	viper.SetDefault("reset_max_age", 3600)
 	viper.SetDefault("max_attempts", 10)
 	viper.SetDefault("bind", "")
-	viper.SetDefault("secret_key", "change-me")
 	viper.SetDefault("driver", "mysql")
 	viper.SetDefault("dsn", "/mokey?parseTime=true")
 	viper.SetDefault("rate_limit", false)
