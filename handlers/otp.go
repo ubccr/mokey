@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/justinas/nosurf"
+	"github.com/gorilla/csrf"
 	"github.com/pquerna/otp"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
@@ -82,11 +82,11 @@ func TwoFactorHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"flashes":    session.Flashes(),
-			"otpenabled": user.OTPOnly(),
-			"token":      nosurf.Token(r),
-			"message":    message,
-			"user":       user}
+			"flashes":        session.Flashes(),
+			"otpenabled":     user.OTPOnly(),
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"message":        message,
+			"user":           user}
 
 		session.Save(r, w)
 		ctx.RenderTemplate(w, "2fa.html", vars)
@@ -171,11 +171,11 @@ func OTPTokensHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"flashes":   session.Flashes(),
-			"token":     nosurf.Token(r),
-			"message":   message,
-			"otptokens": tokens,
-			"user":      user}
+			"flashes":        session.Flashes(),
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"message":        message,
+			"otptokens":      tokens,
+			"user":           user}
 
 		session.Save(r, w)
 		ctx.RenderTemplate(w, "otp-tokens.html", vars)

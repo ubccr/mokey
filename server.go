@@ -12,18 +12,20 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/carbocation/interpose"
 	"github.com/go-ini/ini"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/handlers"
+	"github.com/urfave/negroni"
 )
 
 func init() {
 	viper.SetDefault("port", 8080)
 	viper.SetDefault("min_passwd_len", 8)
+	viper.SetDefault("develop", false)
 	viper.SetDefault("pgp_sign", false)
 	viper.SetDefault("force_2fa", true)
 	viper.SetDefault("require_question_pwreset", true)
@@ -63,15 +65,7 @@ func init() {
 	}
 }
 
-func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
-	mw := interpose.New()
-	mw.Use(handlers.Nosurf())
-
-	mw.UseHandler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.Header().Set("Referrer-Policy", "origin-when-cross-origin")
-		rw.Header().Set("Strict-Transport-Security", "max-age=15768000;")
-	}))
-
+func middleware(ctx *app.AppContext) *negroni.Negroni {
 	router := mux.NewRouter()
 
 	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -102,9 +96,17 @@ func middlewareStruct(ctx *app.AppContext) *interpose.Middleware {
 	router.Path("/otptokens").Handler(handlers.AuthRequired(ctx, handlers.OTPTokensHandler(ctx))).Methods("GET", "POST")
 	router.Path("/").Handler(handlers.AuthRequired(ctx, handlers.IndexHandler(ctx))).Methods("GET")
 
-	mw.UseHandler(router)
+	n := negroni.New(negroni.NewRecovery())
+	n.Use(negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+		rw.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+		rw.Header().Set("Strict-Transport-Security", "max-age=15768000;")
+		next(rw, r)
+	}))
 
-	return mw
+	CSRF := csrf.Protect([]byte(viper.GetString("auth_key")), csrf.FieldName("auth_tok"), csrf.Secure(!viper.GetBool("develop")))
+	n.UseHandler(CSRF(router))
+
+	return n
 }
 
 func Server() {
@@ -113,7 +115,7 @@ func Server() {
 		log.Fatal(err.Error())
 	}
 
-	middle := middlewareStruct(ctx)
+	middle := middleware(ctx)
 
 	log.Printf("IPA server: %s", viper.GetString("ipahost"))
 

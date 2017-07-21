@@ -11,7 +11,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/context"
-	"github.com/justinas/nosurf"
 	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/app"
 )
@@ -185,11 +184,4 @@ func RateLimit(ctx *app.AppContext, next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-// Nosurf is a wrapper for justinas' csrf protection middleware
-func Nosurf() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return nosurf.New(next)
-	}
 }

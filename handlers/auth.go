@@ -10,8 +10,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
-	"github.com/justinas/nosurf"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
@@ -99,8 +99,8 @@ func LoginHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":   nosurf.Token(r),
-			"message": message}
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"message":        message}
 
 		ctx.RenderTemplate(w, "login.html", vars)
 	})
@@ -171,7 +171,7 @@ func checkAuth(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRec
 	}
 
 	vars := map[string]interface{}{
-		"token":            nosurf.Token(r),
+		csrf.TemplateTag:   csrf.TemplateField(r),
 		"answer":           answer,
 		"otpRequired":      user.OTPOnly(),
 		"questionRequired": viper.GetBool("force_2fa"),

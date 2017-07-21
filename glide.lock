@@ -1,15 +1,11 @@
-hash: 351fe9923016fd4596ed9a481053ee7090eb09b32b72a8e6d7039d905cdb39e4
-updated: 2017-05-26T14:13:39.59309778-04:00
+hash: bb8e301019d47097d0a846db3aa65fa83053d14c4864e3905dfe28dcd38ad129
+updated: 2017-07-21T11:04:17.697562642-04:00
 imports:
 - name: github.com/boombuler/barcode
   version: 8b1271e880cb66f992a2647ff7940d4dc5a41fee
   subpackages:
   - qr
   - utils
-- name: github.com/carbocation/interpose
-  version: 50c09d12f8624ab10532f931cb630d0bf5f7c2c7
-- name: github.com/codegangsta/cli
-  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/garyburd/redigo
@@ -23,12 +19,14 @@ imports:
   version: 665b83488b90b902ce0a305ef6652e599771cdf9
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/csrf
+  version: 69581736821c33d85bbf378f42f6ad864dbd85de
 - name: github.com/gorilla/mux
   version: 757bef944d0f21880861c2dd9c871ca543023cba
 - name: github.com/gorilla/schema
   version: 0164a00ab4cd01d814d8cd5bf63fd9fcea30e23b
 - name: github.com/gorilla/securecookie
-  version: fa5329f913702981df43dcb2a380bac429c810b5
+  version: 667fe4e3466a040b780561fe9b51a83a3753eefc
 - name: github.com/gorilla/sessions
   version: ca9ada44574153444b00d3fd9c8559e4cc95f896
 - name: github.com/hashicorp/hcl
@@ -46,8 +44,6 @@ imports:
   version: f71d5ee01769df469d115332106ef504ded071dc
   subpackages:
   - reflectx
-- name: github.com/justinas/nosurf
-  version: 8e15682772641a1e39c431233e6a9338a32def32
 - name: github.com/magiconair/properties
   version: 0723e352fa358f9322c938cc2dadda874e9151a9
 - name: github.com/mitchellh/mapstructure
@@ -56,6 +52,8 @@ imports:
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
   version: 7cb988051d5045890cb91402a0b5fddc76c627bc
+- name: github.com/pkg/errors
+  version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: github.com/pquerna/otp
   version: 54653902c20e47f3417541d35435cb6d6162e28a
 - name: github.com/Sirupsen/logrus
@@ -78,6 +76,10 @@ imports:
   version: b55f6370b6198848497943fa1e822a02e0deee3f
   subpackages:
   - khttp
+- name: github.com/urfave/cli
+  version: 4b90d79a682b4bf685762c7452db20f2a676ecb2
+- name: github.com/urfave/negroni
+  version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
 - name: golang.org/x/crypto
   version: ede567c8e044a5913dad1d1af3696d9da953104c
   subpackages:

@@ -11,7 +11,7 @@ import (
 	"unicode/utf8"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/justinas/nosurf"
+	"github.com/gorilla/csrf"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/model"
 )
@@ -88,11 +88,11 @@ func UpdateSecurityQuestionHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":     nosurf.Token(r),
-			"completed": completed,
-			"user":      user,
-			"questions": questions,
-			"message":   message}
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"completed":      completed,
+			"user":           user,
+			"questions":      questions,
+			"message":        message}
 
 		ctx.RenderTemplate(w, "update-security-question.html", vars)
 	})
@@ -155,9 +155,9 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":     nosurf.Token(r),
-			"questions": questions,
-			"message":   message}
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"questions":      questions,
+			"message":        message}
 
 		ctx.RenderTemplate(w, "setup-question.html", vars)
 	})

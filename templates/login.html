@@ -11,7 +11,7 @@
     <h2 class="form-signin-heading"><i class="fa fa-lock"></i> Please Log in</h2>
     <label for="inputEmail" class="sr-only">Username</label>
     <input type="text" id="uid" name="uid" class="form-control" placeholder="Username" required autofocus>
-    <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
+    {{ .csrfField }}
     <button class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
 
       <div>

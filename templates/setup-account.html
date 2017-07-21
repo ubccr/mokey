@@ -105,7 +105,7 @@
 
       <div class="form-group">
           <div class="col-sm-offset-2 col-sm-6">
-              <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
+              {{ .csrfField }}
               <button type="submit" class="btn btn-primary">Save {{ if .otpRequired }}&amp; Setup Two-Factor Auth {{ end }}</button>
           </div>
       </div>

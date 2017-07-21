@@ -3,8 +3,7 @@ homepage: https://github.com/ubccr/mokey
 license: BSD
 import:
 - package: github.com/Sirupsen/logrus
-- package: github.com/carbocation/interpose
-- package: github.com/codegangsta/cli
+- package: github.com/urfave/cli
 - package: github.com/garyburd/redigo
   subpackages:
   - redis
@@ -15,7 +14,6 @@ import:
 - package: github.com/gorilla/schema
 - package: github.com/gorilla/sessions
 - package: github.com/jmoiron/sqlx
-- package: github.com/justinas/nosurf
 - package: github.com/spf13/viper
 - package: github.com/ubccr/goipa
   version: 88b7c656e548031edd0d76c5cf46c18c5d915e55
@@ -26,3 +24,9 @@ import:
   - openpgp/packet
 - package: github.com/pquerna/otp
 - package: github.com/boombuler/barcode
+- package: github.com/gorilla/csrf
+  version: v1.5
+- package: github.com/urfave/negroni
+  version: v0.2.0
+- package: github.com/gorilla/securecookie
+  version: v1.1

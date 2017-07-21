@@ -11,8 +11,8 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
-	"github.com/justinas/nosurf"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
@@ -171,14 +171,14 @@ func SetupAccountHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":       nosurf.Token(r),
-			"uid":         token.UserName,
-			"completed":   completed,
-			"questions":   questions,
-			"otpRequired": userRec.OTPOnly(),
-			"otpdata":     otpdata,
-			"otptoken":    otptoken,
-			"message":     message}
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"uid":            token.UserName,
+			"completed":      completed,
+			"questions":      questions,
+			"otpRequired":    userRec.OTPOnly(),
+			"otpdata":        otpdata,
+			"otptoken":       otptoken,
+			"message":        message}
 
 		ctx.RenderTemplate(w, "setup-account.html", vars)
 	})
@@ -324,7 +324,7 @@ func ResetPasswordHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":            nosurf.Token(r),
+			csrf.TemplateTag:   csrf.TemplateField(r),
 			"uid":              token.UserName,
 			"completed":        completed,
 			"otpRequired":      userRec.OTPOnly(),
@@ -415,9 +415,9 @@ func ForgotPasswordHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":     nosurf.Token(r),
-			"completed": completed,
-			"message":   message}
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"completed":      completed,
+			"message":        message}
 
 		ctx.RenderTemplate(w, "forgot-password.html", vars)
 	})
@@ -567,7 +567,7 @@ func ChangePasswordHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":            nosurf.Token(r),
+			csrf.TemplateTag:   csrf.TemplateField(r),
 			"completed":        completed,
 			"user":             user,
 			"answer":           answer,

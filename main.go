@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
 	"github.com/spf13/viper"
+	"github.com/urfave/cli"
 )
 
 func init() {

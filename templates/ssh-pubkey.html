@@ -58,7 +58,7 @@
       <form role="form" method="post">
         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="delete_pubkey_id" name="index" value="">
-        <input id="csrf_token" name="csrf_token" type="hidden" value="{{ .token }}">
+        {{ .csrfField }}
         <button type="submit" class="btn btn-danger btn-ok"><i class="fa fa-trash"></i> Delete</a>
       </form>
       </div>

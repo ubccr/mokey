@@ -11,7 +11,7 @@ import (
 	"strconv"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/justinas/nosurf"
+	"github.com/gorilla/csrf"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 )
@@ -45,10 +45,10 @@ func SSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"flashes": session.Flashes(),
-			"token":   nosurf.Token(r),
-			"message": message,
-			"user":    user}
+			"flashes":        session.Flashes(),
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"message":        message,
+			"user":           user}
 
 		session.Save(r, w)
 		ctx.RenderTemplate(w, "ssh-pubkey.html", vars)
@@ -207,9 +207,9 @@ func NewSSHPubKeyHandler(ctx *app.AppContext) http.Handler {
 		}
 
 		vars := map[string]interface{}{
-			"token":   nosurf.Token(r),
-			"message": message,
-			"user":    user}
+			csrf.TemplateTag: csrf.TemplateField(r),
+			"message":        message,
+			"user":           user}
 
 		ctx.RenderTemplate(w, "new-ssh-pubkey.html", vars)
 	})
