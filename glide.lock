@@ -1,5 +1,5 @@
 hash: bb8e301019d47097d0a846db3aa65fa83053d14c4864e3905dfe28dcd38ad129
-updated: 2017-07-21T11:04:17.697562642-04:00
+updated: 2017-07-21T11:52:34.171329999-04:00
 imports:
 - name: github.com/boombuler/barcode
   version: 8b1271e880cb66f992a2647ff7940d4dc5a41fee
