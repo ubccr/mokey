@@ -92,6 +92,8 @@ func NewAppContext() (*AppContext, error) {
 	app.Tmpldir = tmpldir
 	app.DB = db
 	app.cookieStore = sessions.NewCookieStore([]byte(viper.GetString("auth_key")), []byte(viper.GetString("enc_key")))
+	app.cookieStore.Options.Secure = !viper.GetBool("develop")
+	app.cookieStore.MaxAge(0)
 	app.templates = templates
 	app.emails = emails
 

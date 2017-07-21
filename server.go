@@ -103,7 +103,11 @@ func middleware(ctx *app.AppContext) *negroni.Negroni {
 		next(rw, r)
 	}))
 
-	CSRF := csrf.Protect([]byte(viper.GetString("auth_key")), csrf.FieldName("auth_tok"), csrf.Secure(!viper.GetBool("develop")))
+	CSRF := csrf.Protect(
+		[]byte(viper.GetString("auth_key")),
+		csrf.FieldName("auth_tok"),
+		csrf.CookieName("mokey-csrf"),
+		csrf.Secure(!viper.GetBool("develop")))
 	n.UseHandler(CSRF(router))
 
 	return n
