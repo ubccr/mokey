@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	CookieKeySession       = "mokey-session"
+	CookieKeySession       = "mokey-sessck"
 	CookieKeyAuthenticated = "authenticated"
 	CookieKeySID           = "sid"
 	CookieKeyUser          = "user"
