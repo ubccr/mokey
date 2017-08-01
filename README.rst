@@ -61,7 +61,7 @@ you're running CentOS 7.x*
 
 Install the RPM release `here <https://github.com/ubccr/mokey/releases>`_::
 
-  $ rpm -Uvh mokey-0.x.x-1.el7.centos.x86_64.rpm
+  $ rpm -Uvh mokey-0.x.x-x.el7.centos.x86_64.rpm
 
 Install MariaDB and/or setup database for mokey::
 
@@ -77,7 +77,8 @@ Install MariaDB and/or setup database for mokey::
 
 Create a user account and role in FreeIPA with the "Modify users and Reset
 passwords" privilege. This user account will be used by the mokey application
-to reset users passwords. Run the following commands (requires ipa-admintools
+to reset users passwords. The "Modify Users" permission also needs to have the
+"ipauserauthtype" enabled. Run the following commands (requires ipa-admintools
 to be installed)::
 
     $ mkdir /etc/mokey/keytab
