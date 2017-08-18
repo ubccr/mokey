@@ -168,4 +168,11 @@ pgp_sign: false
 # Developer mode
 #------------------------------------------------------------------------------
 develop: false
+
+#------------------------------------------------------------------------------
+# Hydra config
+#------------------------------------------------------------------------------
+# hydra_client_id: "consent-app"
+# hydra_client_secret: "consent-secret"
+# hydra_cluster_url: "https://localhost:4444"
 ...
