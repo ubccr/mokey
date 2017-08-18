@@ -2,7 +2,7 @@ package: github.com/ubccr/mokey
 homepage: https://github.com/ubccr/mokey
 license: BSD
 import:
-- package: github.com/Sirupsen/logrus
+- package: github.com/sirupsen/logrus
 - package: github.com/urfave/cli
 - package: github.com/garyburd/redigo
   subpackages:
@@ -30,3 +30,7 @@ import:
   version: v0.2.0
 - package: github.com/gorilla/securecookie
   version: v1.1
+- package: github.com/ory/hydra
+  version: v0.9.12
+- package: github.com/ory/common
+  version: v0.4.0

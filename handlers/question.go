@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/csrf"
+	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/model"
 )
@@ -149,7 +149,9 @@ func SetupQuestionHandler(ctx *app.AppContext) http.Handler {
 					return
 				}
 
-				http.Redirect(w, r, "/", 302)
+				http.Redirect(w, r, ctx.GetWYAF(session), 302)
+				delete(session.Values, app.CookieKeyWYAF)
+				session.Save(r, w)
 				return
 			}
 		}

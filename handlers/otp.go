@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/csrf"
 	"github.com/pquerna/otp"
+	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 )

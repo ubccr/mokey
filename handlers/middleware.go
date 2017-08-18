@@ -7,10 +7,11 @@ package handlers
 import (
 	"net"
 	"net/http"
+	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/context"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/app"
 )
@@ -47,11 +48,23 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 			return
 		}
 
+		if !strings.HasPrefix(r.URL.String(), "/auth") {
+			query := r.URL.Query().Encode()
+			if len(query) > 0 {
+				session.Values[app.CookieKeyWYAF] = r.URL.Path + "?" + query
+			} else {
+				session.Values[app.CookieKeyWYAF] = r.URL.Path
+			}
+			log.WithFields(log.Fields{
+				"wyaf": session.Values[app.CookieKeyWYAF],
+			}).Info("Redirect URL")
+			session.Save(r, w)
+		}
+
 		sid := session.Values[app.CookieKeySID]
 		user := session.Values[app.CookieKeyUser]
 
 		if sid == nil || user == nil {
-			logout(ctx, w, r)
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}

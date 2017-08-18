@@ -5,8 +5,8 @@
 package model
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 

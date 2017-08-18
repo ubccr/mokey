@@ -13,9 +13,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/context"
 	"github.com/gorilla/sessions"
+	"github.com/ory/hydra/sdk"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/model"
@@ -26,6 +27,7 @@ const (
 	CookieKeyAuthenticated = "authenticated"
 	CookieKeySID           = "sid"
 	CookieKeyUser          = "user"
+	CookieKeyWYAF          = "wyaf"
 	ContextKeyUser         = "user"
 	TokenRegex             = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
 	ResetSalt              = "resetpw"
@@ -34,6 +36,7 @@ const (
 
 type AppContext struct {
 	DB          *sqlx.DB
+	HydraClient *sdk.Client
 	Tmpldir     string
 	cookieStore *sessions.CookieStore
 	templates   map[string]*template.Template
@@ -97,6 +100,19 @@ func NewAppContext() (*AppContext, error) {
 	app.templates = templates
 	app.emails = emails
 
+	if viper.IsSet("hydra_cluster_url") {
+		app.HydraClient, err = sdk.Connect(
+			sdk.ClientID(viper.GetString("hydra_client_id")),
+			sdk.ClientSecret(viper.GetString("hydra_client_secret")),
+			sdk.SkipTLSVerify(viper.GetBool("develop")),
+			sdk.Scopes("hydra.keys.get"),
+			sdk.ClusterURL(viper.GetString("hydra_cluster_url")))
+	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return app, nil
 }
 
@@ -130,6 +146,22 @@ func (app *AppContext) GetUser(r *http.Request) *ipa.UserRecord {
 
 	log.Error("user not found in request context")
 	return nil
+}
+
+// Get WYAF from session
+func (app *AppContext) GetWYAF(session *sessions.Session) string {
+	defaultLocation := "/"
+
+	wyaf := session.Values[CookieKeyWYAF]
+	if wyaf == nil {
+		return defaultLocation
+	}
+
+	if _, ok := wyaf.(string); !ok {
+		return defaultLocation
+	}
+
+	return wyaf.(string)
 }
 
 // Render 404 template

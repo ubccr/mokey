@@ -9,9 +9,9 @@ import (
 	"errors"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
@@ -162,7 +162,9 @@ func checkAuth(ctx *app.AppContext, session *sessions.Session, user *ipa.UserRec
 			}
 
 			if answer != nil {
-				http.Redirect(w, r, "/", 302)
+				http.Redirect(w, r, ctx.GetWYAF(session), 302)
+				delete(session.Values, app.CookieKeyWYAF)
+				session.Save(r, w)
 			} else {
 				http.Redirect(w, r, "/auth/setsec", 302)
 			}
@@ -189,6 +191,7 @@ func logout(ctx *app.AppContext, w http.ResponseWriter, r *http.Request) {
 	delete(session.Values, app.CookieKeySID)
 	delete(session.Values, app.CookieKeyUser)
 	delete(session.Values, app.CookieKeyAuthenticated)
+	delete(session.Values, app.CookieKeyWYAF)
 	session.Options.MaxAge = -1
 
 	err = session.Save(r, w)

@@ -11,10 +11,10 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/go-ini/ini"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
@@ -94,6 +94,7 @@ func middleware(ctx *app.AppContext) *negroni.Negroni {
 	router.Path("/sshpubkey/new").Handler(handlers.AuthRequired(ctx, handlers.NewSSHPubKeyHandler(ctx))).Methods("GET", "POST")
 	router.Path("/2fa").Handler(handlers.AuthRequired(ctx, handlers.TwoFactorHandler(ctx))).Methods("GET", "POST")
 	router.Path("/otptokens").Handler(handlers.AuthRequired(ctx, handlers.OTPTokensHandler(ctx))).Methods("GET", "POST")
+	router.Path("/consent").Handler(handlers.AuthRequired(ctx, handlers.ConsentHandler(ctx))).Methods("GET", "POST")
 	router.Path("/").Handler(handlers.AuthRequired(ctx, handlers.IndexHandler(ctx))).Methods("GET")
 
 	n := negroni.New(negroni.NewRecovery())
