@@ -85,7 +85,6 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 				"uid":              user,
 				"ipa_client_error": err,
 			}).Error("Failed to fetch user info from FreeIPA")
-			logout(ctx, w, r)
 			http.Redirect(w, r, "/auth/login", 302)
 			return
 		}
