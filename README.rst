@@ -38,7 +38,7 @@ Features
 - Add/Remove SSH Public Keys
 - Add/Remove TOTP Tokens
 - Enable/Disable Two-Factor Authentication
-- Hydra Authentication Endpoint for OAuth/OpenID Connect
+- Hydra Consent/Authentication Endpoint for OAuth/OpenID Connect
 - PGP/Mime signed emails
 - Easy to install and configure (requires no FreeIPA/LDAP schema changes)
 
@@ -220,7 +220,7 @@ adding the following lines in /etc/ssh/sshd_config and restarting sshd::
     AuthorizedKeysCommandUser nobody
 
 ------------------------------------------------------------------------
-Hydra Authentication Endpoint for OAuth/OpenID Connect
+Hydra Consent app and Authentication Endpoint for OAuth/OpenID Connect
 ------------------------------------------------------------------------
 
 mokey implements a consent endpoint for handling challenge requests from Hydra.
