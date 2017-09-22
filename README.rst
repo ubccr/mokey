@@ -38,6 +38,7 @@ Features
 - Add/Remove SSH Public Keys
 - Add/Remove TOTP Tokens
 - Enable/Disable Two-Factor Authentication
+- Hydra Authentication Endpoint for OAuth/OpenID Connect
 - PGP/Mime signed emails
 - Easy to install and configure (requires no FreeIPA/LDAP schema changes)
 
@@ -108,7 +109,7 @@ certificate authority. Creating SSL certs is outside the scope of this
 document. You can also run mokey behind haproxy or Apache/Nginx.
 
 Copy your SSL cert/private_key to the following directories and set correct
-paths in /etc/mokey/mokey.yaml. The mokey binary will run as non-root user
+paths in ``/etc/mokey/mokey.yaml``. The mokey binary will run as non-root user
 (mokey) so need to ensure file perms are set correctly::
 
     $ mkdir /etc/mokey/{cert,private}
@@ -172,7 +173,7 @@ a gpg keypair::
     $ chmod 640 /etc/mokey/gpg/example-key.gpg
     $ chgrp mokey /etc/mokey/gpg/example-key.gpg
 
-Next, edit /etc/mokey/mokey.yaml::
+Next, edit ``/etc/mokey/mokey.yaml``::
 
     $ vi /etc/mokey/mokey.yaml
     pgp_sign: true
@@ -191,7 +192,7 @@ Configure rate limiting
 
 mokey can optionally be configured to rate limit certain paths (login and
 forgot password) to limit the number of requests within a given time period. To
-enable rate limiting first install redis then update /etc/mokey/mokey.yaml.
+enable rate limiting first install redis then update ``/etc/mokey/mokey.yaml``.
 
 Install Redis (install from EPEL)::
 
@@ -200,7 +201,7 @@ Install Redis (install from EPEL)::
     $ systemctl restart redis
     $ systecmtl enable redis
 
-Edit /etc/mokey/mokey.yaml and restart::
+Edit ``/etc/mokey/mokey.yaml`` and restart::
 
     $ vi /etc/mokey/mokey.yaml
     rate_limit: true
@@ -217,6 +218,25 @@ adding the following lines in /etc/ssh/sshd_config and restarting sshd::
 
     AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys
     AuthorizedKeysCommandUser nobody
+
+------------------------------------------------------------------------
+Hydra Authentication Endpoint for OAuth/OpenID Connect
+------------------------------------------------------------------------
+
+mokey implements a consent endpoint for handling challenge requests from Hydra.
+This serves as the bridge between Hydra and FreeIPA identity provider. For more
+information on Hydra and consent apps see `here <https://ory.gitbooks.io/hydra/content/oauth2.html#consent-app-flow>`_.
+
+To configure mokey as a Hydra consent app set the following variables in
+``/etc/mokey/mokey.yaml``::
+
+    hydra_client_id: "consent-app"
+    hydra_client_secret: "consent-secret"
+    hydra_cluster_url: "https://localhost:4444"
+
+Any OAuth clients configured in Hydra will be authenticated via mokey using
+FreeIPA as the identity provider. For an example OAuth 2.0/OIDC client
+application see `here <examples/mokey-oidc/main.go>`_.
 
 ------------------------------------------------------------------------
 Building from source
