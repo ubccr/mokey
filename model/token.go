@@ -11,16 +11,18 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )
 
 type Token struct {
-	UserName string `db:"user_name"`
-	Email    string `db:"email"`
-	Token    string `db:"token"`
-	Attempts int    `db:"attempts"`
+	UserName  string     `db:"user_name"`
+	Email     string     `db:"email"`
+	Token     string     `db:"token"`
+	Attempts  int        `db:"attempts"`
+	CreatedAt *time.Time `db:"created_at"`
 }
 
 func randToken() string {
@@ -75,7 +77,7 @@ func VerifyToken(salt, signedToken string) (string, bool) {
 
 func FetchTokenByUser(db *sqlx.DB, uid string, maxAge int) (*Token, error) {
 	t := Token{}
-	err := db.Get(&t, "select user_name,token,attempts,email from token where user_name = ? and timestampdiff(SECOND, created_at, now()) <= ?", uid, maxAge)
+	err := db.Get(&t, "select user_name,token,attempts,email,created_at from token where user_name = ? and timestampdiff(SECOND, created_at, now()) <= ?", uid, maxAge)
 	if err != nil {
 		return nil, err
 	}

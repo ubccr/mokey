@@ -60,6 +60,21 @@ func main() {
 			},
 		},
 		{
+			Name:  "status",
+			Usage: "Display security question and token status for user",
+			Flags: []cli.Flag{
+				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
+			},
+			Action: func(c *cli.Context) {
+				uid := c.String("uid")
+				if len(uid) == 0 {
+					log.Fatal("Please provide a user uid")
+				}
+
+				Status(uid)
+			},
+		},
+		{
 			Name:  "resetpw",
 			Usage: "Send reset password email",
 			Flags: []cli.Flag{

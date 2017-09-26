@@ -5,16 +5,19 @@
 package model
 
 import (
+	"time"
+
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type SecurityAnswer struct {
-	UserName   string `db:"user_name"`
-	QuestionID int    `db:"question_id"`
-	Question   string `db:"question"`
-	Answer     string `db:"answer"`
+	UserName   string     `db:"user_name"`
+	QuestionID int        `db:"question_id"`
+	Question   string     `db:"question"`
+	Answer     string     `db:"answer"`
+	CreatedAt  *time.Time `db:"created_at"`
 }
 
 type SecurityQuestion struct {
@@ -34,7 +37,7 @@ func (a *SecurityAnswer) Verify(ans string) bool {
 
 func FetchAnswer(db *sqlx.DB, uid string) (*SecurityAnswer, error) {
 	answer := SecurityAnswer{}
-	err := db.Get(&answer, "select a.user_name,a.question_id,q.question,a.answer from security_answer a join security_question q on a.question_id = q.id  where a.user_name = ?", uid)
+	err := db.Get(&answer, "select a.user_name,a.question_id,q.question,a.answer,a.created_at from security_answer a join security_question q on a.question_id = q.id  where a.user_name = ?", uid)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,10 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -113,5 +115,43 @@ func ResetPasswordEmail(uid string) {
 			"uid":   uid,
 			"error": err,
 		}).Error("failed send email to user")
+	}
+}
+
+func Status(uid string) {
+	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	token, err := model.FetchTokenByUser(db, uid, viper.GetInt("setup_max_age"))
+	if err != nil && err != sql.ErrNoRows {
+		log.WithFields(log.Fields{
+			"uid":   uid,
+			"error": err,
+		}).Error("Failed to fetch token")
+		return
+	}
+
+	answer, err := model.FetchAnswer(db, uid)
+	if err != nil && err != sql.ErrNoRows {
+		log.WithFields(log.Fields{
+			"uid":   uid,
+			"error": err,
+		}).Error("Failed to fetch security answer")
+		return
+	}
+
+	fmt.Printf("Status for user: %s\n", uid)
+	fmt.Printf("-----------------------------------\n")
+	if answer != nil {
+		fmt.Printf("Security question set on %s\n", answer.CreatedAt.Local().Format(time.UnixDate))
+	} else {
+		fmt.Printf("No security question set\n")
+	}
+	if token != nil {
+		fmt.Printf("Active token created at: %s\n", token.CreatedAt.Local().Format(time.UnixDate))
+	} else {
+		fmt.Printf("No token found\n")
 	}
 }

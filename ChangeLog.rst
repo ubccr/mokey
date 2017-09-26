@@ -6,6 +6,7 @@ ChangeLog
 ----------------------
 
 - Add support for hydra consent endpoint
+- Add user status command
 
 `v0.0.5`_ (2017-08-01)
 ----------------------
