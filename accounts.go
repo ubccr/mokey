@@ -8,7 +8,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -145,12 +144,12 @@ func Status(uid string) {
 	fmt.Printf("Status for user: %s\n", uid)
 	fmt.Printf("-----------------------------------\n")
 	if answer != nil {
-		fmt.Printf("Security question set on %s\n", answer.CreatedAt.Local().Format(time.UnixDate))
+		fmt.Printf("Security question set on %s\n", answer.CreatedAt.Format("Jan 02, 2006 15:04:05"))
 	} else {
 		fmt.Printf("No security question set\n")
 	}
 	if token != nil {
-		fmt.Printf("Active token created at: %s\n", token.CreatedAt.Local().Format(time.UnixDate))
+		fmt.Printf("Active token created at: %s\n", token.CreatedAt.Format("Jan 02, 2006 15:04:05"))
 	} else {
 		fmt.Printf("No token found\n")
 	}
