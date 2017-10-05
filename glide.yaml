@@ -16,7 +16,7 @@ import:
 - package: github.com/jmoiron/sqlx
 - package: github.com/spf13/viper
 - package: github.com/ubccr/goipa
-  version: 88b7c656e548031edd0d76c5cf46c18c5d915e55
+  version: c40bd4731db00357a2ffd62b665c0cbb69172691
 - package: golang.org/x/crypto
   subpackages:
   - bcrypt
