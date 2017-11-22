@@ -6,6 +6,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/csrf"
 	"github.com/ory/hydra/sdk"
@@ -69,19 +70,31 @@ func ConsentHandler(ctx *app.AppContext) http.Handler {
 
 				// Data that will be available on the token introspection and warden endpoints.
 				AccessTokenExtra: struct {
-					UID   string `json:"uid"`
-					First string `json:"first"`
-					Last  string `json:"last"`
-					Email string `json:"email"`
-				}{UID: string(user.Uid), First: string(user.First), Last: string(user.Last), Email: string(user.Email)},
+					UID    string `json:"uid"`
+					First  string `json:"first"`
+					Last   string `json:"last"`
+					Email  string `json:"email"`
+					Groups string `json:"groups"`
+				}{
+					UID:    string(user.Uid),
+					First:  string(user.First),
+					Last:   string(user.Last),
+					Groups: strings.Join(user.Groups, ";"),
+					Email:  string(user.Email)},
 
 				// If we issue an ID token, we can set extra data for that id token here.
 				IDTokenExtra: struct {
-					UID   string `json:"uid"`
-					First string `json:"first"`
-					Last  string `json:"last"`
-					Email string `json:"email"`
-				}{UID: string(user.Uid), First: string(user.First), Last: string(user.Last), Email: string(user.Email)},
+					UID    string `json:"uid"`
+					First  string `json:"first"`
+					Last   string `json:"last"`
+					Email  string `json:"email"`
+					Groups string `json:"groups"`
+				}{
+					UID:    string(user.Uid),
+					First:  string(user.First),
+					Last:   string(user.Last),
+					Groups: strings.Join(user.Groups, ";"),
+					Email:  string(user.Email)},
 			})
 
 			if err != nil {
