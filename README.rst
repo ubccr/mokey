@@ -11,14 +11,14 @@ What is mokey?
 mokey is web application that provides self-service user account management
 tools for `FreeIPA <http://freeipa.org>`_. The motivation for this project was
 to implement the self-service password reset functionality missing in FreeIPA.
-This feature is not provided by default in FreeIPA, see `here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_ 
+This feature is not provided by default in FreeIPA, see `here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_
 for more info and the rationale behind this decision. mokey is not a FreeIPA
 plugin but a complete standalone application that uses the FreeIPA JSON API.
 mokey requires no changes to the underlying LDAP schema and uses a MariaDB
 database to store security questions and access tokens. The user experience and
 web interface can be customized to fit the requirements of an organization's
 look and feel. mokey is written in Go and released under a modified BSD
-license. For screenshots `see here <docs/>`_ 
+license. For screenshots `see here <docs/>`_
 
 ------------------------------------------------------------------------
 Project status
@@ -26,7 +26,7 @@ Project status
 
 mokey should be considered alpha software and used at your own risk. There are
 inherent security risks in providing features like self-service password resets
-and can make your systems vulnerable to abuse. 
+and can make your systems vulnerable to abuse.
 
 ------------------------------------------------------------------------
 Features
@@ -91,12 +91,12 @@ to be installed)::
     $ ipa-getkeytab -s [your.ipa-master.server] -p mokeyapp -k /etc/mokey/keytab/mokeyapp.keytab
     $ chmod 640 /etc/mokey/keytab/mokeyapp.keytab
     $ chgrp mokey /etc/mokey/keytab/mokeyapp.keytab
-    
+
 
 Edit mokey configuration file. Add user/pass for MariaDB database, path to
 keytab, auth and encryption keys::
 
-    $ vim /etc/mokey/mokey.yaml 
+    $ vim /etc/mokey/mokey.yaml
     dsn: "user:pass@/dbname?parseTime=true"
     keytab: "/etc/mokey/keytab/mokeyapp.keytab"
     auth_key: "32 or 64 bytes random key"
@@ -146,20 +146,20 @@ Getting Started with mokey cli tools
 
     $ kinit adminuser
     $ ipa user-add --first="Jesse" --last="Pinkman" --email="jp@example.com" capncook
-    $ mokey newacct --uid capncook 
+    $ mokey newacct --uid capncook
     (An email will be sent to jp@example.com with a link to setup their password)
-    
+
 - Reset user password. Use case: user forgot their password, send the user an
   email link to reset their password using their previously set security
   question. Users can also initiate a password reset using the "Forgot
   Password" link in the web interface::
 
     $ kinit adminuser
-    $ mokey resetpw --uid capncook 
+    $ mokey resetpw --uid capncook
     (An email will be sent to jp@example.com with a link to reset their password)
 
 ------------------------------------------------------------------------
-Configure PGP/Mime email 
+Configure PGP/Mime email
 ------------------------------------------------------------------------
 
 mokey can be configured to send PGP/Mime signed email messages. First generate
@@ -180,7 +180,7 @@ Next, edit ``/etc/mokey/mokey.yaml``::
     pgp_key: "/etc/mokey/gpg/example-key.gpg"
     pgp_passphrase: "my-secret"
 
-    $ systecmtl restart mokey
+    $ systemctl restart mokey
 
 Publish your public key to a keyserver or other means. Emails will now be PGP
 signed using your private key. Users can verify the authenticity of the emails
@@ -199,14 +199,14 @@ Install Redis (install from EPEL)::
     $ yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     $ yum install redis
     $ systemctl restart redis
-    $ systecmtl enable redis
+    $ systemctl enable redis
 
 Edit ``/etc/mokey/mokey.yaml`` and restart::
 
     $ vi /etc/mokey/mokey.yaml
     rate_limit: true
 
-    $ systecmtl restart mokey
+    $ systemctl restart mokey
 
 ------------------------------------------------------------------------
 SSH Public Key Management
@@ -260,4 +260,4 @@ In the project folder you can now resolve the dependencies and build mokey::
 License
 ------------------------------------------------------------------------
 
-mokey is released under a BSD style license. See the LICENSE file. 
+mokey is released under a BSD style license. See the LICENSE file.
