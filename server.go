@@ -19,6 +19,7 @@ import (
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/app"
 	"github.com/ubccr/mokey/handlers"
+	"github.com/ubccr/mokey/model"
 	"github.com/urfave/negroni"
 )
 
@@ -47,6 +48,7 @@ func init() {
 
 	gob.Register(&ipa.UserRecord{})
 	gob.Register(&ipa.IpaDateTime{})
+	gob.Register(&model.ApiKey{})
 
 	if !viper.IsSet("ipahost") {
 		cfg, err := ini.Load("/etc/ipa/default.conf")
@@ -94,7 +96,8 @@ func middleware(ctx *app.AppContext) *negroni.Negroni {
 	router.Path("/sshpubkey/new").Handler(handlers.AuthRequired(ctx, handlers.NewSSHPubKeyHandler(ctx))).Methods("GET", "POST")
 	router.Path("/2fa").Handler(handlers.AuthRequired(ctx, handlers.TwoFactorHandler(ctx))).Methods("GET", "POST")
 	router.Path("/otptokens").Handler(handlers.AuthRequired(ctx, handlers.OTPTokensHandler(ctx))).Methods("GET", "POST")
-	router.Path("/consent").Handler(handlers.AuthRequired(ctx, handlers.ConsentHandler(ctx))).Methods("GET", "POST")
+	router.Path("/consent").Handler(handlers.AuthRequired(ctx, handlers.RateLimit(ctx, handlers.ConsentHandler(ctx)))).Methods("GET", "POST")
+	router.Path("/apikey").Handler(handlers.AuthRequired(ctx, handlers.ApiKeyHandler(ctx))).Methods("GET", "POST")
 	router.Path("/").Handler(handlers.AuthRequired(ctx, handlers.IndexHandler(ctx))).Methods("GET")
 
 	n := negroni.New(negroni.NewRecovery())
@@ -106,7 +109,7 @@ func middleware(ctx *app.AppContext) *negroni.Negroni {
 
 	CSRF := csrf.Protect(
 		[]byte(viper.GetString("auth_key")),
-		csrf.FieldName("auth_tok"),
+		csrf.FieldName(app.CSRFFieldName),
 		csrf.CookieName("mokey-csrf"),
 		csrf.Secure(!viper.GetBool("develop")))
 	n.UseHandler(CSRF(router))

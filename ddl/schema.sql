@@ -26,6 +26,18 @@ CREATE TABLE `security_question` (
     UNIQUE KEY  `question` (`question`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+DROP TABLE IF EXISTS `api_key`;
+CREATE TABLE `api_key` (
+    `user_name`      varchar(255)      NOT NULL,
+    `client_id`      varchar(255)      NOT NULL,
+    `api_key`        varchar(255)      NOT NULL,
+    `scopes`         varchar(255)      NOT NULL,
+    `created_at`     datetime          NOT NULL,
+    `last_accessed`  datetime          NOT NULL,
+    PRIMARY KEY      (`user_name`,`client_id`),
+    UNIQUE           (`api_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 INSERT INTO security_question SET question = "In what city or town does your nearest sibling live";
 INSERT INTO security_question SET question = "In what year was your father born";
 INSERT INTO security_question SET question = "In what year was your mother born";

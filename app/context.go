@@ -29,14 +29,24 @@ const (
 	CookieKeyUser          = "user"
 	CookieKeyWYAF          = "wyaf"
 	ContextKeyUser         = "user"
+	ContextKeyApi          = "apikey"
+	CSRFFieldName          = "auth_tok"
 	TokenRegex             = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
 	ResetSalt              = "resetpw"
 	AccountSetupSalt       = "acctsetup"
 )
 
+type ApiKeyClient struct {
+	Name        string
+	ClientID    string `mapstructure:"client_id"`
+	Description string `mapstructure:"desc"`
+	Scopes      string
+}
+
 type AppContext struct {
 	DB          *sqlx.DB
 	HydraClient *sdk.Client
+	ApiClients  map[string]*ApiKeyClient
 	Tmpldir     string
 	cookieStore *sessions.CookieStore
 	templates   map[string]*template.Template
@@ -63,7 +73,7 @@ func NewAppContext() (*AppContext, error) {
 		tmpldir = dir + "/templates"
 	}
 
-	log.Printf("Using template dir: %s", tmpldir)
+	log.Infof("Using template dir: %s", tmpldir)
 
 	tmpls, err := filepath.Glob(tmpldir + "/*.html")
 	if err != nil {
@@ -107,10 +117,34 @@ func NewAppContext() (*AppContext, error) {
 			sdk.SkipTLSVerify(viper.GetBool("develop")),
 			sdk.Scopes("hydra.keys.get"),
 			sdk.ClusterURL(viper.GetString("hydra_cluster_url")))
-	}
 
-	if err != nil {
-		log.Fatal(err)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Infof("Hydra consent app enabled")
+
+		if viper.IsSet("enabled_api_client_ids") {
+			app.ApiClients = make(map[string]*ApiKeyClient)
+
+			ids := viper.GetStringSlice("enabled_api_client_ids")
+			for _, clientID := range ids {
+				if !viper.IsSet(clientID) {
+					log.Fatalf("Api Client ID config not found: %s", clientID)
+				}
+
+				apiKeyConfig := viper.Sub(clientID)
+				var a ApiKeyClient
+				err = apiKeyConfig.Unmarshal(&a)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				log.Infof("Enabling oauth2 Api client: %s", clientID)
+				a.ClientID = clientID
+				app.ApiClients[clientID] = &a
+			}
+		}
 	}
 
 	return app, nil
@@ -172,7 +206,15 @@ func (app *AppContext) RenderNotFound(w http.ResponseWriter) {
 }
 
 // Render template t using template parameters in data.
-func (app *AppContext) RenderTemplate(w http.ResponseWriter, name string, data interface{}) {
+func (app *AppContext) RenderTemplate(w http.ResponseWriter, name string, data map[string]interface{}) {
+	if data == nil {
+		data = map[string]interface{}{
+			"apiEnabled": len(app.ApiClients) > 0,
+		}
+	}
+
+	data["apiEnabled"] = len(app.ApiClients) > 0
+
 	t := app.templates[name]
 
 	var buf bytes.Buffer

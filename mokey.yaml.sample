@@ -175,4 +175,21 @@ develop: false
 # hydra_client_id: "consent-app"
 # hydra_client_secret: "consent-secret"
 # hydra_cluster_url: "https://localhost:4444"
+
+#------------------------------------------------------------------------------
+# Public oauth2 clients for Api Key access (requires Hydra)
+#------------------------------------------------------------------------------
+# enabled_api_client_ids:
+#   - openstack-api
+#   - mypublic-api
+# 
+# openstack-api:
+#   name: "Openstack CLI"
+#   desc: "Access to Openstack CLI"
+#   scopes: openid
+# 
+# mypublic-api:
+#   name: "Some other API"
+#   desc: "Access to some other API"
+#   scopes: openid
 ...

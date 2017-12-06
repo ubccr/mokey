@@ -1,0 +1,15 @@
+{{define "content"}}
+
+<h1 class="page-header"><i class="fa fa-wrench"></i> {{ .client.ClientID }}</h1>
+<span id="helpBlock" class="help-block">{{ .client.Description }}</span>
+
+<div class="alert alert-warning alert-dismissable">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+Below is your API Key. Copy it to a safe place. If you lose this key you will have to create a new one.
+</div>
+
+<h3><code>{{ .secret }}</code></h3>
+<br/>
+<a class="btn btn-primary" href="/apikey" role="button">Done</a>
+
+{{end}}

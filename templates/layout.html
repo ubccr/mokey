@@ -36,6 +36,9 @@
                 <li class="hidden-lg hidden-md hidden-sm"><a href="/sshpubkey">SSH Keys</a></li>
                 <li class="hidden-lg hidden-md hidden-sm"><a href="/otptokens">OTP Tokens</a></li>
                 <li class="hidden-lg hidden-md hidden-sm"><a href="/2fa">Two-Factor Auth</a></li>
+                {{ if $.apiEnabled }}
+                <li class="hidden-lg hidden-md hidden-sm"><a href="/apikey">Api Keys</a></li>
+                {{ end }}
               </ul>
           {{ else }}
               <p class="navbar-text navbar-right"><a href="/auth/login">Login</a></p>
@@ -56,6 +59,9 @@
                     <a href="/sshpubkey" class="list-group-item">SSH Keys</a>
                     <a href="/otptokens" class="list-group-item">OTP Tokens</a>
                     <a href="/2fa" class="list-group-item">Two-Factor Auth</a>
+                    {{ if $.apiEnabled }}
+                    <a href="/apikey" class="list-group-item">Api Keys</a>
+                    {{ end }}
                 </div>
             </div>
         </div>

@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/app"
+	"github.com/ubccr/mokey/model"
 )
 
 // AuthRequired ensures the user has successfully completed the authentication
@@ -42,6 +43,14 @@ func AuthRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 // Stores the ipa.UserRecord in the request context
 func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if consent endpoint and Api Key was given
+		accept := r.Header.Get("Accept")
+		auth := strings.Split(r.Header.Get("Authorization"), " ")
+		if strings.HasPrefix(r.URL.String(), "/consent") && strings.Contains(accept, "application/json") && len(auth) == 2 && strings.ToLower(auth[0]) == "bearer" && len(auth[1]) > 0 {
+			ApiKeyRequired(ctx, auth[1], w, r, next)
+			return
+		}
+
 		session, err := ctx.GetSession(r)
 		if err != nil {
 			ctx.RenderError(w, http.StatusInternalServerError)
@@ -89,7 +98,7 @@ func LoginRequired(ctx *app.AppContext, next http.Handler) http.Handler {
 			return
 		}
 
-		context.Set(r, "user", userRec)
+		context.Set(r, app.ContextKeyUser, userRec)
 		context.Set(r, "ipa", c)
 
 		next.ServeHTTP(w, r)
@@ -196,4 +205,76 @@ func RateLimit(ctx *app.AppContext, next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func ApiKeyRequired(ctx *app.AppContext, keyString string, w http.ResponseWriter, r *http.Request, next http.Handler) {
+	key, err := model.FetchApiKey(ctx.DB, keyString)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"key":   keyString,
+			"error": err,
+		}).Error("Failed to fetch api key")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// Check api client is enabled in config
+	if _, ok := ctx.ApiClients[key.ClientID]; !ok {
+		log.WithFields(log.Fields{
+			"key":       key.Key,
+			"user":      key.UserName,
+			"client_id": key.ClientID,
+		}).Error("Api client is not enabled in mokey.yaml")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	session, err := ctx.GetSession(r)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"key":   keyString,
+			"error": err,
+		}).Error("Failed to fetch session")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = model.RefreshApiKey(ctx.DB, key)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"key":   keyString,
+			"error": err,
+		}).Error("Failed to save api key")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	userRec, err := checkUser(key.UserName)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"key":   keyString,
+			"user":  key.UserName,
+			"error": err,
+		}).Error("Failed to fetch user from ipa")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	session.Values[app.CookieKeyUser] = key.UserName
+	session.Values[app.CookieKeyAuthenticated] = true
+	context.Set(r, app.ContextKeyUser, userRec)
+	context.Set(r, app.ContextKeyApi, key)
+
+	err = session.Save(r, w)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"key":   keyString,
+			"user":  key.UserName,
+			"error": err,
+		}).Error("Failed to save session")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	next.ServeHTTP(w, r)
 }

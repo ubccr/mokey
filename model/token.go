@@ -25,10 +25,14 @@ type Token struct {
 	CreatedAt *time.Time `db:"created_at"`
 }
 
-func randToken() string {
+func randToken() (string, error) {
 	b := make([]byte, 16)
-	rand.Read(b)
-	return base64.RawURLEncoding.EncodeToString(b)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", nil
+	}
+
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
 func computeMAC(salt, message, key []byte) string {
@@ -96,8 +100,13 @@ func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
 }
 
 func CreateToken(db *sqlx.DB, uid, email string) (*Token, error) {
-	t := Token{UserName: uid, Email: email, Token: randToken()}
-	_, err := db.NamedExec("replace into token (user_name,email,token,attempts,created_at) values (:user_name, :email, :token, 0, now())", t)
+	tok, err := randToken()
+	if err != nil {
+		return nil, err
+	}
+
+	t := Token{UserName: uid, Email: email, Token: tok}
+	_, err = db.NamedExec("replace into token (user_name,email,token,attempts,created_at) values (:user_name, :email, :token, 0, now())", t)
 	if err != nil {
 		return nil, err
 	}

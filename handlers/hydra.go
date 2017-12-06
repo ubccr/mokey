@@ -5,17 +5,26 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/csrf"
 	"github.com/ory/hydra/sdk"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/mokey/app"
+	"github.com/ubccr/mokey/model"
 )
 
 func ConsentHandler(ctx *app.AppContext) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ctx.HydraClient == nil {
+			log.Info("Hydra is not configured")
+			ctx.RenderNotFound(w)
+			return
+		}
+
 		user := ctx.GetUser(r)
 		if user == nil {
 			ctx.RenderError(w, http.StatusInternalServerError)
@@ -55,6 +64,40 @@ func ConsentHandler(ctx *app.AppContext) http.Handler {
 			grantedScopes := r.PostForm["scope"]
 			if grantedScopes == nil {
 				grantedScopes = []string{}
+			}
+
+			if contextKey := context.Get(r, app.ContextKeyApi); contextKey != nil {
+				key := contextKey.(*model.ApiKey)
+
+				log.WithFields(log.Fields{
+					"user":      key.UserName,
+					"client_id": key.ClientID,
+					"audience":  claims.Audience,
+				}).Info("Api consent request")
+
+				// Check key matches client
+				if key.ClientID != claims.Audience {
+					log.WithFields(log.Fields{
+						"key":       key.Key,
+						"user":      key.UserName,
+						"client_id": key.ClientID,
+						"audience":  claims.Audience,
+					}).Error("Claims audience does not match api key")
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
+				// Check key matches scopes
+				if key.Scopes != strings.Join(claims.RequestedScopes, ",") {
+					log.WithFields(log.Fields{
+						"key":           key.Key,
+						"user":          key.UserName,
+						"key_scopes":    key.Scopes,
+						"claims_scopes": claims.RequestedScopes,
+					}).Error("Claims scopes does not match api key")
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
 			}
 
 			// Generate the challenge response.
@@ -110,6 +153,27 @@ func ConsentHandler(ctx *app.AppContext) http.Handler {
 			}).Info("Consent challenge signed successfully")
 
 			http.Redirect(w, r, redirectUrl, http.StatusFound)
+			return
+		}
+
+		if strings.Contains(r.Header.Get("Accept"), "application/json") {
+			data := map[string]string{
+				app.CSRFFieldName: csrf.Token(r),
+				"audience":        claims.Audience,
+				"scopes":          strings.Join(claims.RequestedScopes, ","),
+				"challenge":       challenge}
+
+			payload, err := json.Marshal(data)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("Failed to marshal json payload for consent")
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(payload)
 			return
 		}
 
