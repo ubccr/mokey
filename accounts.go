@@ -87,7 +87,7 @@ func ResetPasswordEmail(uid string) {
 	}
 
 	_, err = model.FetchAnswer(db, uid)
-	if err != nil {
+	if err != nil && viper.GetBool("require_question_pwreset") {
 		log.WithFields(log.Fields{
 			"uid":   uid,
 			"error": err,
