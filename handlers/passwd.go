@@ -368,7 +368,7 @@ func forgotPassword(ctx *app.AppContext, r *http.Request) error {
 	}
 
 	_, err = model.FetchAnswer(ctx.DB, uid)
-	if err != nil {
+	if err != nil && viper.GetBool("require_question_pwreset") {
 		log.WithFields(log.Fields{
 			"uid":   uid,
 			"error": err,
