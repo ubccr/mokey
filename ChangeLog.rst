@@ -5,9 +5,10 @@ ChangeLog
 `v0.0.6`_ (2018-01-09)
 ----------------------
 
-- Add support for hydra consent endpoint
+- Add new OAuth/OpenID Connect consent endpoint for Hydra
 - Add support for api key access to consent endpoint
 - Add user status command
+- Add support for FreeIPA 4.5
 - Fix optional security question on password reset for fresh accounts (PR #11)
 
 `v0.0.5`_ (2017-08-01)

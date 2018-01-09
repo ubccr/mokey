@@ -4,7 +4,7 @@
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
 Version:       0.0.6
-Release:       13%{?dist}
+Release:       14%{?dist}
 License:       BSD
 Group:         Applications/Internet
 SOURCE:        %{name}-%{version}-linux-amd64.tar.gz
@@ -15,9 +15,7 @@ Requires(pre): /usr/sbin/useradd, /usr/bin/getent
 %description
 mokey is web application that provides self-service user account management
 tools for FreeIPA. The motivation for this project was to implement the
-self-service password reset functionality missing in FreeIPA.
-
-%pre
+self-service password reset functionality missing in FreeIPA.  %pre
 getent group mokey &> /dev/null || \
 groupadd -r mokey &> /dev/null
 getent passwd mokey &> /dev/null || \
@@ -73,6 +71,14 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Tue Jan 09 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.6-14
+- New Features
+    - OAuth/OpenID Connect consent endpoint for Hydra
+    - API key access to consent endpoint
+    - User status command
+- Bug Fixes
+    - Fix optional security question on password reset for fresh accounts
+    - Support for FreeIPA 4.5
 * Thu May 25 2017  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.5-1
 - New Features
     - Add support for managing SSH Public Keys
