@@ -2,12 +2,13 @@
 ChangeLog
 ===============================================================================
 
-`v0.0.6`_ (unreleased)
+`v0.0.6`_ (2018-01-09)
 ----------------------
 
 - Add support for hydra consent endpoint
-- Add support for oauth2 proxy access_tokens 
+- Add support for api key access to consent endpoint
 - Add user status command
+- Fix optional security question on password reset for fresh accounts (PR #11)
 
 `v0.0.5`_ (2017-08-01)
 ----------------------
@@ -46,3 +47,4 @@ ChangeLog
 .. _v0.0.3: https://github.com/ubccr/mokey/releases/tag/v0.0.3
 .. _v0.0.4: https://github.com/ubccr/mokey/releases/tag/v0.0.4
 .. _v0.0.5: https://github.com/ubccr/mokey/releases/tag/v0.0.5
+.. _v0.0.6: https://github.com/ubccr/mokey/releases/tag/v0.0.6
