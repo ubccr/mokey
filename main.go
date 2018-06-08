@@ -9,6 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/mokey/server"
 	"github.com/urfave/cli"
 )
 
@@ -55,53 +56,14 @@ func main() {
 		{
 			Name:  "server",
 			Usage: "Run http server",
-			Action: func(c *cli.Context) {
-				Server()
-			},
-		},
-		{
-			Name:  "status",
-			Usage: "Display security question and token status for user",
-			Flags: []cli.Flag{
-				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
-			},
-			Action: func(c *cli.Context) {
-				uid := c.String("uid")
-				if len(uid) == 0 {
-					log.Fatal("Please provide a user uid")
+			Action: func(c *cli.Context) error {
+				err := server.Run()
+				if err != nil {
+					log.Fatal(err)
+					return cli.NewExitError(err, 1)
 				}
 
-				Status(uid)
-			},
-		},
-		{
-			Name:  "resetpw",
-			Usage: "Send reset password email",
-			Flags: []cli.Flag{
-				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
-			},
-			Action: func(c *cli.Context) {
-				uid := c.String("uid")
-				if len(uid) == 0 {
-					log.Fatal("Please provide a user uid")
-				}
-
-				ResetPasswordEmail(uid)
-			},
-		},
-		{
-			Name:  "newacct",
-			Usage: "Send new account email",
-			Flags: []cli.Flag{
-				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
-			},
-			Action: func(c *cli.Context) {
-				uid := c.String("uid")
-				if len(uid) == 0 {
-					log.Fatal("Please provide a user uid")
-				}
-
-				NewAccountEmail(uid)
+				return nil
 			},
 		}}
 

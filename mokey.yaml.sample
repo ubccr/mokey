@@ -76,10 +76,12 @@ require_question_pwreset: true
 # ipahost: "ipa.example.edu"
 
 #------------------------------------------------------------------------------
-# Keytab file for mokey (should have "Modify users and Reset passwords"
-# privilege in FreeIPA)
+# Keytab file and username for mokey to user for operations requiring elevated
+# privileges (should have "Modify users and Reset passwords" privilege in
+# FreeIPA)
 #------------------------------------------------------------------------------
 keytab: "/path/to/client.keytab"
+ktuser: "username"
 
 #------------------------------------------------------------------------------
 # Enable rate limiting based on remote ip (requires redis)

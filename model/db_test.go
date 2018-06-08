@@ -7,11 +7,9 @@ package model
 import (
 	"os"
 	"testing"
-
-	"github.com/jmoiron/sqlx"
 )
 
-func newTestDB() (*sqlx.DB, error) {
+func newTestDB() (*DB, error) {
 	dsn := os.Getenv("MOKEY_TEST_DSN")
 	return NewDB("mysql", dsn)
 }

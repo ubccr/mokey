@@ -9,7 +9,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewDB(driver, dsn string) (*sqlx.DB, error) {
+type Datastore interface {
+}
+
+type DB struct {
+	*sqlx.DB
+}
+
+func NewDB(driver, dsn string) (*DB, error) {
 	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
 		return nil, err
@@ -20,5 +27,5 @@ func NewDB(driver, dsn string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	return db, nil
+	return &DB{db}, nil
 }
