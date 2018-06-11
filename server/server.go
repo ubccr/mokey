@@ -123,9 +123,10 @@ func Run() error {
 		return err
 	}
 
-	e.GET("/", AuthRequired(h.Index))
+	e.GET("/", LoginRequired(h.Index))
 	e.GET("/auth/login", h.Login)
 	e.POST("/auth/login", h.Login)
+	e.GET("/auth/logout", h.Logout)
 
 	log.Printf("IPA server: %s", viper.GetString("ipahost"))
 

@@ -18,7 +18,7 @@ type Datastore interface {
 	FetchApiKey(key string) (*ApiKey, error)
 	CreateApiKey(uid, clientID, scopes string) (*ApiKey, string, error)
 	RefreshApiKey(ak *ApiKey) error
-	DestroyApiKey(user, clientID string)
+	DestroyApiKey(user, clientID string) error
 	DestroyApiKeys(uid string) error
 
 	// Token
@@ -34,7 +34,7 @@ type Datastore interface {
 
 	// Security Question
 	FetchAnswer(uid string) (*SecurityAnswer, error)
-	StoreAnswer(user, ans string, qid int)
+	StoreAnswer(user, ans string, qid int) error
 	FetchQuestions() ([]*SecurityQuestion, error)
 	RemoveAnswer(uid string) error
 }

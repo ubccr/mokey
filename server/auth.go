@@ -43,6 +43,12 @@ func (h *Handler) tryAuth(uid, password string) (string, error) {
 		return "", errors.New("Invalid login")
 	}
 
+	// Ping to get sessionID for later use
+	_, err = client.Ping()
+	if err != nil {
+		return "", errors.New("Error contacting FreeIPA")
+	}
+
 	return client.SessionID(), nil
 }
 
@@ -80,6 +86,11 @@ func (h *Handler) Login(c echo.Context) error {
 		"message": message}
 
 	return c.Render(http.StatusOK, "login.html", vars)
+}
+
+func (h *Handler) Logout(c echo.Context) error {
+	logout(c)
+	return c.Redirect(http.StatusFound, "/auth/login")
 }
 
 func logout(c echo.Context) {

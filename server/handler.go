@@ -30,5 +30,13 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 }
 
 func (h *Handler) Index(c echo.Context) error {
-	return c.Render(http.StatusOK, "index.html", nil)
+	user := c.Get(ContextKeyUser)
+	if user == nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+	}
+
+	vars := map[string]interface{}{
+		"user": user.(*ipa.UserRecord)}
+
+	return c.Render(http.StatusOK, "index.html", vars)
 }
