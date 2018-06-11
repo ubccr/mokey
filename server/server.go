@@ -88,6 +88,9 @@ func getTemplateDir() string {
 	return tmpldir
 }
 
+func setRoutes(e *echo.Echo) {
+}
+
 // Start web server
 func Run() error {
 	e := echo.New()
@@ -123,10 +126,7 @@ func Run() error {
 		return err
 	}
 
-	e.GET("/", LoginRequired(h.Index))
-	e.GET("/auth/login", h.Login)
-	e.POST("/auth/login", h.Login)
-	e.GET("/auth/logout", h.Logout)
+	h.SetupRoutes(e)
 
 	log.Printf("IPA server: %s", viper.GetString("ipahost"))
 

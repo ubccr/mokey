@@ -29,6 +29,16 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 	return h, nil
 }
 
+func (h *Handler) SetupRoutes(e *echo.Echo) {
+	e.GET("/", LoginRequired(h.Index))
+	e.GET("/auth/login", h.Login)
+	e.POST("/auth/login", h.Login)
+	e.GET("/auth/logout", h.Logout)
+	e.GET("/auth/signup", h.Signup)
+	e.POST("/auth/signup", h.Signup)
+	e.GET("/captcha/*.png", h.Captcha)
+}
+
 func (h *Handler) Index(c echo.Context) error {
 	user := c.Get(ContextKeyUser)
 	if user == nil {

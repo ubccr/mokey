@@ -8,16 +8,29 @@
 {{ end }}
 
   <form class="form-signin" role="form" method="POST">
-    <h2 class="form-signin-heading"><i class="fa fa-lock"></i> Please Log in</h2>
-    <label for="inputEmail" class="sr-only">Username</label>
-    <input type="text" id="uid" name="uid" class="form-control" placeholder="Username" required autofocus>
-    <label for="inputPassword" class="sr-only">Password</label>
-    <input type="password" id="password" name="password" class="form-control" placeholder="Password or Password + OTP" required>
+    <h2 class="form-signin-heading">Sign in</h2>
+
+    <div class="form-group">
+        <label for="inputEmail" class="sr-only">Username</label>
+        <div class="input-group">
+            <span class="input-group-addon"><i class="fa fa-user"></i></span>
+            <input type="text" id="uid" name="uid" class="form-control" placeholder="Username" required autofocus>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="inputPassword" class="sr-only">Password</label>
+        <div class="input-group">
+            <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+            <input type="password" id="password" name="password" class="form-control" placeholder="Password or Password + OTP" required>
+        </div>
+    </div>
+
     <input type="hidden" name="csrf" value="{{ .csrf }}" />
     <button class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
 
-      <div>
-            <span class="help-block"><a href="/auth/forgotpw">Forgot your password?</a></span>
+      <div style="margin-top: 25px">
+            <span class="help-block text-center"><a href="/auth/signup">Create Account</a> &nbsp; &nbsp; |&nbsp; &nbsp; <a href="/auth/forgotpw">Forgot your password?</a></span>
       </div>
 
   </form>

@@ -31,8 +31,16 @@
   branch = "master"
 
 [[constraint]]
+  name = "github.com/dchest/captcha"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/gorilla/sessions"
   version = "1.1.1"
+
+[[constraint]]
+  name = "github.com/asaskevich/govalidator"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/gomodule/redigo"

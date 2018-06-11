@@ -2,6 +2,18 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/asaskevich/govalidator"
+  packages = ["."]
+  revision = "7d2e70ef918f16bd6455529af38304d6d025c952"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/dchest/captcha"
+  packages = ["."]
+  revision = "6a29415a8364ec2971fdc62d9e415ed53fc20410"
+
+[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
@@ -218,6 +230,8 @@
   packages = [
     "acme",
     "acme/autocert",
+    "bcrypt",
+    "blowfish",
     "md4",
     "pbkdf2",
     "ssh/terminal"
@@ -312,6 +326,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e91bef8ab56726c16622a80413a527252ed07d70e66540e1db030fe263eade42"
+  inputs-digest = "6bab53abc976e77b07a39dde1ec7e1833f4f64e3b625d9de8c8aa2fcea5e9aea"
   solver-name = "gps-cdcl"
   solver-version = 1

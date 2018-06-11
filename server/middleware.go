@@ -17,25 +17,6 @@ import (
 	"github.com/ubccr/goipa"
 )
 
-// AuthRequired ensures the user has successfully completed the authentication
-// process including any 2FA.
-func AuthRequired(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sess, err := session.Get(CookieKeySession, c)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
-		}
-
-		auth := sess.Values[CookieKeyAuthenticated]
-
-		if auth != nil && auth.(bool) {
-			return next(c)
-		}
-
-		return c.Redirect(http.StatusFound, "/auth/login")
-	}
-}
-
 // LoginRequired ensure the user has logged in and has a valid FreeIPA session.
 // Stores the ipa.UserRecord in the request context
 func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
@@ -99,31 +80,7 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// UserNameRequired ensure the user has submitted a valid username.
-func UserNameRequired(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sess, err := session.Get(CookieKeySession, c)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
-		}
-
-		user := sess.Values[CookieKeyUser]
-
-		if user == nil {
-			logout(c)
-			return c.Redirect(http.StatusFound, "/auth/login")
-		}
-
-		if _, ok := user.(string); !ok {
-			logout(c)
-			log.Error("Invalid user record in session.")
-			return c.Redirect(http.StatusFound, "/auth/login")
-		}
-
-		return next(c)
-	}
-}
-
+// RateLimit middleware using redis for rate limiting requests
 func RateLimit(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// check if rate limiting is enabled
