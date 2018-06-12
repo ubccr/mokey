@@ -32,9 +32,10 @@ func NewTemplateRenderer(dir string) (*TemplateRenderer, error) {
 
 	for _, file := range tmpls {
 		base := filepath.Base(file)
-		if base != "layout.html" {
+		if base != "layout.html" && base != "otp-info.html" {
 			t.templates[base] = template.Must(template.New("layout").Funcs(funcMap).ParseFiles(file,
-				filepath.Join(dir, "layout.html")))
+				filepath.Join(dir, "layout.html"),
+				filepath.Join(dir, "otp-info.html")))
 		}
 	}
 

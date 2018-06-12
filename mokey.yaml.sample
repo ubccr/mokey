@@ -36,9 +36,10 @@ bind: "127.0.0.1"
 # key: "/path/to/key"
 
 #------------------------------------------------------------------------------
-# Min password length
+# Password requirements
 #------------------------------------------------------------------------------
 # min_passwd_len: 8
+# min_passwd_classes: 2
 
 #------------------------------------------------------------------------------
 # Authentication key used for HMAC token signing and secure cookies 

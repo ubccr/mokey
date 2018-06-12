@@ -8,6 +8,16 @@
   revision = "7d2e70ef918f16bd6455529af38304d6d025c952"
 
 [[projects]]
+  name = "github.com/boombuler/barcode"
+  packages = [
+    ".",
+    "qr",
+    "utils"
+  ]
+  revision = "3cfea5ab600ae37946be2b763b8ec2c1cf2d272d"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/dchest/captcha"
   packages = ["."]
@@ -163,6 +173,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/pquerna/otp"
+  packages = ["."]
+  revision = "40d624026db6bba02e9ad012a27ed01ca9f4984b"
+
+[[projects]]
+  branch = "master"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "ea8897e79973357ba785ac2533559a6297e83c44"
@@ -204,7 +220,7 @@
   branch = "master"
   name = "github.com/ubccr/goipa"
   packages = ["."]
-  revision = "5c59d9b15aac430e37580a09fea414c8c75f947c"
+  revision = "14b0ab0652bf8bce765669d54c79889c32c4819b"
 
 [[projects]]
   branch = "master"
@@ -232,7 +248,14 @@
     "acme/autocert",
     "bcrypt",
     "blowfish",
+    "cast5",
     "md4",
+    "openpgp",
+    "openpgp/armor",
+    "openpgp/elgamal",
+    "openpgp/errors",
+    "openpgp/packet",
+    "openpgp/s2k",
     "pbkdf2",
     "ssh/terminal"
   ]
@@ -326,6 +349,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6bab53abc976e77b07a39dde1ec7e1833f4f64e3b625d9de8c8aa2fcea5e9aea"
+  inputs-digest = "1d9aac13348e495614fed02edbc628424dc189a0ab31c29ed073c1628956f500"
   solver-name = "gps-cdcl"
   solver-version = 1

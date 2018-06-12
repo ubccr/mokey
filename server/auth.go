@@ -10,23 +10,6 @@ import (
 	"github.com/ubccr/goipa"
 )
 
-func (h *Handler) checkUser(uid string) (*ipa.UserRecord, error) {
-	if len(uid) == 0 {
-		return nil, errors.New("Please provide a username")
-	}
-
-	userRec, err := h.client.UserShow(uid)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"uid":              uid,
-			"ipa_client_error": err,
-		}).Error("failed to check user")
-		return nil, errors.New("Invalid login")
-	}
-
-	return userRec, nil
-}
-
 func (h *Handler) tryAuth(uid, password string) (string, error) {
 	if len(password) == 0 {
 		return "", errors.New("Please provide a password")

@@ -4,23 +4,23 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/spf13/viper"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/model"
+	"github.com/ubccr/mokey/util"
 )
 
 func init() {
 	viper.SetDefault("port", 8080)
 	viper.SetDefault("min_passwd_len", 8)
+	viper.SetDefault("min_passwd_classes", 2)
 	viper.SetDefault("develop", false)
 	viper.SetDefault("pgp_sign", false)
 	viper.SetDefault("force_2fa", true)
@@ -58,44 +58,23 @@ func HTTPErrorHandler(err error, c echo.Context) {
 			"path": c.Request().URL,
 			"ip":   c.RealIP(),
 		}).Error("Requested path not found")
-
 	}
 
 	errorPage := fmt.Sprintf("%d.html", code)
 	if err := c.Render(code, errorPage, nil); err != nil {
 		c.Logger().Error(err)
 	}
+
 	c.Logger().Error(err)
-}
-
-func getTemplateDir() string {
-	tmpldir := viper.GetString("templates")
-	if len(tmpldir) == 0 {
-		// default to directory of current executable
-		path, err := filepath.EvalSymlinks(os.Args[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		dir, err := filepath.Abs(filepath.Dir(path))
-		if err != nil {
-			log.Fatal(err)
-		}
-		tmpldir = dir + "/templates"
-	}
-
-	log.Infof("Using template dir: %s", tmpldir)
-
-	return tmpldir
-}
-
-func setRoutes(e *echo.Echo) {
 }
 
 // Start web server
 func Run() error {
 	e := echo.New()
 
-	tmplDir := getTemplateDir()
+	tmplDir := util.GetTemplateDir()
+	log.Infof("Using template dir: %s", tmplDir)
+
 	renderer, err := NewTemplateRenderer(tmplDir)
 	if err != nil {
 		log.Fatal(err)
@@ -118,7 +97,7 @@ func Run() error {
 
 	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	h, err := NewHandler(db)
@@ -182,7 +161,7 @@ func Run() error {
 		s.TLSConfig.Certificates = make([]tls.Certificate, 1)
 		s.TLSConfig.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		log.Printf("Running on https://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
