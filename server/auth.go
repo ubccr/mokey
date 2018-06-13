@@ -22,7 +22,7 @@ func (h *Handler) tryAuth(uid, password string) (string, error) {
 		log.WithFields(log.Fields{
 			"uid":              uid,
 			"ipa_client_error": err,
-		}).Error("tryauth: failed login attempt")
+		}).Error("Failed login attempt")
 		return "", errors.New("Invalid login")
 	}
 
@@ -39,34 +39,40 @@ func (h *Handler) Login(c echo.Context) error {
 	message := ""
 	sess, _ := session.Get(CookieKeySession, c)
 
-	if c.Request().Method == "POST" {
-		uid := c.FormValue("uid")
-		password := c.FormValue("password")
+	uid := c.FormValue("uid")
+	password := c.FormValue("password")
 
-		sid, err := h.tryAuth(uid, password)
-		if err != nil {
-			message = err.Error()
-		} else {
-			sess.Values[CookieKeyUser] = uid
-			sess.Values[CookieKeySID] = sid
-			sess.Values[CookieKeyAuthenticated] = true
+	sid, err := h.tryAuth(uid, password)
+	if err == nil {
+		sess.Values[CookieKeyUser] = uid
+		sess.Values[CookieKeySID] = sid
+		sess.Values[CookieKeyAuthenticated] = true
 
-			location := "/"
-			wyaf := sess.Values[CookieKeyWYAF]
-			if _, ok := wyaf.(string); ok {
-				location = wyaf.(string)
-			}
-			delete(sess.Values, CookieKeyWYAF)
-
-			sess.Save(c.Request(), c.Response())
-
-			return c.Redirect(http.StatusFound, location)
+		location := "/"
+		wyaf := sess.Values[CookieKeyWYAF]
+		if _, ok := wyaf.(string); ok {
+			location = wyaf.(string)
 		}
+		delete(sess.Values, CookieKeyWYAF)
+
+		sess.Save(c.Request(), c.Response())
+
+		return c.Redirect(http.StatusFound, location)
+	} else {
+		message = err.Error()
 	}
 
 	vars := map[string]interface{}{
 		"csrf":    c.Get("csrf").(string),
 		"message": message}
+
+	return c.Render(http.StatusOK, "login.html", vars)
+}
+
+func (h *Handler) Signin(c echo.Context) error {
+	vars := map[string]interface{}{
+		"csrf": c.Get("csrf").(string),
+	}
 
 	return c.Render(http.StatusOK, "login.html", vars)
 }

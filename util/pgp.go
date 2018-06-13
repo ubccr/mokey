@@ -19,15 +19,22 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/mokey/model"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
+const (
+	ResetSalt  = "resetpw"
+	VerifySalt = "acctsetup"
+)
+
 type Emailer struct {
+	db        model.Datastore
 	templates map[string]*template.Template
 }
 
-func NewEmailer() (*Emailer, error) {
+func NewEmailer(db model.Datastore) (*Emailer, error) {
 	tmpldir := GetTemplateDir()
 
 	tmpls, err := filepath.Glob(tmpldir + "/email/*.txt")
@@ -41,7 +48,42 @@ func NewEmailer() (*Emailer, error) {
 		templates[base] = template.Must(template.New(base).ParseFiles(t))
 	}
 
-	return &Emailer{templates: templates}, nil
+	return &Emailer{db: db, templates: templates}, nil
+}
+
+func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
+	token, err := e.db.CreateToken(uid, email)
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]interface{}{
+		"link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), e.db.SignToken(ResetSalt, token.Token))}
+
+	err = e.sendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *Emailer) SendVerifyAccountEmail(uid, email string) error {
+	token, err := e.db.CreateToken(uid, email)
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]interface{}{
+		"uid":  uid,
+		"link": fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), e.db.SignToken(VerifySalt, token.Token))}
+
+	err = e.sendEmail(token.Email, fmt.Sprintf("[%s] Verify your email", viper.GetString("email_prefix")), "setup-account.txt", vars)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
@@ -102,7 +144,7 @@ func (e *Emailer) sign(qtext []byte, header textproto.MIMEHeader) ([]byte, error
 	return sig.Bytes(), nil
 }
 
-func (e *Emailer) SendEmail(email, subject, tmpl string, data map[string]interface{}) error {
+func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interface{}) error {
 	log.WithFields(log.Fields{
 		"email": email,
 	}).Info("Sending email to user")

@@ -1,13 +1,10 @@
 package server
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"net/http"
-	"path"
 	"path/filepath"
-	"time"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/dchest/captcha"
@@ -24,41 +21,49 @@ func init() {
 	viper.SetDefault("default_homedir", "/home")
 }
 
-// Captcha handler displays captcha image
-func (h *Handler) Captcha(c echo.Context) error {
-	_, file := path.Split(c.Request().URL.Path)
-	ext := path.Ext(file)
-	id := file[:len(file)-len(ext)]
-	if ext == "" || id == "" {
-		return echo.NewHTTPError(http.StatusNotFound, "Captcha not found")
-	}
-	if c.Request().FormValue("reload") != "" {
-		captcha.Reload(id)
-	}
+// Create new user account POST handler
+func (h *Handler) CreateAccount(c echo.Context) error {
+	uid := c.FormValue("uid")
+	email := c.FormValue("email")
+	first := c.FormValue("first")
+	last := c.FormValue("last")
+	pass := c.FormValue("password")
+	pass2 := c.FormValue("password2")
+	captchaID := c.FormValue("captcha_id")
+	captchaSol := c.FormValue("captcha_sol")
 
-	c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-	c.Response().Header().Set("Pragma", "no-cache")
-	c.Response().Header().Set("Expires", "0")
-
-	var content bytes.Buffer
-	switch ext {
-	case ".png":
-		c.Response().Header().Set(echo.HeaderContentType, "image/png")
-		err := captcha.WriteImage(&content, id, captcha.StdWidth, captcha.StdHeight)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"id": id,
-			}).Warn("Captcha not found")
-			return echo.NewHTTPError(http.StatusNotFound, "Captcha not found")
-		}
-	default:
-		return echo.NewHTTPError(http.StatusNotFound, "Captcha not found")
+	vars := map[string]interface{}{
+		"csrf": c.Get("csrf").(string),
 	}
 
-	http.ServeContent(c.Response(), c.Request(), id+ext, time.Time{}, bytes.NewReader(content.Bytes()))
-	return nil
+	if viper.GetBool("enable_captcha") {
+		vars["captchaID"] = captcha.New()
+	}
+
+	err := h.createAccount(uid, email, first, last, pass, pass2, captchaID, captchaSol)
+	if err != nil {
+		vars["message"] = err.Error()
+	} else {
+		vars["success"] = true
+	}
+
+	return c.Render(http.StatusOK, "signup.html", vars)
 }
 
+// Signup form GET handler
+func (h *Handler) Signup(c echo.Context) error {
+	vars := map[string]interface{}{
+		"csrf": c.Get("csrf").(string),
+	}
+
+	if viper.GetBool("enable_captcha") {
+		vars["captchaID"] = captcha.New()
+	}
+
+	return c.Render(http.StatusOK, "signup.html", vars)
+}
+
+// createAccount does the work of validation and creating the account in FreeIPA
 func (h *Handler) createAccount(uid, email, first, last, pass, pass2, captchaID, captchaSol string) error {
 	if !valid.IsEmail(email) {
 		return errors.New("Please provide a valid email address")
@@ -151,15 +156,27 @@ func (h *Handler) createAccount(uid, email, first, last, pass, pass2, captchaID,
 		"uid": uid,
 	}).Info("User password set successfully")
 
+	// Disable new users until they have verified their email address
+	err = h.client.UserDisable(uid)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+			"uid": uid,
+		}).Error("Failed to disable user")
+
+		// TODO: should we tell user about this? probably not?
+	}
+
 	// Send user an email to verify their account
-	err = h.NewAccountEmail(uid, email)
+	err = h.emailer.SendVerifyAccountEmail(uid, email)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":   err,
 			"uid":   uid,
 			"email": email,
 		}).Error("Failed to send new account email")
-		return errors.New("Failed to create user account. Fatal system error.")
+
+		// TODO: should we tell user about this?
 	}
 
 	log.WithFields(log.Fields{
@@ -168,44 +185,4 @@ func (h *Handler) createAccount(uid, email, first, last, pass, pass2, captchaID,
 	}).Info("New user account email sent successfully")
 
 	return nil
-}
-
-func (h *Handler) CreateAccount(c echo.Context) error {
-	uid := c.FormValue("uid")
-	email := c.FormValue("email")
-	first := c.FormValue("first")
-	last := c.FormValue("last")
-	pass := c.FormValue("password")
-	pass2 := c.FormValue("password2")
-	captchaID := c.FormValue("captcha_id")
-	captchaSol := c.FormValue("captcha_sol")
-
-	vars := map[string]interface{}{
-		"csrf": c.Get("csrf").(string),
-	}
-
-	if viper.GetBool("enable_captcha") {
-		vars["captchaID"] = captcha.New()
-	}
-
-	err := h.createAccount(uid, email, first, last, pass, pass2, captchaID, captchaSol)
-	if err != nil {
-		vars["message"] = err.Error()
-	} else {
-		vars["success"] = true
-	}
-
-	return c.Render(http.StatusOK, "signup.html", vars)
-}
-
-func (h *Handler) Signup(c echo.Context) error {
-	vars := map[string]interface{}{
-		"csrf": c.Get("csrf").(string),
-	}
-
-	if viper.GetBool("enable_captcha") {
-		vars["captchaID"] = captcha.New()
-	}
-
-	return c.Render(http.StatusOK, "signup.html", vars)
 }

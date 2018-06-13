@@ -11,6 +11,4 @@ const (
 	ContextKeyApi          = "apikey"
 	CSRFFieldName          = "auth_tok"
 	TokenRegex             = `[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\-\_\.]+`
-	ResetSalt              = "resetpw"
-	AccountSetupSalt       = "acctsetup"
 )

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -27,7 +26,7 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 		return nil, err
 	}
 
-	h.emailer, err = util.NewEmailer()
+	h.emailer, err = util.NewEmailer(db)
 	if err != nil {
 		return nil, err
 	}
@@ -38,13 +37,25 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 }
 
 func (h *Handler) SetupRoutes(e *echo.Echo) {
+	// Public
 	e.GET("/", LoginRequired(h.Index))
-	e.GET("/auth/login", h.Login)
+	e.GET("/auth/captcha/*.png", h.Captcha)
+
+	// Login
+	e.GET("/auth/login", h.Signin)
 	e.POST("/auth/login", h.Login)
+
+	// Logout
 	e.GET("/auth/logout", h.Logout)
+
+	// Signup
 	e.GET("/auth/signup", h.Signup)
 	e.POST("/auth/signup", h.CreateAccount)
-	e.GET("/captcha/*.png", h.Captcha)
+	e.Match([]string{"GET", "POST"}, "/auth/verify/*", h.SetupAccount)
+
+	// Forgot Password
+	e.Match([]string{"GET", "POST"}, "/auth/forgotpw", h.ForgotPassword)
+	e.Match([]string{"GET", "POST"}, "/auth/resetpw/*", h.ResetPassword)
 }
 
 func (h *Handler) Index(c echo.Context) error {
@@ -57,34 +68,6 @@ func (h *Handler) Index(c echo.Context) error {
 		"user": user.(*ipa.UserRecord)}
 
 	return c.Render(http.StatusOK, "index.html", vars)
-}
-
-func (h *Handler) NewAccountEmail(uid, email string) error {
-	token, err := h.db.CreateToken(uid, email)
-	if err != nil {
-		return err
-	}
-
-	vars := map[string]interface{}{
-		"uid":  uid,
-		"link": fmt.Sprintf("%s/auth/setup/%s", viper.GetString("email_link_base"), h.db.SignToken(AccountSetupSalt, token.Token))}
-
-	err = h.emailer.SendEmail(token.Email, fmt.Sprintf("[%s] New Account Setup", viper.GetString("email_prefix")), "setup-account.txt", vars)
-	if err != nil {
-		return err
-	}
-
-	err = h.db.RemoveAnswer(uid)
-	if err != nil {
-		return err
-	}
-
-	err = h.removeAllOTPTokens(uid)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (h *Handler) removeAllOTPTokens(uid string) error {

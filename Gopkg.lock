@@ -220,7 +220,7 @@
   branch = "master"
   name = "github.com/ubccr/goipa"
   packages = ["."]
-  revision = "14b0ab0652bf8bce765669d54c79889c32c4819b"
+  revision = "6e9a8d59ed3cf12b50e911104e324992cd38ebbf"
 
 [[projects]]
   branch = "master"
