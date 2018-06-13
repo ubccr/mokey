@@ -173,6 +173,12 @@ pgp_sign: false
 # enable_captcha: true
 # default_shell: "/bin/bash"
 # default_homedir: "/home"
+#
+#------------------------------------------------------------------------------
+# Require users to verify email address. With this option enabled new accounts
+# are disabled by default until the user verifies their email address
+#------------------------------------------------------------------------------
+# require_verify_email: false
 
 #------------------------------------------------------------------------------
 # Developer mode

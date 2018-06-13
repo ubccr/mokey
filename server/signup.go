@@ -156,27 +156,29 @@ func (h *Handler) createAccount(uid, email, first, last, pass, pass2, captchaID,
 		"uid": uid,
 	}).Info("User password set successfully")
 
-	// Disable new users until they have verified their email address
-	err = h.client.UserDisable(uid)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err": err,
-			"uid": uid,
-		}).Error("Failed to disable user")
+	if viper.GetBool("require_verify_email") {
+		// Disable new users until they have verified their email address
+		err = h.client.UserDisable(uid)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+				"uid": uid,
+			}).Error("Failed to disable user")
 
-		// TODO: should we tell user about this? probably not?
-	}
+			// TODO: should we tell user about this? probably not?
+		}
 
-	// Send user an email to verify their account
-	err = h.emailer.SendVerifyAccountEmail(uid, email)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err":   err,
-			"uid":   uid,
-			"email": email,
-		}).Error("Failed to send new account email")
+		// Send user an email to verify their account
+		err = h.emailer.SendVerifyAccountEmail(uid, email)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err":   err,
+				"uid":   uid,
+				"email": email,
+			}).Error("Failed to send new account email")
 
-		// TODO: should we tell user about this?
+			// TODO: should we tell user about this?
+		}
 	}
 
 	log.WithFields(log.Fields{
