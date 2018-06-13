@@ -38,7 +38,6 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 
 func (h *Handler) SetupRoutes(e *echo.Echo) {
 	// Public
-	e.GET("/", LoginRequired(h.Index))
 	e.GET("/auth/captcha/*.png", h.Captcha)
 
 	// Login
@@ -56,6 +55,10 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	// Forgot Password
 	e.Match([]string{"GET", "POST"}, "/auth/forgotpw", h.ForgotPassword)
 	e.Match([]string{"GET", "POST"}, "/auth/resetpw/*", h.ResetPassword)
+
+	// Login Required
+	e.GET("/", LoginRequired(h.Index))
+	e.Match([]string{"GET", "POST"}, "/changepw", LoginRequired(h.ChangePassword))
 }
 
 func (h *Handler) Index(c echo.Context) error {
