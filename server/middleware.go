@@ -74,7 +74,7 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		c.Set(ContextKeyUser, userRec)
-		c.Set("ipa", c)
+		c.Set(ContextKeyIPAClient, client)
 
 		return next(c)
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/ubccr/mokey/util"
 )
 
-func (h *Handler) changePassword(user *ipa.UserRecord, current, pass, pass2, challenge string) error {
+func (h *Handler) changePassword(client *ipa.Client, user *ipa.UserRecord, current, pass, pass2, challenge string) error {
 	if len(current) == 0 {
 		return errors.New("Please enter you current password")
 	}
@@ -37,7 +37,7 @@ func (h *Handler) changePassword(user *ipa.UserRecord, current, pass, pass2, cha
 	}
 
 	// Change password in FreeIPA
-	err := h.client.ChangePassword(string(user.Uid), current, pass, challenge)
+	err := client.ChangePassword(string(user.Uid), current, pass, challenge)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
@@ -59,16 +59,8 @@ func (h *Handler) changePassword(user *ipa.UserRecord, current, pass, pass2, cha
 }
 
 func (h *Handler) ChangePassword(c echo.Context) error {
-	userRec := c.Get(ContextKeyUser)
-	if userRec == nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
-	}
-
-	if _, ok := userRec.(*ipa.UserRecord); !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Context user is invalid type")
-	}
-
-	user := userRec.(*ipa.UserRecord)
+	user := c.Get(ContextKeyUser).(*ipa.UserRecord)
+	client := c.Get(ContextKeyIPAClient).(*ipa.Client)
 
 	vars := map[string]interface{}{
 		"user": user,
@@ -81,7 +73,7 @@ func (h *Handler) ChangePassword(c echo.Context) error {
 		pass2 := c.FormValue("new_password2")
 		challenge := c.FormValue("challenge")
 
-		err := h.changePassword(user, current, pass, pass2, challenge)
+		err := h.changePassword(client, user, current, pass, pass2, challenge)
 		if err != nil {
 			vars["message"] = err.Error()
 		} else {
