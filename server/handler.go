@@ -83,19 +83,19 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 
 	// Login
 	e.GET("/auth/login", h.Signin)
-	e.POST("/auth/login", h.Login)
+	e.POST("/auth/login", RateLimit(h.Login))
 
 	// Logout
 	e.GET("/auth/logout", h.Logout)
 
 	// Signup
 	e.GET("/auth/signup", h.Signup)
-	e.POST("/auth/signup", h.CreateAccount)
+	e.POST("/auth/signup", RateLimit(h.CreateAccount))
 	e.Match([]string{"GET", "POST"}, "/auth/verify/*", h.SetupAccount)
 
 	// Forgot Password
-	e.Match([]string{"GET", "POST"}, "/auth/forgotpw", h.ForgotPassword)
-	e.Match([]string{"GET", "POST"}, "/auth/resetpw/*", h.ResetPassword)
+	e.Match([]string{"GET", "POST"}, "/auth/forgotpw", RateLimit(h.ForgotPassword))
+	e.Match([]string{"GET", "POST"}, "/auth/resetpw/*", RateLimit(h.ResetPassword))
 
 	// Login Required
 	e.GET("/", LoginRequired(h.Index))
@@ -108,7 +108,7 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.Match([]string{"GET", "POST"}, "/2fa", LoginRequired(h.TwoFactorAuth))
 
 	if viper.GetBool("hydra_cluster_url") {
-		e.Match([]string{"GET", "POST"}, "/consent", LoginRequired(h.Consent))
+		e.Match([]string{"GET", "POST"}, "/consent", RateLimit(LoginRequired(h.Consent)))
 
 		if viper.GetBool("enable_api_keys") {
 			e.Match([]string{"GET", "POST"}, "/apikey", LoginRequired(h.ApiKey))
