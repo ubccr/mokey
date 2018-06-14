@@ -11,6 +11,7 @@ ChangeLog
 - Simplify login to be more like FreeIPA (password+otp)
 - Remove security questions
 - Remove CLI tools
+- Remove dependecy on krb5-libs (now using pure go kerberos library)
 
 `v0.0.6`_ (2018-01-09)
 ----------------------
