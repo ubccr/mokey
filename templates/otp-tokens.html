@@ -60,7 +60,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="action" name="action" value="delete">
         <input type="hidden" id="delete_uuid" name="uuid" value="">
-        {{ .csrfField }}
+        <input type="hidden" name="csrf" value="{{ .csrf }}" />
         <button type="submit" class="btn btn-danger btn-ok"><i class="fa fa-trash"></i> Delete</a>
       </form>
       </div>
@@ -83,7 +83,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="action" name="action" value="enable">
         <input type="hidden" id="enable_uuid" name="uuid" value="">
-        {{ .csrfField }}
+        <input type="hidden" name="csrf" value="{{ .csrf }}" />
         <button type="submit" class="btn btn-success btn-ok"><i class="fa fa-check"></i> Enable</a>
       </form>
       </div>
@@ -106,7 +106,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="action" name="action" value="disable">
         <input type="hidden" id="disable_uuid" name="uuid" value="">
-        {{ .csrfField }}
+        <input type="hidden" name="csrf" value="{{ .csrf }}" />
         <button type="submit" class="btn btn-danger btn-ok"><i class="fa fa-times"></i> Disable</a>
       </form>
       </div>
@@ -133,7 +133,7 @@
       <form role="form" method="post">
         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="action" name="action" value="add">
-        {{ .csrfField }}
+        <input type="hidden" name="csrf" value="{{ .csrf }}" />
         <button type="submit" class="btn btn-primary btn-ok"><i class="fa fa-check"></i> Add</a>
       </form>
       </div>

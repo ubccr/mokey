@@ -62,6 +62,8 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.GET("/sshpubkey/new", LoginRequired(h.NewSSHPubKey))
 	e.POST("/sshpubkey/new", LoginRequired(h.AddSSHPubKey))
 	e.Match([]string{"GET", "POST"}, "/sshpubkey", LoginRequired(h.SSHPubKey))
+	e.GET("/otptokens", LoginRequired(h.OTPTokens))
+	e.POST("/otptokens", LoginRequired(h.ModifyOTPTokens))
 }
 
 func (h *Handler) Index(c echo.Context) error {
