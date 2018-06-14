@@ -107,7 +107,7 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.POST("/otptokens", LoginRequired(h.ModifyOTPTokens))
 	e.Match([]string{"GET", "POST"}, "/2fa", LoginRequired(h.TwoFactorAuth))
 
-	if viper.GetBool("hydra_cluster_url") {
+	if viper.IsSet("hydra_cluster_url") {
 		e.Match([]string{"GET", "POST"}, "/consent", RateLimit(LoginRequired(h.Consent)))
 
 		if viper.GetBool("enable_api_keys") {
