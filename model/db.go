@@ -31,12 +31,6 @@ type Datastore interface {
 	IncrementToken(token string) error
 	DestroyToken(token string) error
 	DestroyTokenByUser(uid string) error
-
-	// Security Question
-	FetchAnswer(uid string) (*SecurityAnswer, error)
-	StoreAnswer(user, ans string, qid int) error
-	FetchQuestions() ([]*SecurityQuestion, error)
-	RemoveAnswer(uid string) error
 }
 
 type DB struct {
