@@ -68,7 +68,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="remove_api_key" name="client_id" value="">
         <input type="hidden" id="action" name="action" value="remove">
-        {{ .csrfField }}
+        <input type="hidden" name="csrf" value="{{ .csrf }}" />
         <button type="submit" class="btn btn-danger btn-ok"><i class="fa fa-trash"></i> Delete</a>
       </form>
       </div>
@@ -94,7 +94,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
         <input type="hidden" id="action" name="action" value="enable">
         <input type="hidden" id="new_api_key" name="client_id" value="">
-        {{ .csrfField }}
+        <input type="hidden" name="csrf" value="{{ .csrf }}" />
         <button type="submit" class="btn btn-success btn-ok"><i class="fa fa-check"></i> Create</a>
       </form>
       </div>

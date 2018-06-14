@@ -195,6 +195,7 @@ develop: false
 #------------------------------------------------------------------------------
 # Public oauth2 clients for Api Key access (requires Hydra)
 #------------------------------------------------------------------------------
+# enable_api_keys: false
 # enabled_api_client_ids:
 #   - openstack-api
 #   - mypublic-api

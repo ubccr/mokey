@@ -12,6 +12,13 @@ import (
 	"time"
 )
 
+type ApiKeyClient struct {
+	Name        string
+	ClientID    string `mapstructure:"client_id"`
+	Description string `mapstructure:"desc"`
+	Scopes      string
+}
+
 type ApiKey struct {
 	UserName     string     `db:"user_name"`
 	Key          string     `db:"api_key"`

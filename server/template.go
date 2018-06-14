@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/labstack/echo"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -50,6 +51,7 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 	if viewContext, isMap := data.(map[string]interface{}); isMap {
 		viewContext["reverse"] = c.Echo().Reverse
+		viewContext["apiEnabled"] = viper.GetBool("enable_api_keys")
 	}
 
 	return t.templates[name].ExecuteTemplate(w, "layout", data)
