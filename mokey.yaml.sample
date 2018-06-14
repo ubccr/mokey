@@ -57,21 +57,6 @@ enc_key: mysecret
 templates: /usr/share/mokey/templates
 
 #------------------------------------------------------------------------------
-# Force Two-Factor authentication on login. If enabled users will be required
-# to provide their security question (if OTP is disabled) in addition to their
-# password when logging in. Defaults to true
-#------------------------------------------------------------------------------
-force_2fa: true
-
-#------------------------------------------------------------------------------
-# Require security question for password resets. If disabled, users will not be
-# required to enter their security question when resetting their password. They
-# will only need the link sent to their email address. Disabling this option is
-# not recommended. Defaults to true
-#------------------------------------------------------------------------------
-require_question_pwreset: true
-
-#------------------------------------------------------------------------------
 # FreeIPA server hostname (defaults to /etc/ipa/default.conf)
 #------------------------------------------------------------------------------
 # ipahost: "ipa.example.edu"

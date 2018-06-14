@@ -23,8 +23,6 @@ func init() {
 	viper.SetDefault("min_passwd_classes", 2)
 	viper.SetDefault("develop", false)
 	viper.SetDefault("pgp_sign", false)
-	viper.SetDefault("force_2fa", true)
-	viper.SetDefault("require_question_pwreset", true)
 	viper.SetDefault("require_verify_email", false)
 	viper.SetDefault("smtp_host", "localhost")
 	viper.SetDefault("smtp_port", 25)
@@ -41,10 +39,6 @@ func init() {
 	viper.SetDefault("redis", ":6379")
 	viper.SetDefault("max_requests", 15)
 	viper.SetDefault("rate_limit_expire", 3600)
-
-	//gob.Register(&ipa.UserRecord{})
-	//gob.Register(&ipa.IpaDateTime{})
-	//gob.Register(&model.ApiKey{})
 }
 
 // Render custom error templates if available
