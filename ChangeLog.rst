@@ -8,6 +8,7 @@ ChangeLog
 - Major code refactor to use echo framework
 - Add user signup/registration (Fixes #8)
 - Add ApiKey support for hydra consent
+- Add CAPTCHA support
 - Simplify login to be more like FreeIPA (password+otp)
 - Remove security questions
 - Remove CLI tools
