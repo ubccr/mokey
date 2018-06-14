@@ -10,15 +10,16 @@ What is mokey?
 
 mokey is web application that provides self-service user account management
 tools for `FreeIPA <http://freeipa.org>`_. The motivation for this project was
-to implement the self-service password reset functionality missing in FreeIPA.
-This feature is not provided by default in FreeIPA, see `here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_
-for more info and the rationale behind this decision. mokey is not a FreeIPA
-plugin but a complete standalone application that uses the FreeIPA JSON API.
-mokey requires no changes to the underlying LDAP schema and uses a MariaDB
-database to store security questions and access tokens. The user experience and
-web interface can be customized to fit the requirements of an organization's
-look and feel. mokey is written in Go and released under a modified BSD
-license. For screenshots `see here <docs/>`_
+to implement the self-service account creation and password reset functionality
+missing in FreeIPA.  This feature is not provided by default in FreeIPA, see
+`here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_ for more info
+and the rationale behind this decision. mokey is not a FreeIPA plugin but a
+complete standalone application that uses the FreeIPA JSON API.  mokey requires
+no changes to the underlying LDAP schema and uses a MariaDB database to store
+access tokens. The user experience and web interface can be customized to fit
+the requirements of an organization's look and feel. mokey is written in Go and
+released under a modified BSD license. For screenshots
+`see here <docs/>`_
 
 ------------------------------------------------------------------------
 Project status
@@ -32,9 +33,8 @@ and can make your systems vulnerable to abuse.
 Features
 ------------------------------------------------------------------------
 
-- Account Activation / First time password setup
-- Forgot Password
-- Change Password / Set security question
+- Account Signup
+- Forgot/Change Password
 - Add/Remove SSH Public Keys
 - Add/Remove TOTP Tokens
 - Enable/Disable Two-Factor Authentication
@@ -46,10 +46,11 @@ Features
 Requirements
 ------------------------------------------------------------------------
 
-- FreeIPA v4.1.0
+- FreeIPA v4.5.0
 - MariaDB/MySQL
 - Linux x86_64 (CentOS 7.x preferred)
 - Redis (optional)
+- Hydra v0.9.15 (optional)
 
 ------------------------------------------------------------------------
 Upgrading
@@ -98,7 +99,7 @@ to be installed)::
     $ mkdir /etc/mokey/keytab
     $ kinit adminuser
     $ ipa role-add 'Mokey User Manager' --desc='Mokey User management'
-    $ ipa role-add-privilege 'Mokey User Manager' --privilege='Modify users and Reset passwords'
+    $ ipa role-add-privilege 'Mokey User Manager' --privilege='User Administrators'
     $ ipa user-add mokeyapp --first Mokey --last App
     $ ipa role-add-member 'Mokey User Manager' --users=mokeyapp
     $ ipa-getkeytab -s [your.ipa-master.server] -p mokeyapp -k /etc/mokey/keytab/mokeyapp.keytab
@@ -149,27 +150,6 @@ Customizing templates
 
 The templates for the web interface and emails are installed by default in
 /usr/share/mokey/templates. Edit to taste and restart mokey.
-
-------------------------------------------------------------------------
-Getting Started with mokey cli tools
-------------------------------------------------------------------------
-
-- Account Activation / First time password setup. Use case: create new user and
-  send them an email link to setup their password and security question::
-
-    $ kinit adminuser
-    $ ipa user-add --first="Jesse" --last="Pinkman" --email="jp@example.com" capncook
-    $ mokey newacct --uid capncook
-    (An email will be sent to jp@example.com with a link to setup their password)
-
-- Reset user password. Use case: user forgot their password, send the user an
-  email link to reset their password using their previously set security
-  question. Users can also initiate a password reset using the "Forgot
-  Password" link in the web interface::
-
-    $ kinit adminuser
-    $ mokey resetpw --uid capncook
-    (An email will be sent to jp@example.com with a link to reset their password)
 
 ------------------------------------------------------------------------
 Configure PGP/Mime email
@@ -257,8 +237,7 @@ Building from source
 
 First, you will need:
 
-- `glide <https://glide.sh/>`_ to manage project's dependencies.
-- The krb5-libs/GSSAPI lib installed on your compilation system
+- `dep <https://golang.github.io/dep/>`_ to manage project's dependencies.
 
 Clone the repository in your $GOPATH::
 
@@ -266,7 +245,7 @@ Clone the repository in your $GOPATH::
 
 In the project folder you can now resolve the dependencies and build mokey::
 
-    $ glide install
+    $ dep ensure
     $ go build
 
 ------------------------------------------------------------------------

@@ -2,6 +2,16 @@
 ChangeLog
 ===============================================================================
 
+`v0.5.1`_ (unreleased)
+----------------------
+
+- Major code refactor to use echo framework
+- Add user signup/registration (Fixes #8)
+- Add ApiKey support for hydra consent
+- Simplify login to be more like FreeIPA (password+otp)
+- Remove security questions
+- Remove CLI tools
+
 `v0.0.6`_ (2018-01-09)
 ----------------------
 
