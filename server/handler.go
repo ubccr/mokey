@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	"github.com/ory/hydra/sdk"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
@@ -12,10 +13,11 @@ import (
 )
 
 type Handler struct {
-	db         model.Datastore
-	client     *ipa.Client
-	emailer    *util.Emailer
-	apiClients map[string]*model.ApiKeyClient
+	db          model.Datastore
+	client      *ipa.Client
+	hydraClient *sdk.Client
+	emailer     *util.Emailer
+	apiClients  map[string]*model.ApiKeyClient
 }
 
 func NewHandler(db model.Datastore) (*Handler, error) {
@@ -36,6 +38,19 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 	h.client.StickySession(false)
 
 	if viper.IsSet("hydra_cluster_url") {
+		h.hydraClient, err = sdk.Connect(
+			sdk.ClientID(viper.GetString("hydra_client_id")),
+			sdk.ClientSecret(viper.GetString("hydra_client_secret")),
+			sdk.SkipTLSVerify(viper.GetBool("develop")),
+			sdk.Scopes("hydra.keys.get"),
+			sdk.ClusterURL(viper.GetString("hydra_cluster_url")))
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Infof("Hydra consent app enabled")
+
 		if viper.IsSet("enabled_api_client_ids") {
 			h.apiClients = make(map[string]*model.ApiKeyClient)
 
@@ -92,8 +107,12 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.POST("/otptokens", LoginRequired(h.ModifyOTPTokens))
 	e.Match([]string{"GET", "POST"}, "/2fa", LoginRequired(h.TwoFactorAuth))
 
-	if viper.GetBool("enable_api_keys") {
-		e.Match([]string{"GET", "POST"}, "/apikey", LoginRequired(h.ApiKey))
+	if viper.GetBool("hydra_cluster_url") {
+		e.Match([]string{"GET", "POST"}, "/consent", LoginRequired(h.Consent))
+
+		if viper.GetBool("enable_api_keys") {
+			e.Match([]string{"GET", "POST"}, "/apikey", LoginRequired(h.ApiKey))
+		}
 	}
 }
 

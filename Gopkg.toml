@@ -47,6 +47,10 @@
   version = "^2.0.0"
 
 [[constraint]]
+  name = "github.com/ory/hydra"
+  version = "=v0.9.15"
+
+[[constraint]]
   name = "github.com/pquerna/otp"
   branch = "master"
 

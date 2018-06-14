@@ -28,6 +28,8 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 			strings.Contains(accept, "application/json") &&
 			len(auth) == 2 && strings.ToLower(auth[0]) == "bearer" &&
 			len(auth[1]) > 0 {
+
+			c.Set(ContextKeyApi, auth[1])
 			return next(c)
 		}
 
