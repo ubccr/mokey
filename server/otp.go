@@ -110,6 +110,61 @@ func (h *Handler) ModifyOTPTokens(c echo.Context) error {
 	return c.Render(http.StatusOK, "otp-tokens.html", vars)
 }
 
+func (h *Handler) TwoFactorAuth(c echo.Context) error {
+	user := c.Get(ContextKeyUser).(*ipa.UserRecord)
+	client := c.Get(ContextKeyIPAClient).(*ipa.Client)
+
+	vars := map[string]interface{}{
+		"user": user,
+		"csrf": c.Get("csrf").(string),
+	}
+
+	if c.Request().Method == "POST" {
+		// These operations require admin privs. TODO: should we make this
+		// configurable?
+		action := c.FormValue("action")
+		if action == "remove" {
+			// Remove any auth types which will fall back to FreeIPA global default.
+			err := h.client.SetAuthTypes(string(user.Uid), nil)
+			if err == nil {
+				user.AuthTypes = []string{}
+			} else {
+				log.WithFields(log.Fields{
+					"user":  string(user.Uid),
+					"error": err,
+				}).Error("failed to reset auth types to default")
+				vars["message"] = "Failed to disable TOTP. Please contact your administrator"
+			}
+		} else if action == "enable" {
+			err := h.client.SetAuthTypes(string(user.Uid), []string{"otp"})
+			if err == nil {
+				user.AuthTypes = []string{"otp"}
+			} else {
+				log.WithFields(log.Fields{
+					"user":  string(user.Uid),
+					"error": err,
+				}).Error("failed to set auth types to otp")
+				vars["message"] = "Failed to enable TOTP. Please contact your administrator"
+			}
+
+			tokens, err := client.FetchOTPTokens(string(user.Uid))
+			if err != nil {
+				log.WithFields(log.Fields{
+					"user":  string(user.Uid),
+					"error": err,
+				}).Error("failed to fetch OTP tokens")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch otp tokens")
+			}
+			if len(tokens) == 0 {
+				return h.addNewToken(c)
+			}
+		}
+	}
+
+	vars["otpenabled"] = user.OTPOnly()
+	return c.Render(http.StatusOK, "2fa.html", vars)
+}
+
 func (h *Handler) addNewToken(c echo.Context) error {
 	user := c.Get(ContextKeyUser).(*ipa.UserRecord)
 	client := c.Get(ContextKeyIPAClient).(*ipa.Client)
