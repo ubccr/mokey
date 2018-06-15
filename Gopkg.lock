@@ -320,6 +320,15 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/pquerna/cachecontrol"
+  packages = [
+    ".",
+    "cacheobject"
+  ]
+  revision = "1555304b9b35fdd2b425bccf1a5613677705e7d0"
+
+[[projects]]
+  branch = "master"
   name = "github.com/pquerna/otp"
   packages = ["."]
   revision = "40d624026db6bba02e9ad012a27ed01ca9f4984b"
@@ -474,14 +483,13 @@
   revision = "db08ff08e8622530d9ed3a0e8ac279f6d4c02196"
 
 [[projects]]
-  branch = "master"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "clientcredentials",
     "internal"
   ]
-  revision = "1e0a3fa8ba9a5c9eb35c271780101fdaf1b205d7"
+  revision = "9a379c6b3e95a790ffc43293c2a78dee0d7b6e20"
 
 [[projects]]
   branch = "master"
@@ -519,6 +527,12 @@
   ]
   revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
   version = "v1.0.0"
+
+[[projects]]
+  name = "gopkg.in/coreos/go-oidc.v2"
+  packages = ["."]
+  revision = "1180514eaf4d9f38d0d19eef639a1d695e066e72"
+  version = "v2.0.0"
 
 [[projects]]
   name = "gopkg.in/gorp.v1"
@@ -580,6 +594,7 @@
 [[projects]]
   name = "gopkg.in/square/go-jose.v2"
   packages = [
+    ".",
     "cipher",
     "json"
   ]
@@ -595,6 +610,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d815bee2851bbaf529104c1cca2cdaad4c693d7a166138338924e8b40c8896c3"
+  inputs-digest = "4a9ab1e26438445be852daddaaf74c07bd3df4f4e5162cbfc95715f03f6cb5f0"
   solver-name = "gps-cdcl"
   solver-version = 1

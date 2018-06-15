@@ -9,6 +9,7 @@ import (
 	valid "github.com/asaskevich/govalidator"
 	"github.com/dchest/captcha"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo-contrib/session"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
@@ -23,7 +24,24 @@ func init() {
 
 // Create new user account POST handler
 func (h *Handler) CreateAccount(c echo.Context) error {
+	vars := map[string]interface{}{
+		"csrf":                 c.Get("csrf").(string),
+		"require_verify_email": viper.GetBool("require_verify_email"),
+	}
+
 	uid := c.FormValue("uid")
+	if viper.GetBool("globus_signup") {
+		username, err := h.globusUsername(c)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+			}).Error("Signup requires globus authentication")
+			return c.Redirect(http.StatusFound, "/auth/globus")
+		}
+		uid = username
+		vars["globus_user"] = uid
+	}
+
 	email := c.FormValue("email")
 	first := c.FormValue("first")
 	last := c.FormValue("last")
@@ -31,10 +49,6 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 	pass2 := c.FormValue("password2")
 	captchaID := c.FormValue("captcha_id")
 	captchaSol := c.FormValue("captcha_sol")
-
-	vars := map[string]interface{}{
-		"csrf": c.Get("csrf").(string),
-	}
 
 	if viper.GetBool("enable_captcha") {
 		vars["captchaID"] = captcha.New()
@@ -44,16 +58,57 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 	if err != nil {
 		vars["message"] = err.Error()
 	} else {
+		logout(c)
 		vars["success"] = true
 	}
 
 	return c.Render(http.StatusOK, "signup.html", vars)
 }
 
+func (h *Handler) globusUsername(c echo.Context) (string, error) {
+	sess, err := session.Get(CookieKeySession, c)
+	if err != nil {
+		return "", errors.New("failed to get session")
+	}
+
+	globus := sess.Values[CookieKeyGlobus]
+	globusUser := sess.Values[CookieKeyGlobusUsername]
+
+	if globus == nil || globusUser == nil {
+		return "", errors.New("no globus user in session")
+	}
+
+	if _, ok := globusUser.(string); !ok {
+		return "", errors.New("globus user is not string")
+	}
+
+	if _, ok := globus.(bool); !ok || !globus.(bool) {
+		return "", errors.New("no globus flag is not bool true")
+	}
+
+	username := globusUser.(string)
+	if len(username) == 0 {
+		return "", errors.New("globus username is empty")
+	}
+
+	return username, nil
+}
+
 // Signup form GET handler
 func (h *Handler) Signup(c echo.Context) error {
 	vars := map[string]interface{}{
 		"csrf": c.Get("csrf").(string),
+	}
+
+	if viper.GetBool("globus_signup") {
+		username, err := h.globusUsername(c)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+			}).Error("Signup requires globus authentication")
+			return c.Redirect(http.StatusFound, "/auth/globus")
+		}
+		vars["globus_user"] = username
 	}
 
 	if viper.GetBool("enable_captcha") {

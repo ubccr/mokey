@@ -10,7 +10,7 @@
 {{ with .success }}
     <br/>
     <br/>
-    <div style="margin-top: 25px" class="alert alert-success">Your account as been created. You must verify your email address and setup a password. Check your email for further instructions.</div>
+    <div style="margin-top: 25px" class="alert alert-success">Your account as been created. {{ if .require_verify_email }}You must verify your email address to activate your account. Check your email for further instructions.{{ end }}</div>
 {{ else }}
 
 <form class="form-horizontal form-signup" role="form" method="POST">
@@ -19,7 +19,11 @@
     <div class="form-group">
         <label for="username" class="col-md-3 control-label">Username</label>
         <div class="input-group col-md-9">
+{{ with .globus_user }}
+            <input type="text" class="form-control" name="uid" value="{{ . }}"  readonly>
+{{ else }}
             <input type="text" class="form-control" name="uid" placeholder="Username">
+{{ end }}
         </div>
     </div>
     

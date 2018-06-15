@@ -69,6 +69,7 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 		userRec, err := client.UserShow(user.(string))
 		if err != nil {
 			log.WithFields(log.Fields{
+				"error":            err,
 				"uid":              user,
 				"ipa_client_error": err,
 			}).Error("Failed to fetch user info from FreeIPA")

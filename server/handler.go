@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -10,14 +11,22 @@ import (
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/model"
 	"github.com/ubccr/mokey/util"
+	"golang.org/x/oauth2"
+	oidc "gopkg.in/coreos/go-oidc.v2"
 )
 
 type Handler struct {
-	db          model.Datastore
-	client      *ipa.Client
+	db      model.Datastore
+	client  *ipa.Client
+	emailer *util.Emailer
+
+	// Hydra consent app support
 	hydraClient *sdk.Client
-	emailer     *util.Emailer
 	apiClients  map[string]*model.ApiKeyClient
+
+	// Globus signup support
+	authUrl  *oauth2.Config
+	verifier *oidc.IDTokenVerifier
 }
 
 func NewHandler(db model.Datastore) (*Handler, error) {
@@ -74,6 +83,24 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 		}
 	}
 
+	if viper.GetBool("globus_signup") {
+		provider, err := oidc.NewProvider(context.Background(), viper.GetString("globus_iss"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		clientID := viper.GetString("globus_client_id")
+		h.authUrl = &oauth2.Config{
+			ClientID:     clientID,
+			ClientSecret: viper.GetString("globus_secret"),
+			Endpoint:     provider.Endpoint(),
+			Scopes:       []string{"openid", "profile", "urn:globus:auth:scope:auth.globus.org:view_identity_set", "email", "urn:globus:auth:scope:auth.globus.org:view_identities"},
+			RedirectURL:  viper.GetString("email_link_base") + "/auth/globus/redirect",
+		}
+
+		h.verifier = provider.Verifier(&oidc.Config{ClientID: clientID, SupportedSigningAlgs: []string{"RS512"}})
+	}
+
 	return h, nil
 }
 
@@ -113,6 +140,11 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 		if viper.GetBool("enable_api_keys") {
 			e.Match([]string{"GET", "POST"}, "/apikey", LoginRequired(h.ApiKey))
 		}
+	}
+
+	if viper.GetBool("globus_signup") {
+		e.GET("/auth/globus/redirect", h.GlobusRedirect)
+		e.GET("/auth/globus", h.GlobusSignup)
 	}
 }
 

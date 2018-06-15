@@ -54,6 +54,14 @@
   name = "github.com/pquerna/otp"
   branch = "master"
 
+[[constraint]]
+  name = "golang.org/x/oauth2"
+  revision = "9a379c6b3e95a790ffc43293c2a78dee0d7b6e20"
+
+[[constraint]]
+  name = "gopkg.in/coreos/go-oidc.v2"
+  version = "2.0.0"
+
 [prune]
   go-tests = true
   unused-packages = true

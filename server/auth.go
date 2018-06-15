@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 )
 
@@ -64,6 +65,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	vars := map[string]interface{}{
 		"csrf":    c.Get("csrf").(string),
+		"globus":  viper.GetBool("globus_signup"),
 		"message": message}
 
 	return c.Render(http.StatusOK, "login.html", vars)
@@ -71,7 +73,8 @@ func (h *Handler) Login(c echo.Context) error {
 
 func (h *Handler) Signin(c echo.Context) error {
 	vars := map[string]interface{}{
-		"csrf": c.Get("csrf").(string),
+		"csrf":   c.Get("csrf").(string),
+		"globus": viper.GetBool("globus_signup"),
 	}
 
 	return c.Render(http.StatusOK, "login.html", vars)
@@ -88,6 +91,8 @@ func logout(c echo.Context) {
 	delete(sess.Values, CookieKeyUser)
 	delete(sess.Values, CookieKeyAuthenticated)
 	delete(sess.Values, CookieKeyWYAF)
+	delete(sess.Values, CookieKeyGlobus)
+	delete(sess.Values, CookieKeyGlobusUsername)
 	sess.Options.MaxAge = -1
 
 	sess.Save(c.Request(), c.Response())

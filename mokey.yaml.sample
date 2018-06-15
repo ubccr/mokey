@@ -171,6 +171,17 @@ pgp_sign: false
 develop: false
 
 #------------------------------------------------------------------------------
+# Globus Signup
+#------------------------------------------------------------------------------
+# globus_signup: false
+# globus_iss: "https://auth.globus.org"
+# globus_client_id: "xxx"
+# globus_secret: "xxx"
+# globus_trusted_providers:
+#   - xxx
+#   - xxx
+
+#------------------------------------------------------------------------------
 # Hydra config
 #------------------------------------------------------------------------------
 # hydra_client_id: "consent-app"

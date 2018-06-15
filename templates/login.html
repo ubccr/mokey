@@ -30,7 +30,7 @@
     <button class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
 
       <div style="margin-top: 25px">
-            <span class="help-block text-center"><a href="/auth/signup">Create Account</a> &nbsp; &nbsp; |&nbsp; &nbsp; <a href="/auth/forgotpw">Forgot your password?</a></span>
+            <span class="help-block text-center"><a href="{{ if .globus }}/auth/globus{{ else }}/auth/signup{{ end }}">Create Account</a> &nbsp; &nbsp; |&nbsp; &nbsp; <a href="/auth/forgotpw">Forgot your password?</a></span>
       </div>
 
   </form>
