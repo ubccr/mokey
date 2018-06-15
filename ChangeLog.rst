@@ -9,6 +9,7 @@ ChangeLog
 - Add user signup/registration (Fixes #8)
 - Add ApiKey support for hydra consent
 - Add CAPTCHA support
+- Add Globus support to user account sign up
 - Simplify login to be more like FreeIPA (password+otp)
 - Remove security questions
 - Remove CLI tools
