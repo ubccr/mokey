@@ -17,10 +17,11 @@
     <h2 class="form-signup-heading">Create Account</h2>
 
     <div class="form-group">
-        <label for="username" class="col-md-3 control-label">Username</label>
-        <div class="input-group col-md-9">
+        <label for="username" class="col-md-4 control-label">Username</label>
+        <div class="input-group col-md-8">
 {{ with .globus_user }}
             <input type="text" class="form-control" name="uid" value="{{ . }}"  readonly>
+            <span class="help-block">This will be your username. It was obtained from your Globus identity and cannot be changed.</span>
 {{ else }}
             <input type="text" class="form-control" name="uid" placeholder="Username">
 {{ end }}
@@ -28,36 +29,45 @@
     </div>
     
     <div class="form-group">
-        <label for="email" class="col-md-3 control-label">Email</label>
-        <div class="input-group col-md-9">
-            <input type="text" class="form-control" name="email" placeholder="Email Address">
-        </div>
-    </div>
-        
-    <div class="form-group">
-        <label for="firstname" class="col-md-3 control-label">First Name</label>
-        <div class="input-group col-md-9">
+        <label for="firstname" class="col-md-4 control-label">First Name</label>
+        <div class="input-group col-md-8">
             <input type="text" class="form-control" name="first" placeholder="First Name">
         </div>
     </div>
     <div class="form-group">
-        <label for="lastname" class="col-md-3 control-label">Last Name</label>
-        <div class="input-group col-md-9">
+        <label for="lastname" class="col-md-4 control-label">Last Name</label>
+        <div class="input-group col-md-8">
             <input type="text" class="form-control" name="last" placeholder="Last Name">
         </div>
     </div>
 
     <div class="form-group">
-        <label for="password" class="col-md-3 control-label">Password</label>
-        <div class="input-group col-md-9">
+        <label for="email" class="col-md-4 control-label">Email</label>
+        <div class="input-group col-md-8">
+            <span class="input-group-addon"><i class="fa fa-at"></i></span>
+            <input type="text" class="form-control" name="email" placeholder="Email Address">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="email2" class="col-md-4 control-label">Confirm Email</label>
+        <div class="input-group col-md-8">
+            <span class="input-group-addon"><i class="fa fa-at"></i></span>
+            <input type="text" class="form-control" name="email2" placeholder="">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="password" class="col-md-4 control-label">Password</label>
+        <div class="input-group col-md-8">
             <span class="input-group-addon"><i class="fa fa-lock"></i></span>
             <input type="password" class="form-control" name="password" value="">
         </div>
     </div>
 
     <div class="form-group">
-        <label for="password2" class="col-md-3 control-label">Confirm</label>
-        <div class="input-group col-md-9">
+        <label for="password2" class="col-md-4 control-label">Confirm Password</label>
+        <div class="input-group col-md-8">
             <span class="input-group-addon"><i class="fa fa-lock"></i></span>
             <input type="password" class="form-control" name="password2" value="">
         </div>
@@ -65,8 +75,8 @@
 
 {{ with .captchaID }}
   <div class="form-group">
-    <label class="col-md-3 control-label">&nbsp;</label>
-    <div class="col-md-9">
+    <label class="col-md-4 control-label">&nbsp;</label>
+    <div class="col-md-8">
         <span class="help-block"><em>Type the numbers you see in the picture below:</em> <a href="#" onclick="reloadCaptcha()">Reload</a></span>
         <input name="captcha_sol" class="form-control" size="10" type="text">
         <input name="captcha_id" type="hidden" value="{{ . }}">
@@ -76,7 +86,7 @@
 {{ end }}
         
     <div class="form-group">
-        <div class="col-md-offset-3 col-md-9">
+        <div class="col-md-offset-4 col-md-8">
             <input type="hidden" name="csrf" value="{{ .csrf }}" />
             <button id="btn-signup" type="submit" class="btn btn-lg btn-primary btn-block"> Sign Up</button>
         </div>

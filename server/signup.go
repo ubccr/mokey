@@ -43,6 +43,7 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 	}
 
 	email := c.FormValue("email")
+	email2 := c.FormValue("email2")
 	first := c.FormValue("first")
 	last := c.FormValue("last")
 	pass := c.FormValue("password")
@@ -54,7 +55,7 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 		vars["captchaID"] = captcha.New()
 	}
 
-	err := h.createAccount(uid, email, first, last, pass, pass2, captchaID, captchaSol)
+	err := h.createAccount(uid, email, email2, first, last, pass, pass2, captchaID, captchaSol)
 	if err != nil {
 		vars["message"] = err.Error()
 	} else {
@@ -119,9 +120,13 @@ func (h *Handler) Signup(c echo.Context) error {
 }
 
 // createAccount does the work of validation and creating the account in FreeIPA
-func (h *Handler) createAccount(uid, email, first, last, pass, pass2, captchaID, captchaSol string) error {
+func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, captchaID, captchaSol string) error {
 	if !valid.IsEmail(email) {
 		return errors.New("Please provide a valid email address")
+	}
+
+	if email != email2 {
+		return errors.New("Email address does not match. Please confirm your email.")
 	}
 
 	if len(uid) <= 2 || len(uid) > 50 {
