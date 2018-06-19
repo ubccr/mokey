@@ -418,7 +418,7 @@
   branch = "master"
   name = "github.com/ubccr/goipa"
   packages = ["."]
-  revision = "2564e228eeaa903bef63bdb1b84e5061633531b8"
+  revision = "789dfd7f00dbd40ed1607ff6daccde83808ab84d"
 
 [[projects]]
   branch = "master"
@@ -588,8 +588,8 @@
     "pac",
     "types"
   ]
-  revision = "b7336d9b230f10c8436b1a932b454ab044232e22"
-  version = "v5.1.0"
+  revision = "5502bb09507bcc91e28c9b6feba046beb2e007d1"
+  version = "v5.2.0"
 
 [[projects]]
   name = "gopkg.in/square/go-jose.v2"
