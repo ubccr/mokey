@@ -7,6 +7,7 @@ package app
 import (
 	"bytes"
 	"crypto"
+	"crypto/tls"
 	"fmt"
 	"mime/multipart"
 	"mime/quotedprintable"
@@ -165,6 +166,16 @@ func (a *AppContext) SendEmail(email, subject, template string, data map[string]
 		return err
 	}
 	defer c.Close()
+
+	if viper.GetBool("smtp_starttls") {
+		err = c.StartTLS(&tls.Config{
+			InsecureSkipVerify: false,
+			ServerName:         viper.GetString("smtp_host"),
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	c.Mail(viper.GetString("email_from"))
 	c.Rcpt(email)
