@@ -32,6 +32,7 @@ func init() {
 	viper.SetDefault("require_question_pwreset", true)
 	viper.SetDefault("smtp_host", "localhost")
 	viper.SetDefault("smtp_port", 25)
+	viper.SetDefault("smtp_starttls", false)
 	viper.SetDefault("email_link_base", "http://localhost")
 	viper.SetDefault("email_from", "helpdesk@example.com")
 	viper.SetDefault("email_prefix", "mokey")
