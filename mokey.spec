@@ -42,8 +42,7 @@ cp -Ra ./ddl %{buildroot}%{_datadir}/%{name}
 cat << EOF > %{buildroot}%{_usr}/lib/systemd/system/%{name}.service
 [Unit]
 Description=mokey server
-After=syslog.target
-After=network.target
+After=syslog.target network.target mariadb.service
 
 [Service]
 Type=simple
