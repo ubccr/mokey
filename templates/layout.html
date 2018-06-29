@@ -29,19 +29,19 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           {{ with .user }}
-              <p class="navbar-text navbar-right">Hello {{ .First }} (<a href="/auth/logout" class="navbar-link">sign out</a>)</p>
+              <p class="navbar-text navbar-right">Hello {{ .First }} (<a href="{{ uri $.ctx "logout" }}" class="navbar-link">sign out</a>)</p>
               <ul class="nav navbar-nav navbar-right">
-                <li class="hidden-lg hidden-md hidden-sm"><a href="/">Account Information</a></li>
-                <li class="hidden-lg hidden-md hidden-sm"><a href="/changepw">Change Password</a></li>
-                <li class="hidden-lg hidden-md hidden-sm"><a href="/sshpubkey">SSH Keys</a></li>
-                <li class="hidden-lg hidden-md hidden-sm"><a href="/otptokens">OTP Tokens</a></li>
-                <li class="hidden-lg hidden-md hidden-sm"><a href="/2fa">Two-Factor Auth</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "index" }}">Account Information</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "changepw" }}">Change Password</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "sshpubkey" }}">SSH Keys</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "otptokens" }}">OTP Tokens</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "2fa" }}">Two-Factor Auth</a></li>
                 {{ if $.apiEnabled }}
-                <li class="hidden-lg hidden-md hidden-sm"><a href="/apikey">Api Keys</a></li>
+                <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "apikey" }}">Api Keys</a></li>
                 {{ end }}
               </ul>
           {{ else }}
-              <p class="navbar-text navbar-right"><a href="/auth/login">Sign In</a></p>
+              <p class="navbar-text navbar-right"><a href="{{ uri $.ctx "login" }}">Sign In</a></p>
           {{ end }}
         </div>
       </div>
@@ -54,13 +54,13 @@
             <div class="panel panel-default">
                 <div class="panel-heading"><strong>Security Settings</strong></div>
                 <div class="list-group">
-                    <a href="/" class="list-group-item">Account Information</a>
-                    <a href="/changepw" class="list-group-item">Change Password</a>
-                    <a href="/sshpubkey" class="list-group-item">SSH Keys</a>
-                    <a href="/otptokens" class="list-group-item">OTP Tokens</a>
-                    <a href="/2fa" class="list-group-item">Two-Factor Auth</a>
+                    <a href="{{ uri $.ctx "index" }}" class="list-group-item">Account Information</a>
+                    <a href="{{ uri $.ctx "changepw" }}" class="list-group-item">Change Password</a>
+                    <a href="{{ uri $.ctx "sshpubkey" }}" class="list-group-item">SSH Keys</a>
+                    <a href="{{ uri $.ctx "otptokens" }}" class="list-group-item">OTP Tokens</a>
+                    <a href="{{ uri $.ctx "2fa" }}" class="list-group-item">Two-Factor Auth</a>
                     {{ if $.apiEnabled }}
-                    <a href="/apikey" class="list-group-item">Api Keys</a>
+                    <a href="{{ uri $.ctx "apikey" }}" class="list-group-item">Api Keys</a>
                     {{ end }}
                 </div>
             </div>

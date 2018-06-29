@@ -12,7 +12,9 @@ import (
 
 var (
 	// Template functions
-	funcMap = template.FuncMap{}
+	funcMap = template.FuncMap{
+		"uri": URI,
+	}
 )
 
 // Template renderer
@@ -50,9 +52,13 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 	}
 
 	if viewContext, isMap := data.(map[string]interface{}); isMap {
-		viewContext["reverse"] = c.Echo().Reverse
+		viewContext["ctx"] = c
 		viewContext["apiEnabled"] = viper.GetBool("enable_api_keys")
 	}
 
 	return t.templates[name].ExecuteTemplate(w, "layout", data)
+}
+
+func URI(c echo.Context, name string) string {
+	return c.Echo().Reverse(name)
 }
