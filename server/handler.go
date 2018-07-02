@@ -95,7 +95,7 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 			ClientSecret: viper.GetString("globus_secret"),
 			Endpoint:     provider.Endpoint(),
 			Scopes:       []string{"openid", "profile", "urn:globus:auth:scope:auth.globus.org:view_identity_set", "email", "urn:globus:auth:scope:auth.globus.org:view_identities"},
-			RedirectURL:  viper.GetString("email_link_base") + "/auth/globus/redirect",
+			RedirectURL:  viper.GetString("email_link_base") + Path("/auth/globus/redirect"),
 		}
 
 		h.verifier = provider.Verifier(&oidc.Config{ClientID: clientID, SupportedSigningAlgs: []string{"RS512"}})
@@ -106,45 +106,45 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 
 func (h *Handler) SetupRoutes(e *echo.Echo) {
 	// Public
-	e.GET("/auth/captcha/*.png", h.Captcha).Name = "captcha"
+	e.GET(Path("/auth/captcha/*.png"), h.Captcha).Name = "captcha"
 
 	// Login
-	e.GET("/auth/login", h.Signin).Name = "login"
-	e.POST("/auth/login", RateLimit(h.Login))
+	e.GET(Path("/auth/login"), h.Signin).Name = "login"
+	e.POST(Path("/auth/login"), RateLimit(h.Login))
 
 	// Logout
-	e.GET("/auth/logout", h.Logout).Name = "logout"
+	e.GET(Path("/auth/logout"), h.Logout).Name = "logout"
 
 	// Signup
-	e.GET("/auth/signup", h.Signup).Name = "signup"
-	e.POST("/auth/signup", RateLimit(h.CreateAccount))
-	e.Match([]string{"GET", "POST"}, "/auth/verify/*", h.SetupAccount)[0].Name = "verify"
+	e.GET(Path("/auth/signup"), h.Signup).Name = "signup"
+	e.POST(Path("/auth/signup"), RateLimit(h.CreateAccount))
+	e.Match([]string{"GET", "POST"}, Path("/auth/verify/*"), h.SetupAccount)[0].Name = "verify"
 
 	// Forgot Password
-	e.Match([]string{"GET", "POST"}, "/auth/forgotpw", RateLimit(h.ForgotPassword))[0].Name = "forgotpw"
-	e.Match([]string{"GET", "POST"}, "/auth/resetpw/*", RateLimit(h.ResetPassword))[0].Name = "resetpw"
+	e.Match([]string{"GET", "POST"}, Path("/auth/forgotpw"), RateLimit(h.ForgotPassword))[0].Name = "forgotpw"
+	e.Match([]string{"GET", "POST"}, Path("/auth/resetpw/*"), RateLimit(h.ResetPassword))[0].Name = "resetpw"
 
 	// Login Required
-	e.GET("/", LoginRequired(h.Index)).Name = "index"
-	e.Match([]string{"GET", "POST"}, "/changepw", LoginRequired(h.ChangePassword))[0].Name = "changepw"
-	e.GET("/sshpubkey/new", LoginRequired(h.NewSSHPubKey)).Name = "sshpubkey-new"
-	e.POST("/sshpubkey/new", LoginRequired(h.AddSSHPubKey))
-	e.Match([]string{"GET", "POST"}, "/sshpubkey", LoginRequired(h.SSHPubKey))[0].Name = "sshpubkey"
-	e.GET("/otptokens", LoginRequired(h.OTPTokens)).Name = "otptokens"
-	e.POST("/otptokens", LoginRequired(h.ModifyOTPTokens))
-	e.Match([]string{"GET", "POST"}, "/2fa", LoginRequired(h.TwoFactorAuth))[0].Name = "2fa"
+	e.GET(Path("/"), LoginRequired(h.Index)).Name = "index"
+	e.Match([]string{"GET", "POST"}, Path("/changepw"), LoginRequired(h.ChangePassword))[0].Name = "changepw"
+	e.GET(Path("/sshpubkey/new"), LoginRequired(h.NewSSHPubKey)).Name = "sshpubkey-new"
+	e.POST(Path("/sshpubkey/new"), LoginRequired(h.AddSSHPubKey))
+	e.Match([]string{"GET", "POST"}, Path("/sshpubkey"), LoginRequired(h.SSHPubKey))[0].Name = "sshpubkey"
+	e.GET(Path("/otptokens"), LoginRequired(h.OTPTokens)).Name = "otptokens"
+	e.POST(Path("/otptokens"), LoginRequired(h.ModifyOTPTokens))
+	e.Match([]string{"GET", "POST"}, Path("/2fa"), LoginRequired(h.TwoFactorAuth))[0].Name = "2fa"
 
 	if viper.IsSet("hydra_cluster_url") {
-		e.Match([]string{"GET", "POST"}, "/consent", RateLimit(LoginRequired(h.Consent)))[0].Name = "consent"
+		e.Match([]string{"GET", "POST"}, Path("/consent"), RateLimit(LoginRequired(h.Consent)))[0].Name = "consent"
 
 		if viper.GetBool("enable_api_keys") {
-			e.Match([]string{"GET", "POST"}, "/apikey", LoginRequired(h.ApiKey))[0].Name = "apikey"
+			e.Match([]string{"GET", "POST"}, Path("/apikey"), LoginRequired(h.ApiKey))[0].Name = "apikey"
 		}
 	}
 
 	if viper.GetBool("globus_signup") {
-		e.GET("/auth/globus/redirect", h.GlobusRedirect)
-		e.GET("/auth/globus", h.GlobusSignup).Name = "globus"
+		e.GET(Path("/auth/globus/redirect"), h.GlobusRedirect)
+		e.GET(Path("/auth/globus"), h.GlobusSignup).Name = "globus"
 	}
 }
 

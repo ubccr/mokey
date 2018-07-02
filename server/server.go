@@ -56,8 +56,11 @@ func HTTPErrorHandler(err error, c echo.Context) {
 		}).Error("Requested path not found")
 	}
 
+	viewContext := map[string]interface{}{
+		"ctx": c,
+	}
 	errorPage := fmt.Sprintf("%d.html", code)
-	if err := c.Render(code, errorPage, nil); err != nil {
+	if err := c.Render(code, errorPage, viewContext); err != nil {
 		c.Logger().Error(err)
 	}
 
@@ -77,7 +80,7 @@ func Run() error {
 	}
 
 	e.Renderer = renderer
-	e.Static("/static", filepath.Join(tmplDir, "static"))
+	e.Static(Path("/static"), filepath.Join(tmplDir, "static"))
 	e.HTTPErrorHandler = HTTPErrorHandler
 	e.HideBanner = true
 	e.Use(middleware.Recover())
@@ -160,10 +163,10 @@ func Run() error {
 			return err
 		}
 
-		log.Printf("Running on https://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
+		log.Printf("Running on https://%s:%d%s", viper.GetString("bind"), viper.GetInt("port"), Path("/"))
 	} else {
 		log.Warn("**WARNING*** SSL/TLS not enabled. HTTP communication will not be encrypted and vulnerable to snooping.")
-		log.Printf("Running on http://%s:%d", viper.GetString("bind"), viper.GetInt("port"))
+		log.Printf("Running on http://%s:%d%s", viper.GetString("bind"), viper.GetInt("port"), Path("/"))
 	}
 
 	return e.StartServer(s)

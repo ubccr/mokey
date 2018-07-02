@@ -80,7 +80,7 @@
         <span class="help-block"><em>Type the numbers you see in the picture below:</em> <a href="#" onclick="reloadCaptcha()">Reload</a></span>
         <input name="captcha_sol" class="form-control" size="10" type="text">
         <input name="captcha_id" type="hidden" value="{{ . }}">
-        <p><img id="captcha" src="/auth/captcha/{{ . }}.png" alt="Captcha image"></p>
+        <p><img id="captcha" src="{{ uri $.ctx (print "/auth/captcha/" $.captchaID ".png") }}" alt="Captcha image"></p>
     </div>
   </div>
 {{ end }}
@@ -93,7 +93,7 @@
     </div>
 
       <div style="margin-top: 25px">
-            <span class="help-block text-center">Already have an account? <a href="/auth/login">Sign in</a></span>
+            <span class="help-block text-center">Already have an account? <a href="{{ uri .ctx "login" }}">Sign in</a></span>
       </div>
     
 </form>

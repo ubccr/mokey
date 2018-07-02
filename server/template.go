@@ -5,8 +5,10 @@ import (
 	"html/template"
 	"io"
 	"path/filepath"
+	"strings"
 
 	"github.com/labstack/echo"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -60,5 +62,28 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 }
 
 func URI(c echo.Context, name string) string {
-	return c.Echo().Reverse(name)
+	if strings.HasPrefix(name, "/static") || strings.HasPrefix(name, "/auth/captcha/") {
+		return Path(name)
+	}
+
+	if c != nil {
+		return c.Echo().Reverse(name)
+	}
+
+	log.WithFields(log.Fields{
+		"name": name,
+	}).Error("Failed to build URI. Echo context nil")
+
+	return name
+}
+
+func Path(path string) string {
+	if viper.IsSet("path_prefix") {
+		if path == "/" {
+			path = ""
+		}
+		return viper.GetString("path_prefix") + path
+	}
+
+	return path
 }

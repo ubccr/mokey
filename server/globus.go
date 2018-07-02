@@ -115,14 +115,14 @@ func (h *Handler) GlobusRedirect(c echo.Context) error {
 	if err != nil {
 		sess.AddFlash(err.Error())
 		sess.Save(c.Request(), c.Response())
-		return c.Redirect(http.StatusFound, "/auth/globus")
+		return c.Redirect(http.StatusFound, Path("/auth/globus"))
 	}
 
 	sess.Values[CookieKeyGlobus] = true
 	sess.Values[CookieKeyGlobusUsername] = username
 	sess.Save(c.Request(), c.Response())
 
-	return c.Redirect(http.StatusFound, "/auth/signup")
+	return c.Redirect(http.StatusFound, Path("/auth/signup"))
 }
 
 func (h *Handler) fetchGlobusUsername(c echo.Context) (string, error) {

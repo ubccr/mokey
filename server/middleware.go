@@ -38,7 +38,7 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
 		}
 
-		if !strings.HasPrefix(c.Request().URL.String(), "/auth") {
+		if !strings.HasPrefix(c.Request().URL.String(), Path("/auth")) {
 			query := c.Request().URL.Query().Encode()
 			if len(query) > 0 {
 				sess.Values[CookieKeyWYAF] = c.Request().URL.Path + "?" + query
@@ -55,13 +55,13 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 		user := sess.Values[CookieKeyUser]
 
 		if sid == nil || user == nil {
-			return c.Redirect(http.StatusFound, "/auth/login")
+			return c.Redirect(http.StatusFound, Path("/auth/login"))
 		}
 
 		if _, ok := user.(string); !ok {
 			logout(c)
 			log.Error("Invalid user record in session.")
-			return c.Redirect(http.StatusFound, "/auth/login")
+			return c.Redirect(http.StatusFound, Path("/auth/login"))
 		}
 
 		client := ipa.NewDefaultClientWithSession(sid.(string))
@@ -73,7 +73,7 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 				"uid":              user,
 				"ipa_client_error": err,
 			}).Error("Failed to fetch user info from FreeIPA")
-			return c.Redirect(http.StatusFound, "/auth/login")
+			return c.Redirect(http.StatusFound, Path("/auth/login"))
 		}
 
 		c.Set(ContextKeyUser, userRec)

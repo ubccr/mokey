@@ -49,7 +49,7 @@ func (h *Handler) Login(c echo.Context) error {
 		sess.Values[CookieKeySID] = sid
 		sess.Values[CookieKeyAuthenticated] = true
 
-		location := "/"
+		location := Path("/")
 		wyaf := sess.Values[CookieKeyWYAF]
 		if _, ok := wyaf.(string); ok {
 			location = wyaf.(string)
@@ -82,7 +82,7 @@ func (h *Handler) Signin(c echo.Context) error {
 
 func (h *Handler) Logout(c echo.Context) error {
 	logout(c)
-	return c.Redirect(http.StatusFound, "/auth/login")
+	return c.Redirect(http.StatusFound, Path("/auth/login"))
 }
 
 func logout(c echo.Context) {

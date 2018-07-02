@@ -36,7 +36,7 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 			log.WithFields(log.Fields{
 				"err": err,
 			}).Error("Signup requires globus authentication")
-			return c.Redirect(http.StatusFound, "/auth/globus")
+			return c.Redirect(http.StatusFound, Path("/auth/globus"))
 		}
 		uid = username
 		vars["globus_user"] = uid
@@ -107,7 +107,7 @@ func (h *Handler) Signup(c echo.Context) error {
 			log.WithFields(log.Fields{
 				"err": err,
 			}).Error("Signup requires globus authentication")
-			return c.Redirect(http.StatusFound, "/auth/globus")
+			return c.Redirect(http.StatusFound, Path("/auth/globus"))
 		}
 		vars["globus_user"] = username
 	}

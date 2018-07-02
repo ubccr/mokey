@@ -105,7 +105,7 @@ func (h *Handler) AddSSHPubKey(c echo.Context) error {
 	if err == nil {
 		sess.AddFlash("SSH Public Key Added")
 		sess.Save(c.Request(), c.Response())
-		return c.Redirect(http.StatusFound, "/sshpubkey")
+		return c.Redirect(http.StatusFound, Path("/sshpubkey"))
 	}
 
 	vars["message"] = err.Error()
