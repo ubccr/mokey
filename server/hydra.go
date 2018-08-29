@@ -113,7 +113,7 @@ func (h *Handler) Consent(c echo.Context) error {
 				"error": err,
 			}).Error("Failed to accept the consent challenge")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept consent")
-		} else if response.StatusCode != http.StatusCreated {
+		} else if response.StatusCode != http.StatusOK {
 			log.WithFields(log.Fields{
 				"error":      err,
 				"statusCode": response.StatusCode,
