@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/ory/hydra/sdk"
+	"github.com/ory/hydra/sdk/go/hydra"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
@@ -21,7 +21,7 @@ type Handler struct {
 	emailer *util.Emailer
 
 	// Hydra consent app support
-	hydraClient *sdk.Client
+	hydraClient *hydra.CodeGenSDK
 	apiClients  map[string]*model.ApiKeyClient
 
 	// Globus signup support
@@ -46,13 +46,14 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 
 	h.client.StickySession(false)
 
-	if viper.IsSet("hydra_cluster_url") {
-		h.hydraClient, err = sdk.Connect(
-			sdk.ClientID(viper.GetString("hydra_client_id")),
-			sdk.ClientSecret(viper.GetString("hydra_client_secret")),
-			sdk.SkipTLSVerify(viper.GetBool("develop")),
-			sdk.Scopes("hydra.keys.get"),
-			sdk.ClusterURL(viper.GetString("hydra_cluster_url")))
+	if viper.IsSet("hydra_admin_url") {
+		h.hydraClient, err = hydra.NewSDK(&hydra.Configuration{
+			AdminURL:     viper.GetString("hydra_admin_url"),
+			PublicURL:    viper.GetString("hydra_public_url"),
+			ClientID:     viper.GetString("hydra_client_id"),
+			ClientSecret: viper.GetString("hydra_client_secret"),
+			Scopes:       []string{"hydra.keys.get"},
+		})
 
 		if err != nil {
 			log.Fatal(err)
@@ -134,7 +135,7 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.POST(Path("/otptokens"), LoginRequired(h.ModifyOTPTokens))
 	e.Match([]string{"GET", "POST"}, Path("/2fa"), LoginRequired(h.TwoFactorAuth))[0].Name = "2fa"
 
-	if viper.IsSet("hydra_cluster_url") {
+	if viper.IsSet("hydra_admin_url") {
 		e.Match([]string{"GET", "POST"}, Path("/consent"), RateLimit(LoginRequired(h.Consent)))[0].Name = "consent"
 
 		if viper.GetBool("enable_api_keys") {

@@ -186,7 +186,8 @@ develop: false
 #------------------------------------------------------------------------------
 # hydra_client_id: "consent-app"
 # hydra_client_secret: "consent-secret"
-# hydra_cluster_url: "https://localhost:4444"
+# hydra_admin_url: "https://localhost:4445"
+# hydra_public_url: "https://localhost:4444"
 
 #------------------------------------------------------------------------------
 # Public oauth2 clients for Api Key access (requires Hydra)

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo"
-	"github.com/ory/hydra/sdk"
+	"github.com/ory/hydra/sdk/go/hydra/swagger"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/model"
@@ -33,13 +33,20 @@ func (h *Handler) Consent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "consent without challenge")
 	}
 
-	// Verify the challenge and extract the challenge claims.
-	claims, err := h.hydraClient.Consent.VerifyChallenge(challenge)
+	consent, response, err := h.hydraClient.GetConsentRequest(challenge)
 	if err != nil {
+		// This usually indicates a network error.
 		log.WithFields(log.Fields{
-			"user": string(user.Uid),
-		}).Error("The consent challenge could not be verified")
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid challenge")
+			"error": err,
+		}).Error("Failed to validate the consent challenge")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
+	} else if response.StatusCode != http.StatusOK {
+		// This usually indicates a network error.
+		log.WithFields(log.Fields{
+			"error":      err,
+			"statusCode": response.StatusCode,
+		}).Error("Failed to validate the consent challenge")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
 	}
 
 	if c.Request().Method == "POST" {
@@ -59,98 +66,80 @@ func (h *Handler) Consent(c echo.Context) error {
 			log.WithFields(log.Fields{
 				"user":      apiKey.UserName,
 				"client_id": apiKey.ClientID,
-				"audience":  claims.Audience,
+				"audience":  consent.Subject,
 			}).Info("Api consent request")
 
 			// Check key matches client
-			if apiKey.ClientID != claims.Audience {
+			if apiKey.ClientID != consent.Subject {
 				log.WithFields(log.Fields{
 					"key":       apiKey.Key,
 					"user":      apiKey.UserName,
 					"client_id": apiKey.ClientID,
-					"audience":  claims.Audience,
-				}).Error("Claims audience does not match api key")
-				return echo.NewHTTPError(http.StatusBadRequest, "Claims audience does not match api key")
+					"audience":  consent.Subject,
+				}).Error("Consent subject does not match api key")
+				return echo.NewHTTPError(http.StatusBadRequest, "Consent subject does not match api key")
 			}
 
 			// Check key matches scopes
-			if apiKey.Scopes != strings.Join(claims.RequestedScopes, ",") {
+			if apiKey.Scopes != strings.Join(consent.RequestedScope, ",") {
 				log.WithFields(log.Fields{
 					"key":           apiKey.Key,
 					"user":          apiKey.UserName,
 					"key_scopes":    apiKey.Scopes,
-					"claims_scopes": claims.RequestedScopes,
-				}).Error("Claims scopes does not match api key")
-				return echo.NewHTTPError(http.StatusBadRequest, "Claims scopes does not match api key")
+					"claims_scopes": consent.RequestedScope,
+				}).Error("Requested scopes does not match api key")
+				return echo.NewHTTPError(http.StatusBadRequest, "Requested scopes does not match api key")
 			}
 		}
 
-		// Generate the challenge response.
-		redirectUrl, err := h.hydraClient.Consent.GenerateResponse(&sdk.ResponseRequest{
-			// We need to include the original challenge.
-			Challenge: challenge,
-
-			// The subject is a string, usually the user id.
-			Subject: string(user.Uid),
-
-			// The scopes our user granted.
-			Scopes: grantedScopes,
-
-			// Data that will be available on the token introspection and warden endpoints.
-			AccessTokenExtra: struct {
-				UID    string `json:"uid"`
-				First  string `json:"first"`
-				Last   string `json:"last"`
-				Email  string `json:"email"`
-				Groups string `json:"groups"`
-			}{
-				UID:    string(user.Uid),
-				First:  string(user.First),
-				Last:   string(user.Last),
-				Groups: strings.Join(user.Groups, ";"),
-				Email:  string(user.Email)},
-
-			// If we issue an ID token, we can set extra data for that id token here.
-			IDTokenExtra: struct {
-				UID    string `json:"uid"`
-				First  string `json:"first"`
-				Last   string `json:"last"`
-				Email  string `json:"email"`
-				Groups string `json:"groups"`
-			}{
-				UID:    string(user.Uid),
-				First:  string(user.First),
-				Last:   string(user.Last),
-				Groups: strings.Join(user.Groups, ";"),
-				Email:  string(user.Email)},
+		completedRequest, response, err := h.hydraClient.AcceptConsentRequest(challenge, swagger.AcceptConsentRequest{
+			GrantScope:  grantedScopes,
+			Remember:    true,
+			RememberFor: 3600,
+			Session: swagger.ConsentRequestSession{
+				IdToken: map[string]interface{}{
+					"uid":    string(user.Uid),
+					"first":  string(user.First),
+					"last":   string(user.Last),
+					"groups": strings.Join(user.Groups, ";"),
+					"email":  string(user.Email),
+				},
+			},
 		})
 
 		if err != nil {
+			// This usually indicates a network error.
 			log.WithFields(log.Fields{
 				"error": err,
-			}).Error("Could not sign the consent challenge")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to sign consent")
+			}).Error("Failed to accept the consent challenge")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept consent")
+		} else if response.StatusCode != http.StatusCreated {
+			log.WithFields(log.Fields{
+				"error":      err,
+				"statusCode": response.StatusCode,
+			}).Error("Failed to accept the consent challenge")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept consent")
 		}
 
 		log.WithFields(log.Fields{
-			"redirectURL": redirectUrl,
+			"redirectURL": completedRequest.RedirectTo,
 		}).Info("Consent challenge signed successfully")
 
-		return c.Redirect(http.StatusFound, redirectUrl)
+		return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
 	}
 
 	if strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
 		data := map[string]string{
 			"csrf":      c.Get("csrf").(string),
-			"audience":  claims.Audience,
-			"scopes":    strings.Join(claims.RequestedScopes, ","),
+			"audience":  consent.Subject,
+			"scopes":    strings.Join(consent.RequestedScope, ","),
 			"challenge": challenge,
 		}
 
 		return c.JSON(http.StatusOK, data)
 	}
 
-	vars["claims"] = claims
+	vars["consent"] = consent
 	vars["challenge"] = challenge
 	vars["firstName"] = user.First
 

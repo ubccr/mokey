@@ -12,8 +12,8 @@
     <form class="form-horizontal" role="form" method="POST">
       <div class="form-group">
         <div class="col-sm-8">
-            <span class="help-block">An application (id: {{.claims.Audience}}) requested consent to access resources on your behalf. The application wants access to:</span>
-     {{range .claims.RequestedScopes}}
+            <span class="help-block">An application (id: {{.consent.Subject}}) requested consent to access resources on your behalf. The application wants access to:</span>
+     {{range .consent.RequestedScopes}}
         <div class="checkbox">
           <label>
             <input type="checkbox" checked="checked" name="scope" value="{{.}}">
