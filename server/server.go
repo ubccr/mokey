@@ -62,6 +62,7 @@ func HTTPErrorHandler(err error, c echo.Context) {
 	errorPage := fmt.Sprintf("%d.html", code)
 	if err := c.Render(code, errorPage, viewContext); err != nil {
 		c.Logger().Error(err)
+		c.String(code, "")
 	}
 
 	c.Logger().Error(err)
