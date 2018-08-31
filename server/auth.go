@@ -36,7 +36,7 @@ func (h *Handler) tryAuth(uid, password string) (string, error) {
 	return client.SessionID(), nil
 }
 
-func (h *Handler) Login(c echo.Context) error {
+func (h *Handler) LoginPost(c echo.Context) error {
 	message := ""
 	sess, _ := session.Get(CookieKeySession, c)
 
@@ -71,7 +71,7 @@ func (h *Handler) Login(c echo.Context) error {
 	return c.Render(http.StatusOK, "login.html", vars)
 }
 
-func (h *Handler) Signin(c echo.Context) error {
+func (h *Handler) LoginGet(c echo.Context) error {
 	vars := map[string]interface{}{
 		"csrf":   c.Get("csrf").(string),
 		"globus": viper.GetBool("globus_signup"),

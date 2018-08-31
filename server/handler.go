@@ -48,11 +48,11 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 
 	if viper.IsSet("hydra_admin_url") {
 		h.hydraClient, err = hydra.NewSDK(&hydra.Configuration{
-			AdminURL:     viper.GetString("hydra_admin_url"),
-			PublicURL:    viper.GetString("hydra_public_url"),
-			ClientID:     viper.GetString("hydra_client_id"),
-			ClientSecret: viper.GetString("hydra_client_secret"),
-			Scopes:       []string{"hydra.keys.get"},
+			AdminURL: viper.GetString("hydra_admin_url"),
+			//PublicURL: viper.GetString("hydra_public_url"),
+			//ClientID:     viper.GetString("hydra_client_id"),
+			//ClientSecret: viper.GetString("hydra_client_secret"),
+			Scopes: []string{"hydra.keys.get"},
 		})
 
 		if err != nil {
@@ -110,8 +110,8 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.GET(Path("/auth/captcha/*.png"), h.Captcha).Name = "captcha"
 
 	// Login
-	e.GET(Path("/auth/login"), h.Signin).Name = "login"
-	e.POST(Path("/auth/login"), RateLimit(h.Login))
+	e.GET(Path("/auth/login"), h.LoginGet).Name = "login"
+	e.POST(Path("/auth/login"), RateLimit(h.LoginPost))
 
 	// Logout
 	e.GET(Path("/auth/logout"), h.Logout).Name = "logout"
@@ -136,7 +136,10 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.Match([]string{"GET", "POST"}, Path("/2fa"), LoginRequired(h.TwoFactorAuth))[0].Name = "2fa"
 
 	if viper.IsSet("hydra_admin_url") {
-		e.Match([]string{"GET", "POST"}, Path("/consent"), RateLimit(LoginRequired(h.Consent)))[0].Name = "consent"
+		e.GET(Path("/oauth/consent"), h.ConsentGet).Name = "consent"
+		e.POST(Path("/oauth/consent"), RateLimit(h.ConsentPost))
+		e.GET(Path("/oauth/login"), h.LoginOAuthGet).Name = "login-oauth"
+		e.POST(Path("/oauth/login"), RateLimit(h.LoginOAuthPost))
 
 		if viper.GetBool("enable_api_keys") {
 			e.Match([]string{"GET", "POST"}, Path("/apikey"), LoginRequired(h.ApiKey))[0].Name = "apikey"
