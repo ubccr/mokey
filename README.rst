@@ -9,10 +9,10 @@ What is mokey?
 ------------------------------------------------------------------------
 
 mokey is web application that provides self-service user account management
-tools for `FreeIPA <http://freeipa.org>`_. The motivation for this project was
+tools for `FreeIPA <https://www.freeipa.org>`_. The motivation for this project was
 to implement the self-service account creation and password reset functionality
 missing in FreeIPA.  This feature is not provided by default in FreeIPA, see
-`here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_ for more info
+`here <https://www.freeipa.org/page/Self-Service_Password_Reset>`_ for more info
 and the rationale behind this decision. mokey is not a FreeIPA plugin but a
 complete standalone application that uses the FreeIPA JSON API.  mokey requires
 no changes to the underlying LDAP schema and uses a MariaDB database to store
@@ -38,7 +38,7 @@ Features
 - Add/Remove SSH Public Keys
 - Add/Remove TOTP Tokens
 - Enable/Disable Two-Factor Authentication
-- Hydra Consent/Authentication Endpoint for OAuth/OpenID Connect
+- Hydra Consent/Login Endpoint for OAuth/OpenID Connect
 - PGP/Mime signed emails
 - Easy to install and configure (requires no FreeIPA/LDAP schema changes)
 
@@ -50,7 +50,7 @@ Requirements
 - MariaDB/MySQL
 - Linux x86_64 (CentOS 7.x preferred)
 - Redis (optional)
-- Hydra v0.9.15 (optional)
+- Hydra v1.0.0 (optional)
 
 ------------------------------------------------------------------------
 Upgrading
@@ -213,19 +213,17 @@ adding the following lines in /etc/ssh/sshd_config and restarting sshd::
     AuthorizedKeysCommandUser nobody
 
 ------------------------------------------------------------------------
-Hydra Consent app and Authentication Endpoint for OAuth/OpenID Connect
+Hydra Consent and Login Endpoint for OAuth/OpenID Connect
 ------------------------------------------------------------------------
 
-mokey implements a consent endpoint for handling challenge requests from Hydra.
+mokey implements the login/consent flow for handling challenge requests from Hydra.
 This serves as the bridge between Hydra and FreeIPA identity provider. For more
-information on Hydra and consent apps see `here <https://ory.gitbooks.io/hydra/content/oauth2.html#consent-app-flow>`_.
+information on Hydra and the consent flow see `here <https://www.ory.sh/docs/guides/master/>`_.
 
-To configure mokey as a Hydra consent app set the following variables in
+To configure the Hydra login/consent flow set the following variables in
 ``/etc/mokey/mokey.yaml``::
 
-    hydra_client_id: "consent-app"
-    hydra_client_secret: "consent-secret"
-    hydra_cluster_url: "https://localhost:4444"
+    hydra_admin_url: "https://localhost:4444"
 
 Any OAuth clients configured in Hydra will be authenticated via mokey using
 FreeIPA as the identity provider. For an example OAuth 2.0/OIDC client
@@ -235,18 +233,11 @@ application see `here <examples/mokey-oidc/main.go>`_.
 Building from source
 ------------------------------------------------------------------------
 
-First, you will need:
+First, you will need Go v1.11 or greater. Clone the repository::
 
-- `dep <https://golang.github.io/dep/>`_ to manage project's dependencies.
-
-Clone the repository in your $GOPATH::
-
-    $ git clone https://github.com/ubccr/mokey $GOPATH/src/github.com/ubccr/mokey
-
-In the project folder you can now resolve the dependencies and build mokey::
-
-    $ dep ensure
-    $ go build
+    $ git clone https://github.com/ubccr/mokey
+    $ cd mokey
+    $ go build ./...
 
 ------------------------------------------------------------------------
 License
