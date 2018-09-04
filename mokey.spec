@@ -64,7 +64,7 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %{_datadir}/%{name}/ddl/*
-%doc README.rst AUTHORS.rst ChangeLog.rst mokey.yaml.sample
+%doc README.rst AUTHORS.rst ChangeLog.rst NOTICE mokey.yaml.sample
 %license LICENSE
 %config(noreplace) %{_datadir}/%{name}/templates/*
 %attr(0755,root,root) %{_bindir}/%{name}
