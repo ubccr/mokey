@@ -27,6 +27,7 @@
       <div class="form-group">
           <div class="col-sm-8">
               <input type="hidden" name="csrf" value="{{ .csrf }}" />
+              <input type="hidden" name="challenge" value="{{ .challenge }}" />
               <a href="{{ uri .ctx "index" }}" class="btn btn-danger">Deny</a>
               <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
           </div>
