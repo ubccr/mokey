@@ -197,7 +197,7 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 		"first":   first,
 		"last":    last,
 		"homedir": homedir,
-	}).Info("New user account created")
+	}).Warn("New user account created")
 
 	// Set password
 	err = h.client.SetPassword(uid, userRec.Randompassword, pass, "")
@@ -214,7 +214,7 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 
 	log.WithFields(log.Fields{
 		"uid": uid,
-	}).Info("User password set successfully")
+	}).Warn("User password set successfully")
 
 	if viper.GetBool("require_verify_email") {
 		// Disable new users until they have verified their email address
@@ -244,7 +244,7 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 	log.WithFields(log.Fields{
 		"uid":   uid,
 		"email": email,
-	}).Info("New user account email sent successfully")
+	}).Warn("New user account email sent successfully")
 
 	return nil
 }
