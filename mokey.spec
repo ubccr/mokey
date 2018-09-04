@@ -15,7 +15,9 @@ Requires(pre): /usr/sbin/useradd, /usr/bin/getent
 %description
 mokey is web application that provides self-service user account management
 tools for FreeIPA. The motivation for this project was to implement the
-self-service password reset functionality missing in FreeIPA.  %pre
+self-service password reset functionality missing in FreeIPA.
+
+%pre
 getent group mokey &> /dev/null || \
 groupadd -r mokey &> /dev/null
 getent passwd mokey &> /dev/null || \
