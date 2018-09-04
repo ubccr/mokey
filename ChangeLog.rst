@@ -7,13 +7,14 @@ ChangeLog
 
 - Major code refactor to use echo framework
 - Add user signup/registration (Fixes #8)
+- Add support for new Login/Conset flow in hydra 1.0.0
 - Add ApiKey support for hydra consent
 - Add CAPTCHA support
 - Add Globus support to user account sign up
 - Simplify login to be more like FreeIPA (password+otp)
 - Remove security questions
-- Remove CLI tools
 - Remove dependecy on krb5-libs (now using pure go kerberos library)
+- Update build to use vgo
 
 `v0.0.6`_ (2018-01-09)
 ----------------------

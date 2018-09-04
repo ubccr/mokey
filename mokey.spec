@@ -72,6 +72,18 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Wed Sep 05 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.1-1
+- New Features
+    - Major code refactor to use echo framework
+    - Add user signup/registration (Fixes #8)
+    - Add support for new Login/Conset flow in hydra 1.0.0
+    - Add ApiKey support for hydra consent
+    - Add CAPTCHA support
+    - Add Globus support to user account sign up
+    - Simplify login to be more like FreeIPA (password+otp)
+    - Remove security questions
+    - Remove dependecy on krb5-libs (now using pure go kerberos library)
+    - Update build to use vgo
 * Tue Jan 09 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.6-14
 - New Features
     - OAuth/OpenID Connect consent endpoint for Hydra
