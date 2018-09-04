@@ -140,6 +140,7 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 		e.POST(Path("/oauth/consent"), RateLimit(h.ConsentPost))
 		e.GET(Path("/oauth/login"), h.LoginOAuthGet).Name = "login-oauth"
 		e.POST(Path("/oauth/login"), RateLimit(h.LoginOAuthPost))
+		e.GET(Path("/oauth/error"), h.HydraError).Name = "hydra-error"
 
 		if viper.GetBool("enable_api_keys") {
 			e.Match([]string{"GET", "POST"}, Path("/apikey"), LoginRequired(h.ApiKey))[0].Name = "apikey"

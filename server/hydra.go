@@ -416,3 +416,17 @@ func (h *Handler) checkApiKey(c echo.Context) (*model.ApiKey, error) {
 
 	return key, nil
 }
+
+func (h *Handler) HydraError(c echo.Context) error {
+	message := c.Request().URL.Query().Get("error")
+	desc := c.Request().URL.Query().Get("error_description")
+	hint := c.Request().URL.Query().Get("error_hint")
+
+	log.WithFields(log.Fields{
+		"message": message,
+		"desc":    desc,
+		"hint":    hint,
+	}).Error("OAuth2 request failed")
+
+	return echo.NewHTTPError(http.StatusInternalServerError, "OAuth2 Error")
+}
