@@ -52,7 +52,7 @@ require (
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
 	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
 	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d // indirect
-	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
+	golang.org/x/oauth2 v0.0.0-20180821212333-9a379c6b3e95a790ffc43293c2a78dee0d7b6e20
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20180828065106-d99a578cf41b // indirect
 	golang.org/x/text v0.3.0 // indirect
