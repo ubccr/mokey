@@ -18,7 +18,7 @@ func (h *Handler) tryAuth(uid, password string) (string, error) {
 
 	client := ipa.NewDefaultClient()
 
-	err := client.Login(uid, password)
+	err := client.RemoteLogin(uid, password)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uid":              uid,
