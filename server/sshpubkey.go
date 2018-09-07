@@ -67,17 +67,9 @@ func (h *Handler) AddSSHPubKey(c echo.Context) error {
 		"csrf": c.Get("csrf").(string),
 	}
 
-	file, err := c.FormFile("key_file")
-	if err != nil {
-		log.WithFields(log.Fields{
-			"user":  string(user.Uid),
-			"error": err,
-		}).Error("Failed to parse multipart file upload")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to parse multipart file")
-	}
-
 	pubKey := ""
-	if file.Size > 0 {
+	file, err := c.FormFile("key_file")
+	if err == nil && file.Size > 0 {
 		src, err := file.Open()
 		if err != nil {
 			log.WithFields(log.Fields{
