@@ -7,6 +7,7 @@ package util
 import (
 	"bytes"
 	"crypto"
+	"crypto/tls"
 	"fmt"
 	"mime/multipart"
 	"mime/quotedprintable"
@@ -32,6 +33,16 @@ const (
 type Emailer struct {
 	db        model.Datastore
 	templates map[string]*template.Template
+}
+
+func init() {
+	viper.SetDefault("pgp_sign", false)
+	viper.SetDefault("smtp_host", "localhost")
+	viper.SetDefault("smtp_port", 25)
+	viper.SetDefault("smtp_starttls", false)
+	viper.SetDefault("email_prefix", "mokey")
+	viper.SetDefault("email_link_base", "http://localhost")
+	viper.SetDefault("email_from", "helpdesk@example.com")
 }
 
 func NewEmailer(db model.Datastore) (*Emailer, error) {
@@ -233,6 +244,15 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 		return err
 	}
 	defer c.Close()
+
+	if viper.GetBool("smtp_starttls") {
+		err := c.StartTLS(&tls.Config{
+			ServerName: viper.GetString("smtp_host"),
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	c.Mail(viper.GetString("email_from"))
 	c.Rcpt(email)
