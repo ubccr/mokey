@@ -88,7 +88,7 @@ func (h *Handler) removeApiKey(user, clientID string) error {
 			"user":     user,
 			"clientID": clientID,
 		}).Error("Failed to revoke hydra authentication session")
-	} else if response.StatusCode != http.StatusOK {
+	} else if response.StatusCode != http.StatusNoContent {
 		log.WithFields(log.Fields{
 			"statusCode": response.StatusCode,
 			"user":       user,
@@ -103,7 +103,7 @@ func (h *Handler) removeApiKey(user, clientID string) error {
 			"user":     user,
 			"clientID": clientID,
 		}).Error("Failed to revoke hydra consent session")
-	} else if response.StatusCode != http.StatusOK {
+	} else if response.StatusCode != http.StatusNoContent {
 		log.WithFields(log.Fields{
 			"statusCode": response.StatusCode,
 			"user":       user,
