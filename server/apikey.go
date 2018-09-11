@@ -81,6 +81,36 @@ func (h *Handler) removeApiKey(user, clientID string) error {
 		return errors.New("Failed to remove api key")
 	}
 
+	response, err := h.hydraClient.RevokeAuthenticationSession(user)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err,
+			"user":     user,
+			"clientID": clientID,
+		}).Error("Failed to revoke hydra authentication session")
+	} else if response.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{
+			"statusCode": response.StatusCode,
+			"user":       user,
+			"clientID":   clientID,
+		}).Error("HTTP Response not OK. Failed to revoke hydra authentication session")
+	}
+
+	response, err = h.hydraClient.RevokeUserClientConsentSessions(user, clientID)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error":    err,
+			"user":     user,
+			"clientID": clientID,
+		}).Error("Failed to revoke hydra consent session")
+	} else if response.StatusCode != http.StatusOK {
+		log.WithFields(log.Fields{
+			"statusCode": response.StatusCode,
+			"user":       user,
+			"clientID":   clientID,
+		}).Error("HTTP Response not OK. Failed to revoke hydra consent session")
+	}
+
 	return nil
 }
 
