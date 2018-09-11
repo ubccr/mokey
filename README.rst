@@ -60,8 +60,7 @@ Update to latest rpm release::
 
     $ rpm -Uvh mokey-0.x.x-x.el7.centos.x86_64.rpm
 
-If upgrading from to v0.0.6 need to run the following command to update
-database schema::
+If upgrading need to run the following command to update database schema::
 
     $ mysql -u root -p mokey < /usr/share/mokey/ddl/upgrade-to-v0.0.6.sql
 
@@ -237,7 +236,7 @@ First, you will need Go v1.11 or greater. Clone the repository::
 
     $ git clone https://github.com/ubccr/mokey
     $ cd mokey
-    $ go build ./...
+    $ go build .
 
 ------------------------------------------------------------------------
 License
