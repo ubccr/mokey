@@ -81,8 +81,62 @@ func (h *Handler) LoginGet(c echo.Context) error {
 }
 
 func (h *Handler) Logout(c echo.Context) error {
+	err := h.revokeHydraAuthenticationSession(c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Warn("Logout - Failed to revoke hydra authentication session")
+	}
+
 	logout(c)
 	return c.Redirect(http.StatusFound, Path("/auth/login"))
+}
+
+func (h Handler) revokeHydraAuthenticationSession(c echo.Context) error {
+	if !viper.IsSet("hydra_admin_url") {
+		return nil
+	}
+
+	sess, err := session.Get(CookieKeySession, c)
+	if err != nil {
+		return err
+	}
+
+	sid := sess.Values[CookieKeySID]
+	user := sess.Values[CookieKeyUser]
+
+	if sid == nil || user == nil {
+		return errors.New("No sid or user found in session")
+	}
+
+	if _, ok := user.(string); !ok {
+		return errors.New("User is not a string")
+	}
+
+	client := ipa.NewDefaultClientWithSession(sid.(string))
+
+	userRec, err := client.UserShow(user.(string))
+	if err != nil {
+		return err
+	}
+
+	response, err := h.hydraClient.RevokeAuthenticationSession(string(userRec.Uid))
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode != http.StatusNoContent {
+		log.WithFields(log.Fields{
+			"statusCode": response.StatusCode,
+			"user":       userRec.Uid,
+		}).Warn("Logout - HTTP Response not OK. Failed to revoke hydra authentication session")
+	} else {
+		log.WithFields(log.Fields{
+			"user": userRec.Uid,
+		}).Info("Successfully revoked hydra authentication session")
+	}
+
+	return nil
 }
 
 func logout(c echo.Context) {
