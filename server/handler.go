@@ -113,10 +113,12 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	// Logout
 	e.GET(Path("/auth/logout"), h.Logout).Name = "logout"
 
-	// Signup
-	e.GET(Path("/auth/signup"), h.Signup).Name = "signup"
-	e.POST(Path("/auth/signup"), RateLimit(h.CreateAccount))
-	e.Match([]string{"GET", "POST"}, Path("/auth/verify/*"), h.SetupAccount)[0].Name = "verify"
+	if viper.GetBool("enable_user_signup") {
+		// Signup
+		e.GET(Path("/auth/signup"), h.Signup).Name = "signup"
+		e.POST(Path("/auth/signup"), RateLimit(h.CreateAccount))
+		e.Match([]string{"GET", "POST"}, Path("/auth/verify/*"), h.SetupAccount)[0].Name = "verify"
+	}
 
 	// Forgot Password
 	e.Match([]string{"GET", "POST"}, Path("/auth/forgotpw"), RateLimit(h.ForgotPassword))[0].Name = "forgotpw"
@@ -144,7 +146,7 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 		}
 	}
 
-	if viper.GetBool("globus_signup") {
+	if viper.GetBool("enable_user_signup") && viper.GetBool("globus_signup") {
 		e.GET(Path("/auth/globus/redirect"), h.GlobusRedirect)
 		e.GET(Path("/auth/globus"), h.GlobusSignup).Name = "globus"
 	}

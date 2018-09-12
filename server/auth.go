@@ -64,17 +64,19 @@ func (h *Handler) LoginPost(c echo.Context) error {
 	}
 
 	vars := map[string]interface{}{
-		"csrf":    c.Get("csrf").(string),
-		"globus":  viper.GetBool("globus_signup"),
-		"message": message}
+		"csrf":               c.Get("csrf").(string),
+		"globus":             viper.GetBool("globus_signup"),
+		"enable_user_signup": viper.GetBool("enable_user_signup"),
+		"message":            message}
 
 	return c.Render(http.StatusOK, "login.html", vars)
 }
 
 func (h *Handler) LoginGet(c echo.Context) error {
 	vars := map[string]interface{}{
-		"csrf":   c.Get("csrf").(string),
-		"globus": viper.GetBool("globus_signup"),
+		"csrf":               c.Get("csrf").(string),
+		"globus":             viper.GetBool("globus_signup"),
+		"enable_user_signup": viper.GetBool("enable_user_signup"),
 	}
 
 	return c.Render(http.StatusOK, "login.html", vars)

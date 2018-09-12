@@ -17,6 +17,7 @@ import (
 )
 
 func init() {
+	viper.SetDefault("enable_user_signup", true)
 	viper.SetDefault("enable_captcha", true)
 	viper.SetDefault("default_shell", "/bin/bash")
 	viper.SetDefault("default_homedir", "/home")

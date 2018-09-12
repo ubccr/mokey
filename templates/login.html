@@ -30,7 +30,7 @@
     <button class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
 
       <div style="margin-top: 25px">
-            <span class="help-block text-center"><a href="{{ if .globus }}{{ uri .ctx "globus" }}{{ else }}{{ uri .ctx "signup" }}{{ end }}">Create Account</a> &nbsp; &nbsp; |&nbsp; &nbsp; <a href="{{ uri .ctx "forgotpw" }}">Forgot your password?</a></span>
+            <span class="help-block text-center">{{ if .enable_user_signup }}<a href="{{ if .globus }}{{ uri .ctx "globus" }}{{ else }}{{ uri .ctx "signup" }}{{ end }}">Create Account</a> &nbsp; &nbsp; |&nbsp; &nbsp;{{ end }} <a href="{{ uri .ctx "forgotpw" }}">Forgot your password?</a></span>
       </div>
 
   </form>
