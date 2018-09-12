@@ -102,9 +102,7 @@ func (h *Handler) GlobusSignup(c echo.Context) error {
 }
 
 func (h *Handler) GlobusRedirect(c echo.Context) error {
-	log.WithFields(log.Fields{
-		"url": c.Request().URL.String(),
-	}).Info("got globus redirect")
+	log.Info("got globus redirect")
 
 	sess, err := session.Get(CookieKeySession, c)
 	if err != nil {
@@ -117,6 +115,10 @@ func (h *Handler) GlobusRedirect(c echo.Context) error {
 		sess.Save(c.Request(), c.Response())
 		return c.Redirect(http.StatusFound, Path("/auth/globus"))
 	}
+
+	log.WithFields(log.Fields{
+		"username": username,
+	}).Info("successfully authenticated globus user")
 
 	sess.Values[CookieKeyGlobus] = true
 	sess.Values[CookieKeyGlobusUsername] = username
