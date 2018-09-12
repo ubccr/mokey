@@ -21,18 +21,6 @@ import (
 // Stores the ipa.UserRecord in the request context
 func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Check if consent endpoint and Api Key was given
-		accept := c.Request().Header.Get("Accept")
-		auth := strings.Split(c.Request().Header.Get("Authorization"), " ")
-		if strings.HasPrefix(c.Request().URL.String(), "/consent") &&
-			strings.Contains(accept, "application/json") &&
-			len(auth) == 2 && strings.ToLower(auth[0]) == "bearer" &&
-			len(auth[1]) > 0 {
-
-			c.Set(ContextKeyApi, auth[1])
-			return next(c)
-		}
-
 		sess, err := session.Get(CookieKeySession, c)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
