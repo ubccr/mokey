@@ -69,6 +69,10 @@ func SendVerifyEmail(uid string) error {
 		return errors.New("No email address provided for that username")
 	}
 
+	if !userRec.Locked() {
+		return errors.New("User account is already enabled")
+	}
+
 	emailer, err := util.NewEmailer(db)
 	if err != nil {
 		return err

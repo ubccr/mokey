@@ -41,13 +41,16 @@ func (h *Handler) SetupAccount(c echo.Context) error {
 	}
 
 	if c.Request().Method == "POST" {
-		err := h.client.UserEnable(token.UserName)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"uid":   token.UserName,
-				"error": err,
-			}).Error("Failed enable user in FreeIPA")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to enable user")
+		if userRec.Locked() {
+			// Enable user account
+			err := h.client.UserEnable(token.UserName)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"uid":   token.UserName,
+					"error": err,
+				}).Error("Failed enable user in FreeIPA")
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to enable user")
+			}
 		}
 
 		// Destroy token
