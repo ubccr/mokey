@@ -3,7 +3,7 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.5.1
+Version:       0.5.2
 Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
@@ -72,6 +72,10 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Wed Sep 12 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.2-1
+- New Features
+    - Add option to disable user signup
+    - Add new command for re-sending verify emails
 * Wed Sep 12 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.1-1
 - New Features
     - Major code refactor to use echo framework

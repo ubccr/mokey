@@ -2,6 +2,12 @@
 ChangeLog
 ===============================================================================
 
+`v0.5.2`_ (2018-09-12)
+----------------------
+
+- Add option to disable user signup
+- Add new command for re-sending verify emails
+
 `v0.5.1`_ (2018-09-12)
 ----------------------
 
@@ -64,3 +70,4 @@ ChangeLog
 .. _v0.0.5: https://github.com/ubccr/mokey/releases/tag/v0.0.5
 .. _v0.0.6: https://github.com/ubccr/mokey/releases/tag/v0.0.6
 .. _v0.5.1: https://github.com/ubccr/mokey/releases/tag/v0.5.1
+.. _v0.5.2: https://github.com/ubccr/mokey/releases/tag/v0.5.2
