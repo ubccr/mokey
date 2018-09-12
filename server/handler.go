@@ -49,17 +49,14 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 	if viper.IsSet("hydra_admin_url") {
 		h.hydraClient, err = hydra.NewSDK(&hydra.Configuration{
 			AdminURL: viper.GetString("hydra_admin_url"),
-			//PublicURL: viper.GetString("hydra_public_url"),
-			//ClientID:     viper.GetString("hydra_client_id"),
-			//ClientSecret: viper.GetString("hydra_client_secret"),
-			Scopes: []string{"hydra.keys.get"},
+			Scopes:   []string{"hydra.keys.get"},
 		})
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		log.Infof("Hydra consent app enabled")
+		log.Infof("Hydra consent/login endpoints enabled")
 
 		if viper.IsSet("enabled_api_client_ids") {
 			h.apiClients = make(map[string]*model.ApiKeyClient)

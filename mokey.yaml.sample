@@ -190,10 +190,9 @@ develop: false
 #------------------------------------------------------------------------------
 # Hydra config
 #------------------------------------------------------------------------------
-# hydra_client_id: "consent-app"
-# hydra_client_secret: "consent-secret"
 # hydra_admin_url: "https://localhost:4445"
-# hydra_public_url: "https://localhost:4444"
+# hydra_consent_timeout: 86400
+# hydra_login_timeout: 86400
 
 #------------------------------------------------------------------------------
 # Public oauth2 clients for Api Key access (requires Hydra)

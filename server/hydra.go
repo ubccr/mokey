@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/ory/hydra/sdk/go/hydra/swagger"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/model"
 )
 
@@ -51,7 +52,6 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 	if consent.Skip {
 		log.WithFields(log.Fields{
 			"user": consent.Subject,
-			"oidc": consent.OidcContext,
 		}).Info("Hydra requested we skip consent")
 
 		// Check to make sure we have a valid user id
@@ -90,7 +90,7 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 		}
 
 		log.WithFields(log.Fields{
-			"redirectURL": completedRequest.RedirectTo,
+			"username": consent.Subject,
 		}).Info("Consent challenge signed successfully")
 
 		return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
@@ -162,8 +162,8 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 
 	completedRequest, response, err := h.hydraClient.AcceptConsentRequest(challenge, swagger.AcceptConsentRequest{
 		GrantScope:  grantedScopes,
-		Remember:    true,  // TODO: make these configurable
-		RememberFor: 86400, // TODO: make these configurable
+		Remember:    true, // TODO: make this configurable
+		RememberFor: viper.GetInt64("hydra_consent_timeout"),
 		Session: swagger.ConsentRequestSession{
 			IdToken: map[string]interface{}{
 				"uid":    string(user.Uid),
@@ -188,7 +188,7 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 	}
 
 	log.WithFields(log.Fields{
-		"redirectURL": completedRequest.RedirectTo,
+		"username": string(user.Uid),
 	}).Info("Consent challenge signed successfully")
 
 	return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
@@ -225,7 +225,6 @@ func (h *Handler) LoginOAuthGet(c echo.Context) error {
 	if login.Skip {
 		log.WithFields(log.Fields{
 			"user": login.Subject,
-			"oidc": login.OidcContext,
 		}).Info("Hydra requested we skip login")
 
 		// Check to make sure we have a valid user id
@@ -255,7 +254,7 @@ func (h *Handler) LoginOAuthGet(c echo.Context) error {
 		}
 
 		log.WithFields(log.Fields{
-			"redirectURL": completedRequest.RedirectTo,
+			"username": login.Subject,
 		}).Info("Login challenge signed successfully")
 
 		return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
@@ -328,8 +327,8 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 	if err == nil {
 		completedRequest, response, err := h.hydraClient.AcceptLoginRequest(challenge, swagger.AcceptLoginRequest{
 			Subject:     uid,
-			Remember:    true,  // TODO: make these configurable
-			RememberFor: 86400, // TODO: make these configurable
+			Remember:    true, // TODO: make this configurable
+			RememberFor: viper.GetInt64("hydra_login_timeout"),
 		})
 
 		if err != nil {
@@ -345,7 +344,7 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 		}
 
 		log.WithFields(log.Fields{
-			"redirectURL": completedRequest.RedirectTo,
+			"username": uid,
 		}).Info("Login challenge signed successfully")
 
 		return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
