@@ -2,7 +2,7 @@
 ChangeLog
 ===============================================================================
 
-`v0.5.1`_ (unreleased)
+`v0.5.1`_ (2018-09-12)
 ----------------------
 
 - Major code refactor to use echo framework
@@ -63,3 +63,4 @@ ChangeLog
 .. _v0.0.4: https://github.com/ubccr/mokey/releases/tag/v0.0.4
 .. _v0.0.5: https://github.com/ubccr/mokey/releases/tag/v0.0.5
 .. _v0.0.6: https://github.com/ubccr/mokey/releases/tag/v0.0.6
+.. _v0.5.1: https://github.com/ubccr/mokey/releases/tag/v0.5.1

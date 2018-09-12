@@ -72,7 +72,7 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
-* Wed Sep 05 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.1-1
+* Wed Sep 12 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.1-1
 - New Features
     - Major code refactor to use echo framework
     - Add user signup/registration (Fixes #8)

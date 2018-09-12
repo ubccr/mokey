@@ -60,9 +60,14 @@ Update to latest rpm release::
 
     $ rpm -Uvh mokey-0.x.x-x.el7.centos.x86_64.rpm
 
-If upgrading need to run the following command to update database schema::
+If upgrading from v0.0.5 or earlier need to run the following command to update
+database schema::
 
     $ mysql -u root -p mokey < /usr/share/mokey/ddl/upgrade-to-v0.0.6.sql
+
+*WARNING* Security questions have been removed in v0.5.1 and are no longer
+supported. Please consider using TOTP tokens in FreeIPA for Two-Factor
+authentication.
 
 ------------------------------------------------------------------------
 Install
@@ -215,9 +220,10 @@ adding the following lines in /etc/ssh/sshd_config and restarting sshd::
 Hydra Consent and Login Endpoint for OAuth/OpenID Connect
 ------------------------------------------------------------------------
 
-mokey implements the login/consent flow for handling challenge requests from Hydra.
-This serves as the bridge between Hydra and FreeIPA identity provider. For more
-information on Hydra and the consent flow see `here <https://www.ory.sh/docs/guides/master/>`_.
+mokey implements the login/consent flow for handling challenge requests from
+Hydra.  This serves as the bridge between Hydra and FreeIPA identity provider.
+For more information on Hydra and the loing/consent flow see `here
+<https://www.ory.sh/docs/guides/master/>`_.
 
 To configure the Hydra login/consent flow set the following variables in
 ``/etc/mokey/mokey.yaml``::
