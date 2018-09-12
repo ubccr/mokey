@@ -80,7 +80,27 @@ func main() {
 					return cli.NewExitError(errors.New("Please provide a uid"), 1)
 				}
 
-				err := tools.ResetPasswordEmail(uid)
+				err := tools.SendResetPasswordEmail(uid)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:  "verify-email",
+			Usage: "Re-send verify email",
+			Flags: []cli.Flag{
+				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
+			},
+			Action: func(c *cli.Context) error {
+				uid := c.String("uid")
+				if len(uid) == 0 {
+					return cli.NewExitError(errors.New("Please provide a uid"), 1)
+				}
+
+				err := tools.SendVerifyEmail(uid)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}

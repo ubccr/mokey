@@ -14,7 +14,7 @@ import (
 	"github.com/ubccr/mokey/util"
 )
 
-func ResetPasswordEmail(uid string) error {
+func SendResetPasswordEmail(uid string) error {
 	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
 	if err != nil {
 		return err
@@ -41,6 +41,40 @@ func ResetPasswordEmail(uid string) error {
 	}
 
 	err = emailer.SendResetPasswordEmail(uid, string(userRec.Email))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SendVerifyEmail(uid string) error {
+	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
+	if err != nil {
+		return err
+	}
+
+	client := ipa.NewDefaultClient()
+	err = client.LoginWithKeytab(viper.GetString("keytab"), viper.GetString("ktuser"))
+	if err != nil {
+		return err
+	}
+
+	userRec, err := client.UserShow(uid)
+	if err != nil {
+		return err
+	}
+
+	if len(userRec.Email) == 0 {
+		return errors.New("No email address provided for that username")
+	}
+
+	emailer, err := util.NewEmailer(db)
+	if err != nil {
+		return err
+	}
+
+	err = emailer.SendVerifyAccountEmail(uid, string(userRec.Email))
 	if err != nil {
 		return err
 	}
