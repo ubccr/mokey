@@ -36,9 +36,10 @@ bind: "127.0.0.1"
 # key: "/path/to/key"
 
 #------------------------------------------------------------------------------
-# Min password length
+# Password requirements
 #------------------------------------------------------------------------------
 # min_passwd_len: 8
+# min_passwd_classes: 2
 
 #------------------------------------------------------------------------------
 # Authentication key used for HMAC token signing and secure cookies 
@@ -56,19 +57,9 @@ enc_key: mysecret
 templates: /usr/share/mokey/templates
 
 #------------------------------------------------------------------------------
-# Force Two-Factor authentication on login. If enabled users will be required
-# to provide their security question (if OTP is disabled) in addition to their
-# password when logging in. Defaults to true
+# Custom URL context path
 #------------------------------------------------------------------------------
-force_2fa: true
-
-#------------------------------------------------------------------------------
-# Require security question for password resets. If disabled, users will not be
-# required to enter their security question when resetting their password. They
-# will only need the link sent to their email address. Disabling this option is
-# not recommended. Defaults to true
-#------------------------------------------------------------------------------
-require_question_pwreset: true
+# path_prefix: "/mokey"
 
 #------------------------------------------------------------------------------
 # FreeIPA server hostname (defaults to /etc/ipa/default.conf)
@@ -76,10 +67,12 @@ require_question_pwreset: true
 # ipahost: "ipa.example.edu"
 
 #------------------------------------------------------------------------------
-# Keytab file for mokey (should have "Modify users and Reset passwords"
-# privilege in FreeIPA)
+# Keytab file and username for mokey to user for operations requiring elevated
+# privileges (should have "Modify users and Reset passwords" privilege in
+# FreeIPA)
 #------------------------------------------------------------------------------
 keytab: "/path/to/client.keytab"
+ktuser: "username"
 
 #------------------------------------------------------------------------------
 # Enable rate limiting based on remote ip (requires redis)
@@ -110,9 +103,10 @@ rate_limit: false
 smtp_host: "localhost"
 
 #------------------------------------------------------------------------------
-# SMTP port
+# SMTP port / StartTLS
 #------------------------------------------------------------------------------
 smtp_port: 25
+smtp_starttls: false
 
 #------------------------------------------------------------------------------
 # From address used when sending emails
@@ -165,20 +159,45 @@ pgp_sign: false
 # pgp_passphrase: "secret"
 
 #------------------------------------------------------------------------------
+# New User Account Signup
+#------------------------------------------------------------------------------
+# enable_captcha: true
+# default_shell: "/bin/bash"
+# default_homedir: "/home"
+#
+#------------------------------------------------------------------------------
+# Require users to verify email address. With this option enabled new accounts
+# are disabled by default until the user verifies their email address
+#------------------------------------------------------------------------------
+# require_verify_email: false
+
+#------------------------------------------------------------------------------
 # Developer mode
 #------------------------------------------------------------------------------
 develop: false
 
 #------------------------------------------------------------------------------
+# Globus Signup
+#------------------------------------------------------------------------------
+# globus_signup: false
+# globus_iss: "https://auth.globus.org"
+# globus_client_id: "xxx"
+# globus_secret: "xxx"
+# globus_trusted_providers:
+#   - xxx
+#   - xxx
+
+#------------------------------------------------------------------------------
 # Hydra config
 #------------------------------------------------------------------------------
-# hydra_client_id: "consent-app"
-# hydra_client_secret: "consent-secret"
-# hydra_cluster_url: "https://localhost:4444"
+# hydra_admin_url: "https://localhost:4445"
+# hydra_consent_timeout: 86400
+# hydra_login_timeout: 86400
 
 #------------------------------------------------------------------------------
 # Public oauth2 clients for Api Key access (requires Hydra)
 #------------------------------------------------------------------------------
+# enable_api_keys: false
 # enabled_api_client_ids:
 #   - openstack-api
 #   - mypublic-api

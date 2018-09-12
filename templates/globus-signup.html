@@ -1,0 +1,25 @@
+{{define "content"}}
+
+{{ range $m := .flashes }}
+<div class="page-header">
+  <h1><i class="fa fa-frown-o"></i> Unable to sign up for account</h1>
+</div>
+<div class="alert alert-danger" role="alert">
+{{ $m }}
+</div>
+{{ else }}
+<div class="page-header">
+  <h1><i class="fa fa-user"></i> User Sign Up</h1>
+</div>
+<div class="alert alert-info" role="alert">
+To create a new user account you must first authenticate using Globus and have
+a linked identity with a trusted organization. Click the link below to create
+an account.
+
+<div class="text-center">
+    <a href="{{ .globusURL }}" class="btn btn-lg btn-primary"> Sign Up</a>
+</div>
+</div>
+{{ end }}
+
+{{end}}

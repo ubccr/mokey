@@ -5,7 +5,6 @@
 package model
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -22,13 +21,13 @@ func TestToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = FetchTokenByUser(db, "usernotexist", 1800)
-	if err != sql.ErrNoRows {
+	_, err = db.FetchTokenByUser("usernotexist", 1800)
+	if err != ErrNotFound {
 		t.Error(err)
 	}
 
-	_, err = FetchToken(db, "notoken", 1800)
-	if err != sql.ErrNoRows {
+	_, err = db.FetchToken("notoken", 1800)
+	if err != ErrNotFound {
 		t.Error(err)
 	}
 
@@ -36,50 +35,50 @@ func TestToken(t *testing.T) {
 	email := "mokeytestuser@localhost"
 
 	viper.Set("auth_key", goodSecret)
-	token, err := CreateToken(db, uid, email)
+	token, err := db.CreateToken(uid, email)
 	if err != nil {
 		t.Error(err)
 	}
 
-	tok, err := FetchTokenByUser(db, uid, 1800)
+	tok, err := db.FetchTokenByUser(uid, 1800)
 	if err != nil {
 		t.Error(err)
 	}
 
 	if tok.Token != token.Token {
-		t.Errorf("Incorrect token: got %d should be %d", tok.Token, token.Token)
+		t.Errorf("Incorrect token: got %s should be %s", tok.Token, token.Token)
 	}
 
-	st := SignToken(goodSalt, tok.Token)
+	st := db.SignToken(goodSalt, tok.Token)
 
-	_, check := VerifyToken(badSalt, st)
+	_, check := db.VerifyToken(badSalt, st)
 	if check {
 		t.Errorf("Validated token with bad salt")
 	}
 
 	viper.Set("auth_key", badSecret)
-	_, check = VerifyToken(goodSalt, st)
+	_, check = db.VerifyToken(goodSalt, st)
 	if check {
 		t.Errorf("Validated token with bad secret")
 	}
 
 	viper.Set("auth_key", goodSecret)
-	vt, check := VerifyToken(goodSalt, st)
+	vt, check := db.VerifyToken(goodSalt, st)
 	if !check {
 		t.Errorf("Failed to validate good signed token")
 	}
 
 	if vt != tok.Token {
-		t.Errorf("Incorrect validated token: got %d should be %d", vt, tok.Token)
+		t.Errorf("Incorrect validated token: got %s should be %s", vt, tok.Token)
 	}
 
-	err = DestroyToken(db, tok.Token)
+	err = db.DestroyToken(tok.Token)
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = FetchTokenByUser(db, uid, 1800)
-	if err != sql.ErrNoRows {
+	_, err = db.FetchTokenByUser(uid, 1800)
+	if err != ErrNotFound {
 		t.Error(err)
 	}
 }

@@ -9,16 +9,17 @@ What is mokey?
 ------------------------------------------------------------------------
 
 mokey is web application that provides self-service user account management
-tools for `FreeIPA <http://freeipa.org>`_. The motivation for this project was
-to implement the self-service password reset functionality missing in FreeIPA.
-This feature is not provided by default in FreeIPA, see `here <http://www.freeipa.org/page/Self-Service_Password_Reset>`_
-for more info and the rationale behind this decision. mokey is not a FreeIPA
-plugin but a complete standalone application that uses the FreeIPA JSON API.
-mokey requires no changes to the underlying LDAP schema and uses a MariaDB
-database to store security questions and access tokens. The user experience and
-web interface can be customized to fit the requirements of an organization's
-look and feel. mokey is written in Go and released under a modified BSD
-license. For screenshots `see here <docs/>`_
+tools for `FreeIPA <https://www.freeipa.org>`_. The motivation for this project was
+to implement the self-service account creation and password reset functionality
+missing in FreeIPA.  This feature is not provided by default in FreeIPA, see
+`here <https://www.freeipa.org/page/Self-Service_Password_Reset>`_ for more info
+and the rationale behind this decision. mokey is not a FreeIPA plugin but a
+complete standalone application that uses the FreeIPA JSON API.  mokey requires
+no changes to the underlying LDAP schema and uses a MariaDB database to store
+access tokens. The user experience and web interface can be customized to fit
+the requirements of an organization's look and feel. mokey is written in Go and
+released under a modified BSD license. For screenshots
+`see here <docs/>`_
 
 ------------------------------------------------------------------------
 Project status
@@ -32,13 +33,12 @@ and can make your systems vulnerable to abuse.
 Features
 ------------------------------------------------------------------------
 
-- Account Activation / First time password setup
-- Forgot Password
-- Change Password / Set security question
+- Account Signup
+- Forgot/Change Password
 - Add/Remove SSH Public Keys
 - Add/Remove TOTP Tokens
 - Enable/Disable Two-Factor Authentication
-- Hydra Consent/Authentication Endpoint for OAuth/OpenID Connect
+- Hydra Consent/Login Endpoint for OAuth/OpenID Connect
 - PGP/Mime signed emails
 - Easy to install and configure (requires no FreeIPA/LDAP schema changes)
 
@@ -46,10 +46,11 @@ Features
 Requirements
 ------------------------------------------------------------------------
 
-- FreeIPA v4.1.0
+- FreeIPA v4.5.0
 - MariaDB/MySQL
 - Linux x86_64 (CentOS 7.x preferred)
 - Redis (optional)
+- Hydra v1.0.0 (optional)
 
 ------------------------------------------------------------------------
 Upgrading
@@ -59,10 +60,14 @@ Update to latest rpm release::
 
     $ rpm -Uvh mokey-0.x.x-x.el7.centos.x86_64.rpm
 
-If upgrading from to v0.0.6 need to run the following command to update
+If upgrading from v0.0.5 or earlier need to run the following command to update
 database schema::
 
     $ mysql -u root -p mokey < /usr/share/mokey/ddl/upgrade-to-v0.0.6.sql
+
+*WARNING* Security questions have been removed in v0.5.1 and are no longer
+supported. Please consider using TOTP tokens in FreeIPA for Two-Factor
+authentication.
 
 ------------------------------------------------------------------------
 Install
@@ -98,7 +103,7 @@ to be installed)::
     $ mkdir /etc/mokey/keytab
     $ kinit adminuser
     $ ipa role-add 'Mokey User Manager' --desc='Mokey User management'
-    $ ipa role-add-privilege 'Mokey User Manager' --privilege='Modify users and Reset passwords'
+    $ ipa role-add-privilege 'Mokey User Manager' --privilege='User Administrators'
     $ ipa user-add mokeyapp --first Mokey --last App
     $ ipa role-add-member 'Mokey User Manager' --users=mokeyapp
     $ ipa-getkeytab -s [your.ipa-master.server] -p mokeyapp -k /etc/mokey/keytab/mokeyapp.keytab
@@ -149,27 +154,6 @@ Customizing templates
 
 The templates for the web interface and emails are installed by default in
 /usr/share/mokey/templates. Edit to taste and restart mokey.
-
-------------------------------------------------------------------------
-Getting Started with mokey cli tools
-------------------------------------------------------------------------
-
-- Account Activation / First time password setup. Use case: create new user and
-  send them an email link to setup their password and security question::
-
-    $ kinit adminuser
-    $ ipa user-add --first="Jesse" --last="Pinkman" --email="jp@example.com" capncook
-    $ mokey newacct --uid capncook
-    (An email will be sent to jp@example.com with a link to setup their password)
-
-- Reset user password. Use case: user forgot their password, send the user an
-  email link to reset their password using their previously set security
-  question. Users can also initiate a password reset using the "Forgot
-  Password" link in the web interface::
-
-    $ kinit adminuser
-    $ mokey resetpw --uid capncook
-    (An email will be sent to jp@example.com with a link to reset their password)
 
 ------------------------------------------------------------------------
 Configure PGP/Mime email
@@ -233,19 +217,18 @@ adding the following lines in /etc/ssh/sshd_config and restarting sshd::
     AuthorizedKeysCommandUser nobody
 
 ------------------------------------------------------------------------
-Hydra Consent app and Authentication Endpoint for OAuth/OpenID Connect
+Hydra Consent and Login Endpoint for OAuth/OpenID Connect
 ------------------------------------------------------------------------
 
-mokey implements a consent endpoint for handling challenge requests from Hydra.
-This serves as the bridge between Hydra and FreeIPA identity provider. For more
-information on Hydra and consent apps see `here <https://ory.gitbooks.io/hydra/content/oauth2.html#consent-app-flow>`_.
+mokey implements the login/consent flow for handling challenge requests from
+Hydra.  This serves as the bridge between Hydra and FreeIPA identity provider.
+For more information on Hydra and the loing/consent flow see `here
+<https://www.ory.sh/docs/guides/master/>`_.
 
-To configure mokey as a Hydra consent app set the following variables in
+To configure the Hydra login/consent flow set the following variables in
 ``/etc/mokey/mokey.yaml``::
 
-    hydra_client_id: "consent-app"
-    hydra_client_secret: "consent-secret"
-    hydra_cluster_url: "https://localhost:4444"
+    hydra_admin_url: "https://localhost:4444"
 
 Any OAuth clients configured in Hydra will be authenticated via mokey using
 FreeIPA as the identity provider. For an example OAuth 2.0/OIDC client
@@ -255,19 +238,11 @@ application see `here <examples/mokey-oidc/main.go>`_.
 Building from source
 ------------------------------------------------------------------------
 
-First, you will need:
+First, you will need Go v1.11 or greater. Clone the repository::
 
-- `glide <https://glide.sh/>`_ to manage project's dependencies.
-- The krb5-libs/GSSAPI lib installed on your compilation system
-
-Clone the repository in your $GOPATH::
-
-    $ git clone https://github.com/ubccr/mokey $GOPATH/src/github.com/ubccr/mokey
-
-In the project folder you can now resolve the dependencies and build mokey::
-
-    $ glide install
-    $ go build
+    $ git clone https://github.com/ubccr/mokey
+    $ cd mokey
+    $ go build .
 
 ------------------------------------------------------------------------
 License

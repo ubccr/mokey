@@ -5,7 +5,6 @@
 package model
 
 import (
-	"database/sql"
 	"testing"
 )
 
@@ -15,17 +14,17 @@ func TestApiKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	nokeys, err := FetchApiKeys(db, "usernotexist")
+	nokeys, err := db.FetchApiKeys("usernotexist")
 	if err != nil {
 		t.Error(err)
 	}
 
 	if len(nokeys) != 0 {
-		t.Errorf("Incorrect number of keys: got %s should be %s", len(nokeys), 0)
+		t.Errorf("Incorrect number of keys: got %d should be %d", len(nokeys), 0)
 	}
 
-	_, err = FetchApiKey(db, "nokey")
-	if err != sql.ErrNoRows {
+	_, err = db.FetchApiKey("nokey")
+	if err != ErrNotFound {
 		t.Error(err)
 	}
 
@@ -33,18 +32,18 @@ func TestApiKey(t *testing.T) {
 	clientID := "cli"
 	scopes := "openid"
 
-	key, secret, err := CreateApiKey(db, uid, clientID, scopes)
+	key, secret, err := db.CreateApiKey(uid, clientID, scopes)
 	if err != nil {
 		t.Error(err)
 	}
 
-	keys, err := FetchApiKeys(db, uid)
+	keys, err := db.FetchApiKeys(uid)
 	if err != nil {
 		t.Error(err)
 	}
 
 	if len(keys) != 1 {
-		t.Errorf("Incorrect number of keys: got %s should be %s", len(keys), 1)
+		t.Errorf("Incorrect number of keys: got %d should be %d", len(keys), 1)
 	}
 
 	ak := keys[0]
@@ -53,12 +52,12 @@ func TestApiKey(t *testing.T) {
 		t.Errorf("Incorrect key: got %s should be %s", ak.Key, key.Key)
 	}
 
-	err = RefreshApiKey(db, ak)
+	err = db.RefreshApiKey(ak)
 	if err != nil {
 		t.Error(err)
 	}
 
-	ak2, err := FetchApiKey(db, secret)
+	ak2, err := db.FetchApiKey(secret)
 	if err != nil {
 		t.Error(err)
 	}
@@ -71,17 +70,17 @@ func TestApiKey(t *testing.T) {
 		t.Errorf("Incorrect scopes: got %s should be %s", ak2.Scopes, scopes)
 	}
 
-	err = DestroyApiKey(db, uid, ak.ClientID)
+	err = db.DestroyApiKey(uid, ak.ClientID)
 	if err != nil {
 		t.Error(err)
 	}
 
-	nokeys, err = FetchApiKeys(db, uid)
+	nokeys, err = db.FetchApiKeys(uid)
 	if err != nil {
 		t.Error(err)
 	}
 
 	if len(nokeys) != 0 {
-		t.Errorf("Incorrect number of keys: got %s should be %s", len(nokeys), 0)
+		t.Errorf("Incorrect number of keys: got %d should be %d", len(nokeys), 0)
 	}
 }

@@ -2,26 +2,102 @@
 // Use of this source code is governed by a BSD style
 // license that can be found in the LICENSE file.
 
-package app
+package util
 
 import (
 	"bytes"
 	"crypto"
+	"crypto/tls"
 	"fmt"
 	"mime/multipart"
 	"mime/quotedprintable"
 	"net/smtp"
 	"net/textproto"
 	"os"
+	"path/filepath"
+	"text/template"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/mokey/model"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-func quotedBody(body []byte) ([]byte, error) {
+const (
+	ResetSalt  = "resetpw"
+	VerifySalt = "acctsetup"
+)
+
+type Emailer struct {
+	db        model.Datastore
+	templates map[string]*template.Template
+}
+
+func init() {
+	viper.SetDefault("pgp_sign", false)
+	viper.SetDefault("smtp_host", "localhost")
+	viper.SetDefault("smtp_port", 25)
+	viper.SetDefault("smtp_starttls", false)
+	viper.SetDefault("email_prefix", "mokey")
+	viper.SetDefault("email_link_base", "http://localhost")
+	viper.SetDefault("email_from", "helpdesk@example.com")
+}
+
+func NewEmailer(db model.Datastore) (*Emailer, error) {
+	tmpldir := GetTemplateDir()
+
+	tmpls, err := filepath.Glob(tmpldir + "/email/*.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	templates := make(map[string]*template.Template)
+	for _, t := range tmpls {
+		base := filepath.Base(t)
+		templates[base] = template.Must(template.New(base).ParseFiles(t))
+	}
+
+	return &Emailer{db: db, templates: templates}, nil
+}
+
+func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
+	token, err := e.db.CreateToken(uid, email)
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]interface{}{
+		"link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), e.db.SignToken(ResetSalt, token.Token))}
+
+	err = e.sendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *Emailer) SendVerifyAccountEmail(uid, email string) error {
+	token, err := e.db.CreateToken(uid, email)
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]interface{}{
+		"uid":  uid,
+		"link": fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), e.db.SignToken(VerifySalt, token.Token))}
+
+	err = e.sendEmail(token.Email, fmt.Sprintf("[%s] Verify your email", viper.GetString("email_prefix")), "setup-account.txt", vars)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	w := quotedprintable.NewWriter(&buf)
 	_, err := w.Write(body)
@@ -37,7 +113,7 @@ func quotedBody(body []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func sign(qtext []byte, header textproto.MIMEHeader) ([]byte, error) {
+func (e *Emailer) sign(qtext []byte, header textproto.MIMEHeader) ([]byte, error) {
 	var buf bytes.Buffer
 
 	for k, vv := range header {
@@ -79,7 +155,7 @@ func sign(qtext []byte, header textproto.MIMEHeader) ([]byte, error) {
 	return sig.Bytes(), nil
 }
 
-func (a *AppContext) SendEmail(email, subject, template string, data map[string]interface{}) error {
+func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interface{}) error {
 	log.WithFields(log.Fields{
 		"email": email,
 	}).Info("Sending email to user")
@@ -92,14 +168,17 @@ func (a *AppContext) SendEmail(email, subject, template string, data map[string]
 	data["contact"] = viper.GetString("email_from")
 	data["sig"] = viper.GetString("email_sig")
 
-	t := a.emails[template]
+	if _, ok := e.templates[tmpl]; !ok {
+		return fmt.Errorf("Failed to find email template: %s", tmpl)
+	}
+
 	var text bytes.Buffer
-	err := t.ExecuteTemplate(&text, template, data)
+	err := e.templates[tmpl].ExecuteTemplate(&text, tmpl, data)
 	if err != nil {
 		return err
 	}
 
-	qtext, err := quotedBody(text.Bytes())
+	qtext, err := e.quotedBody(text.Bytes())
 	if err != nil {
 		return err
 	}
@@ -121,7 +200,7 @@ func (a *AppContext) SendEmail(email, subject, template string, data map[string]
 		mhead := make(textproto.MIMEHeader)
 		mhead.Add("Content-Type", "text/plain; charset=UTF-8")
 		mhead.Add("Content-Transfer-Encoding", "quoted-printable")
-		sig, err := sign(qtext, mhead)
+		sig, err := e.sign(qtext, mhead)
 		if err != nil {
 			return err
 		}
@@ -165,6 +244,15 @@ func (a *AppContext) SendEmail(email, subject, template string, data map[string]
 		return err
 	}
 	defer c.Close()
+
+	if viper.GetBool("smtp_starttls") {
+		err := c.StartTLS(&tls.Config{
+			ServerName: viper.GetString("smtp_host"),
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	c.Mail(viper.GetString("email_from"))
 	c.Rcpt(email)

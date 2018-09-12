@@ -8,12 +8,12 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )
 
@@ -25,7 +25,7 @@ type Token struct {
 	CreatedAt *time.Time `db:"created_at"`
 }
 
-func randToken() (string, error) {
+func (db *DB) RandToken() (string, error) {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
@@ -35,14 +35,14 @@ func randToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func computeMAC(salt, message, key []byte) string {
+func (db *DB) computeMAC(salt, message, key []byte) string {
 	h := hmac.New(sha256.New, key)
 	h.Write(message)
 	h.Write(salt)
 	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
 
-func checkMAC(salt, message, messageMAC, key []byte) bool {
+func (db *DB) checkMAC(salt, message, messageMAC, key []byte) bool {
 	mac := hmac.New(sha256.New, key)
 	mac.Write(message)
 	mac.Write(salt)
@@ -50,12 +50,12 @@ func checkMAC(salt, message, messageMAC, key []byte) bool {
 	return hmac.Equal(messageMAC, expectedMAC)
 }
 
-func SignToken(salt, token string) string {
-	mac := computeMAC([]byte(salt), []byte(token), []byte(viper.GetString("auth_key")))
+func (db *DB) SignToken(salt, token string) string {
+	mac := db.computeMAC([]byte(salt), []byte(token), []byte(viper.GetString("auth_key")))
 	return fmt.Sprintf("%s.%s", token, mac)
 }
 
-func VerifyToken(salt, signedToken string) (string, bool) {
+func (db *DB) VerifyToken(salt, signedToken string) (string, bool) {
 	parts := strings.SplitN(signedToken, ".", 2)
 	if len(parts) != 2 {
 		return "", false
@@ -72,35 +72,39 @@ func VerifyToken(salt, signedToken string) (string, bool) {
 		return "", false
 	}
 
-	if checkMAC([]byte(salt), []byte(token), mac, []byte(viper.GetString("auth_key"))) {
+	if db.checkMAC([]byte(salt), []byte(token), mac, []byte(viper.GetString("auth_key"))) {
 		return token, true
 	}
 
 	return "", false
 }
 
-func FetchTokenByUser(db *sqlx.DB, uid string, maxAge int) (*Token, error) {
+func (db *DB) FetchTokenByUser(uid string, maxAge int) (*Token, error) {
 	t := Token{}
 	err := db.Get(&t, "select user_name,token,attempts,email,created_at from token where user_name = ? and timestampdiff(SECOND, created_at, now()) <= ?", uid, maxAge)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, ErrNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
 	return &t, nil
 }
 
-func FetchToken(db *sqlx.DB, token string, maxAge int) (*Token, error) {
+func (db *DB) FetchToken(token string, maxAge int) (*Token, error) {
 	t := Token{}
 	err := db.Get(&t, "select user_name,token,attempts,email from token where token = ? and timestampdiff(SECOND, created_at, now()) <= ?", token, maxAge)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return nil, ErrNotFound
+	} else if err != nil {
 		return nil, err
 	}
 
 	return &t, nil
 }
 
-func CreateToken(db *sqlx.DB, uid, email string) (*Token, error) {
-	tok, err := randToken()
+func (db *DB) CreateToken(uid, email string) (*Token, error) {
+	tok, err := db.RandToken()
 	if err != nil {
 		return nil, err
 	}
@@ -114,27 +118,33 @@ func CreateToken(db *sqlx.DB, uid, email string) (*Token, error) {
 	return &t, nil
 }
 
-func IncrementToken(db *sqlx.DB, token string) error {
+func (db *DB) IncrementToken(token string) error {
 	_, err := db.Exec("update token set attempts = attempts + 1 where token = ?", token)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return ErrNotFound
+	} else if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func DestroyToken(db *sqlx.DB, token string) error {
+func (db *DB) DestroyToken(token string) error {
 	_, err := db.Exec("delete from token where token = ?", token)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return ErrNotFound
+	} else if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func DestroyTokenByUser(db *sqlx.DB, uid string) error {
+func (db *DB) DestroyTokenByUser(uid string) error {
 	_, err := db.Exec("delete from token where user_name = ?", uid)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return ErrNotFound
+	} else if err != nil {
 		return err
 	}
 

@@ -1,8 +1,0 @@
-This is to confirm that your account was activated at {{ .date.Format "15:04:05 MST on Jan 02, 2006" }} 
-
-Didn't activate your account?  Contact {{ .contact }} 
-so we can make sure no one else is trying to access your account.
-
-Thank you,
-
-{{ .sig }}

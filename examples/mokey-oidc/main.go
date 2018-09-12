@@ -1,6 +1,6 @@
 package main
 
-// This is an example OAuth 2.0 client app using Open ID Connect. It is not
+// This is an example OAuth 2.0 client app using OpenID Connect. It is not
 // meant for use in a production environment and only for testing
 // FreeIPA->mokey->hydra integration. Configuration is via environment
 // variables (see mokey-oidc.conf)
@@ -131,7 +131,7 @@ func init() {
 			TokenURL: os.Getenv("MOKEY_OIDC_TOKEN_URL"),
 			AuthURL:  os.Getenv("MOKEY_OIDC_AUTH_URL"),
 		},
-		Scopes:      []string{"openid", "offline", "hydra.clients"},
+		Scopes:      []string{"openid"},
 		RedirectURL: os.Getenv("MOKEY_OIDC_REDIRECT_URL"),
 	}
 

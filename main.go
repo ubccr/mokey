@@ -5,10 +5,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/mokey/server"
+	"github.com/ubccr/mokey/tools"
 	"github.com/urfave/cli"
 )
 
@@ -23,7 +26,7 @@ func main() {
 	app.Name = "mokey"
 	app.Authors = []cli.Author{cli.Author{Name: "Andrew E. Bruno", Email: "aebruno2@buffalo.edu"}}
 	app.Usage = "mokey"
-	app.Version = "0.0.6"
+	app.Version = "0.5.1"
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{Name: "conf,c", Usage: "Path to conf file"},
 		&cli.BoolFlag{Name: "debug,d", Usage: "Print debug messages"},
@@ -55,23 +58,14 @@ func main() {
 		{
 			Name:  "server",
 			Usage: "Run http server",
-			Action: func(c *cli.Context) {
-				Server()
-			},
-		},
-		{
-			Name:  "status",
-			Usage: "Display security question and token status for user",
-			Flags: []cli.Flag{
-				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
-			},
-			Action: func(c *cli.Context) {
-				uid := c.String("uid")
-				if len(uid) == 0 {
-					log.Fatal("Please provide a user uid")
+			Action: func(c *cli.Context) error {
+				err := server.Run()
+				if err != nil {
+					log.Fatal(err)
+					return cli.NewExitError(err, 1)
 				}
 
-				Status(uid)
+				return nil
 			},
 		},
 		{
@@ -80,28 +74,38 @@ func main() {
 			Flags: []cli.Flag{
 				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				uid := c.String("uid")
 				if len(uid) == 0 {
-					log.Fatal("Please provide a user uid")
+					return cli.NewExitError(errors.New("Please provide a uid"), 1)
 				}
 
-				ResetPasswordEmail(uid)
+				err := tools.ResetPasswordEmail(uid)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+
+				return nil
 			},
 		},
 		{
-			Name:  "newacct",
-			Usage: "Send new account email",
+			Name:  "status",
+			Usage: "Display token status for user",
 			Flags: []cli.Flag{
 				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				uid := c.String("uid")
 				if len(uid) == 0 {
-					log.Fatal("Please provide a user uid")
+					return cli.NewExitError(errors.New("Please provide a uid"), 1)
 				}
 
-				NewAccountEmail(uid)
+				err := tools.Status(uid)
+				if err != nil {
+					return cli.NewExitError(err, 1)
+				}
+
+				return nil
 			},
 		}}
 

@@ -3,8 +3,8 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.0.6
-Release:       14%{?dist}
+Version:       0.5.1
+Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
 SOURCE:        %{name}-%{version}-linux-amd64.tar.gz
@@ -15,7 +15,9 @@ Requires(pre): /usr/sbin/useradd, /usr/bin/getent
 %description
 mokey is web application that provides self-service user account management
 tools for FreeIPA. The motivation for this project was to implement the
-self-service password reset functionality missing in FreeIPA.  %pre
+self-service password reset functionality missing in FreeIPA.
+
+%pre
 getent group mokey &> /dev/null || \
 groupadd -r mokey &> /dev/null
 getent passwd mokey &> /dev/null || \
@@ -42,8 +44,7 @@ cp -Ra ./ddl %{buildroot}%{_datadir}/%{name}
 cat << EOF > %{buildroot}%{_usr}/lib/systemd/system/%{name}.service
 [Unit]
 Description=mokey server
-After=syslog.target
-After=network.target
+After=syslog.target network.target mariadb.service
 
 [Service]
 Type=simple
@@ -63,7 +64,7 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %{_datadir}/%{name}/ddl/*
-%doc README.rst AUTHORS.rst ChangeLog.rst mokey.yaml.sample
+%doc README.rst AUTHORS.rst ChangeLog.rst NOTICE mokey.yaml.sample
 %license LICENSE
 %config(noreplace) %{_datadir}/%{name}/templates/*
 %attr(0755,root,root) %{_bindir}/%{name}
@@ -71,6 +72,18 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Wed Sep 12 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.1-1
+- New Features
+    - Major code refactor to use echo framework
+    - Add user signup/registration (Fixes #8)
+    - Add support for new Login/Conset flow in hydra 1.0.0
+    - Add ApiKey support for hydra consent
+    - Add CAPTCHA support
+    - Add Globus support to user account sign up
+    - Simplify login to be more like FreeIPA (password+otp)
+    - Remove security questions
+    - Remove dependecy on krb5-libs (now using pure go kerberos library)
+    - Update build to use vgo
 * Tue Jan 09 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.0.6-14
 - New Features
     - OAuth/OpenID Connect consent endpoint for Hydra

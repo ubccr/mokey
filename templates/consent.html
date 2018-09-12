@@ -12,8 +12,8 @@
     <form class="form-horizontal" role="form" method="POST">
       <div class="form-group">
         <div class="col-sm-8">
-            <span class="help-block">An application (id: {{.claims.Audience}}) requested consent to access resources on your behalf. The application wants access to:</span>
-     {{range .claims.RequestedScopes}}
+            <span class="help-block">An application (id: {{.consent.Client.ClientId}}) requested consent to access resources on your behalf. The application wants access to:</span>
+     {{range .consent.RequestedScope}}
         <div class="checkbox">
           <label>
             <input type="checkbox" checked="checked" name="scope" value="{{.}}">
@@ -26,8 +26,9 @@
 
       <div class="form-group">
           <div class="col-sm-8">
-              {{ .csrfField }}
-              <a href="/" class="btn btn-danger">Deny</a>
+              <input type="hidden" name="csrf" value="{{ .csrf }}" />
+              <input type="hidden" name="challenge" value="{{ .challenge }}" />
+              <a href="{{ uri .ctx "index" }}" class="btn btn-danger">Deny</a>
               <button type="submit" name="action" value="approve" class="btn btn-success">Approve</button>
           </div>
       </div>

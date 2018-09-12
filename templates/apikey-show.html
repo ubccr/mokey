@@ -10,6 +10,6 @@ Below is your API Key. Copy it to a safe place. If you lose this key you will ha
 
 <h3><code>{{ .secret }}</code></h3>
 <br/>
-<a class="btn btn-primary" href="/apikey" role="button">Done</a>
+<a class="btn btn-primary" href="{{ uri .ctx "apikey" }}" role="button">Done</a>
 
 {{end}}
