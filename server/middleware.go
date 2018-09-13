@@ -23,7 +23,9 @@ func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess, err := session.Get(CookieKeySession, c)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
+			log.Warn("Failed to get user session. Logging out")
+			logout(c)
+			return c.Redirect(http.StatusFound, Path("/auth/login"))
 		}
 
 		if !strings.HasPrefix(c.Request().URL.String(), Path("/auth")) {
