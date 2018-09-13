@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/dchest/captcha"
@@ -43,10 +44,10 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 		vars["globus_user"] = uid
 	}
 
-	email := c.FormValue("email")
-	email2 := c.FormValue("email2")
-	first := c.FormValue("first")
-	last := c.FormValue("last")
+	email := strings.TrimSpace(c.FormValue("email"))
+	email2 := strings.TrimSpace(c.FormValue("email2"))
+	first := strings.TrimSpace(c.FormValue("first"))
+	last := strings.TrimSpace(c.FormValue("last"))
 	pass := c.FormValue("password")
 	pass2 := c.FormValue("password2")
 	captchaID := c.FormValue("captcha_id")
