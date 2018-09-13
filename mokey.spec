@@ -51,7 +51,7 @@ Type=simple
 User=mokey
 Group=mokey
 WorkingDirectory=%{_datadir}/%{name}
-ExecStart=/bin/bash -c '%{_bindir}/%{name} --debug server'
+ExecStart=%{_bindir}/%{name} --debug server
 Restart=on-abort
 
 [Install]
