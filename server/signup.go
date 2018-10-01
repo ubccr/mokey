@@ -131,7 +131,7 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 		return errors.New("Email address does not match. Please confirm your email.")
 	}
 
-	if len(uid) <= 2 || len(uid) > 50 {
+	if len(uid) <= 1 || len(uid) > 50 {
 		return errors.New("Please provide a username")
 	}
 
