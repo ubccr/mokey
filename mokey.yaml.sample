@@ -101,6 +101,8 @@ rate_limit: false
 # SMTP server
 #------------------------------------------------------------------------------
 smtp_host: "localhost"
+#smtp_username: "username"
+#smtp_password: "password"
 
 #------------------------------------------------------------------------------
 # SMTP port / StartTLS
