@@ -272,7 +272,7 @@ func (h *Handler) verifyToken(rawToken, salt string, maxAge int) (*model.Token, 
 			"token": token.Token,
 			"uid":   token.UserName,
 		}).Error("Too many attempts for token.")
-		return nil, err
+		return nil, errors.New("Too many attempts")
 	}
 
 	return token, nil
