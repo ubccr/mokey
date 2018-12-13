@@ -278,10 +278,19 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 	
 	if (viper.IsSet("smtp_username") && viper.IsSet("smtp_password")) {
 		auth := smtp.PlainAuth("", viper.GetString("smtp_username"), viper.GetString("smtp_password"), viper.GetString("smtp_host"))
-		c.Auth(auth)
+		if err = c.Auth(auth); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
-	c.Mail(viper.GetString("email_from"))
-	c.Rcpt(email)
+	if err = c.Mail(viper.GetString("email_from")); err != nil {
+		log.Error(err)
+		return err
+	}
+	if err = c.Rcpt(email); err != nil {
+		log.Error(err)
+		return err
+	}
 
 	wc, err := c.Data()
 	if err != nil {
