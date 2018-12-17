@@ -275,8 +275,8 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 			return err
 		}
 	}
-	
-	if (viper.IsSet("smtp_username") && viper.IsSet("smtp_password")) {
+
+	if viper.IsSet("smtp_username") && viper.IsSet("smtp_password") {
 		auth := smtp.PlainAuth("", viper.GetString("smtp_username"), viper.GetString("smtp_password"), viper.GetString("smtp_host"))
 		if err = c.Auth(auth); err != nil {
 			log.Error(err)
