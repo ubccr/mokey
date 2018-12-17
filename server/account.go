@@ -95,7 +95,7 @@ func (h *Handler) ForgotPassword(c echo.Context) error {
 
 func (h *Handler) ResetPassword(c echo.Context) error {
 	_, tk := path.Split(c.Request().URL.Path)
-	token, err := h.verifyToken(tk, util.ResetSalt, viper.GetInt("setup_max_age"))
+	token, err := h.verifyToken(tk, util.ResetSalt, viper.GetInt("reset_max_age"))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
@@ -221,7 +221,7 @@ func (h *Handler) sendPasswordReset(uid, captchaID, captchaSol string) error {
 		}
 	}
 
-	_, err := h.db.FetchTokenByUser(uid, viper.GetInt("setup_max_age"))
+	_, err := h.db.FetchTokenByUser(uid, viper.GetInt("reset_max_age"))
 	if err == nil {
 		log.WithFields(log.Fields{
 			"uid": uid,
