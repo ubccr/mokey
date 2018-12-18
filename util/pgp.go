@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"mime/quotedprintable"
+	"net"
 	"net/smtp"
 	"net/textproto"
 	"os"
@@ -39,7 +40,7 @@ func init() {
 	viper.SetDefault("pgp_sign", false)
 	viper.SetDefault("smtp_host", "localhost")
 	viper.SetDefault("smtp_port", 25)
-	viper.SetDefault("smtp_starttls", false)
+	viper.SetDefault("smtp_tls", "off")
 	viper.SetDefault("email_prefix", "mokey")
 	viper.SetDefault("email_link_base", "http://localhost")
 	viper.SetDefault("email_from", "helpdesk@example.com")
@@ -239,13 +240,34 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 		body = multipartBody.Bytes()
 	}
 
-	c, err := smtp.Dial(fmt.Sprintf("%s:%d", viper.GetString("smtp_host"), viper.GetInt("smtp_port")))
+	smtpHostPort := fmt.Sprintf("%s:%d", viper.GetString("smtp_host"), viper.GetInt("smtp_port"))
+	var conn net.Conn
+	tlsMode := viper.GetString("smtp_tls")
+
+	switch tlsMode {
+	case "on":
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: false,
+			ServerName:         viper.GetString("smtp_host"),
+		}
+		conn, err = tls.Dial("tcp", smtpHostPort, tlsConfig)
+	case "off", "starttls":
+		conn, err = net.Dial("tcp", smtpHostPort)
+	default:
+		return fmt.Errorf("invalid config value for smtp_tls: %s", tlsMode)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	c, err := smtp.NewClient(conn, viper.GetString("smtp_host"))
 	if err != nil {
 		return err
 	}
 	defer c.Close()
 
-	if viper.GetBool("smtp_starttls") {
+	if tlsMode == "starttls" {
 		err := c.StartTLS(&tls.Config{
 			ServerName: viper.GetString("smtp_host"),
 		})
@@ -253,13 +275,22 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 			return err
 		}
 	}
-	
-	if (viper.IsSet("smtp_username") && viper.IsSet("smtp_password")) {
+
+	if viper.IsSet("smtp_username") && viper.IsSet("smtp_password") {
 		auth := smtp.PlainAuth("", viper.GetString("smtp_username"), viper.GetString("smtp_password"), viper.GetString("smtp_host"))
-		c.Auth(auth)
+		if err = c.Auth(auth); err != nil {
+			log.Error(err)
+			return err
+		}
 	}
-	c.Mail(viper.GetString("email_from"))
-	c.Rcpt(email)
+	if err = c.Mail(viper.GetString("email_from")); err != nil {
+		log.Error(err)
+		return err
+	}
+	if err = c.Rcpt(email); err != nil {
+		log.Error(err)
+		return err
+	}
 
 	wc, err := c.Data()
 	if err != nil {

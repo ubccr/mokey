@@ -105,10 +105,14 @@ smtp_host: "localhost"
 #smtp_password: "password"
 
 #------------------------------------------------------------------------------
-# SMTP port / StartTLS
+# SMTP port / TLS
+# Possible values for TLS are:
+#   - on: Connection is fully encrypted with TLS
+#   - off: Connection is unencrypted
+#   - starttls: Connections is encrypted on demand via the STARTTLS command
 #------------------------------------------------------------------------------
 smtp_port: 25
-smtp_starttls: false
+smtp_tls: "off"
 
 #------------------------------------------------------------------------------
 # From address used when sending emails
