@@ -38,7 +38,7 @@ func init() {
 	viper.SetDefault("hydra_consent_timeout", 86400)
 }
 
-// Render custom error templates if available
+// HTTPErrorHandler renders custom error templates if available
 func HTTPErrorHandler(err error, c echo.Context) {
 	code := http.StatusInternalServerError
 	if he, ok := err.(*echo.HTTPError); ok {
@@ -64,7 +64,7 @@ func HTTPErrorHandler(err error, c echo.Context) {
 	c.Logger().Error(err)
 }
 
-// Start web server
+// Run starts web server
 func Run() error {
 	e := echo.New()
 
