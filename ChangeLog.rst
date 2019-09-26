@@ -2,6 +2,14 @@
 ChangeLog
 ===============================================================================
 
+`v0.5.3`_ (unreleased)
+----------------------
+
+- Update Login/Conset flow for hydra v1.0.3+oryOS.10
+- Add support for SMTP AUTH (@cdwertmann)
+- Implement fully encrypted SMTP connection (@g5pw)
+- Fix bug if session keys change or session gets corrupted
+
 `v0.5.2`_ (2018-09-12)
 ----------------------
 

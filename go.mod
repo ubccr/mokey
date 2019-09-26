@@ -2,7 +2,7 @@ module github.com/ubccr/mokey
 
 require (
 	github.com/BurntSushi/toml v0.3.0 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20180319081651-7d2e70ef918f
+	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
 	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/coreos/go-oidc v2.0.0+incompatible
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
@@ -27,13 +27,12 @@ require (
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mattn/go-sqlite3 v1.9.0 // indirect
-	github.com/mitchellh/mapstructure v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.6.0 // indirect
 	github.com/onsi/gomega v1.4.1 // indirect
 	github.com/ory/hydra v1.0.0-beta.8
+	github.com/ory/hydra/sdk/go/hydra v0.0.1
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/pquerna/otp v0.0.0-20180220183439-40d624026db6
 	github.com/sirupsen/logrus v0.0.0-20180523074243-ea8897e79973
@@ -44,18 +43,14 @@ require (
 	github.com/spf13/jwalterweatherman v0.0.0-20180814060501-14d3d4c51834 // indirect
 	github.com/spf13/pflag v1.0.2 // indirect
 	github.com/spf13/viper v0.0.0-20180507071007-15738813a09d
-	github.com/stretchr/testify v1.2.2 // indirect
 	github.com/ubccr/goipa v0.0.1
 	github.com/urfave/cli v0.0.0-20180226030253-8e01ec4cd3e2
 	github.com/urfave/negroni v0.3.0
 	github.com/valyala/bytebufferpool v0.0.0-20160817181652-e746df99fe4a // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
-	golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
-	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d // indirect
+	golang.org/x/crypto v0.0.0-20190320223903-b7391e95e576
 	golang.org/x/oauth2 v0.0.0-20180821212333-9a379c6b3e95a790ffc43293c2a78dee0d7b6e20
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
-	golang.org/x/sys v0.0.0-20180828065106-d99a578cf41b // indirect
-	golang.org/x/text v0.3.0 // indirect
 	google.golang.org/appengine v1.1.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/coreos/go-oidc.v2 v2.0.0
@@ -65,5 +60,6 @@ require (
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.1.8 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
-	gopkg.in/yaml.v2 v2.2.1 // indirect
 )
+
+go 1.13

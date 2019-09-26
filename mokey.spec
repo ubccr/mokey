@@ -3,7 +3,7 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.5.2
+Version:       0.5.3
 Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
