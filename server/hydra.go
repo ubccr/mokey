@@ -13,6 +13,15 @@ import (
 	"github.com/ubccr/mokey/model"
 )
 
+type FakeTLSTransport struct {
+	T http.RoundTripper
+}
+
+func (ftt *FakeTLSTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Add("X-Forwarded-Proto", "https")
+	return ftt.T.RoundTrip(req)
+}
+
 func (h *Handler) ConsentGet(c echo.Context) error {
 	apiKey, err := h.checkApiKey(c)
 	if err != nil {
@@ -30,6 +39,7 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 
 	params := admin.NewGetConsentRequestParams()
 	params.SetConsentChallenge(challenge)
+	params.SetHTTPClient(h.hydraAdminHTTPClient)
 	response, err := h.hydraClient.Admin.GetConsentRequest(params)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -66,6 +76,7 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 
 		params := admin.NewAcceptConsentRequestParams()
 		params.SetConsentChallenge(challenge)
+		params.SetHTTPClient(h.hydraAdminHTTPClient)
 		params.SetBody(&models.HandledConsentRequest{
 			GrantedScope: consent.RequestedScope,
 			Session: &models.ConsentRequestSessionData{
@@ -132,6 +143,7 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 
 	getparams := admin.NewGetConsentRequestParams()
 	getparams.SetConsentChallenge(challenge)
+	getparams.SetHTTPClient(h.hydraAdminHTTPClient)
 	response, err := h.hydraClient.Admin.GetConsentRequest(getparams)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -158,6 +170,7 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 
 	acceptparams := admin.NewAcceptConsentRequestParams()
 	acceptparams.SetConsentChallenge(challenge)
+	acceptparams.SetHTTPClient(h.hydraAdminHTTPClient)
 	acceptparams.SetBody(&models.HandledConsentRequest{
 		GrantedScope: grantedScopes,
 		Remember:     true, // TODO: make this configurable
@@ -204,6 +217,7 @@ func (h *Handler) LoginOAuthGet(c echo.Context) error {
 
 	getparams := admin.NewGetLoginRequestParams()
 	getparams.SetLoginChallenge(challenge)
+	getparams.SetHTTPClient(h.hydraAdminHTTPClient)
 	response, err := h.hydraClient.Admin.GetLoginRequest(getparams)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -231,6 +245,7 @@ func (h *Handler) LoginOAuthGet(c echo.Context) error {
 
 		acceptparams := admin.NewAcceptLoginRequestParams()
 		acceptparams.SetLoginChallenge(challenge)
+		acceptparams.SetHTTPClient(h.hydraAdminHTTPClient)
 		acceptparams.SetBody(&models.HandledLoginRequest{
 			Subject: &login.Subject,
 		})
@@ -282,6 +297,7 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 	if apiKey != nil {
 		getparams := admin.NewGetLoginRequestParams()
 		getparams.SetLoginChallenge(challenge)
+		getparams.SetHTTPClient(h.hydraAdminHTTPClient)
 		response, err := h.hydraClient.Admin.GetLoginRequest(getparams)
 		if err != nil {
 			log.WithFields(log.Fields{
@@ -316,6 +332,7 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 	if err == nil {
 		acceptparams := admin.NewAcceptLoginRequestParams()
 		acceptparams.SetLoginChallenge(challenge)
+		acceptparams.SetHTTPClient(h.hydraAdminHTTPClient)
 		acceptparams.SetBody(&models.HandledLoginRequest{
 			Subject:     &uid,
 			Remember:    true, // TODO: make this configurable

@@ -22,8 +22,9 @@ type Handler struct {
 	emailer *util.Emailer
 
 	// Hydra consent app support
-	hydraClient *hydra.OryHydra
-	apiClients  map[string]*model.ApiKeyClient
+	hydraClient          *hydra.OryHydra
+	hydraAdminHTTPClient *http.Client
+	apiClients           map[string]*model.ApiKeyClient
 
 	// Globus signup support
 	authUrl  *oauth2.Config
@@ -52,6 +53,7 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		h.hydraClient = hydra.NewHTTPClientWithConfig(
 			nil,
 			&hydra.TransportConfig{
@@ -59,6 +61,15 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 				Host:     adminURL.Host,
 				BasePath: adminURL.Path,
 			})
+
+		if viper.GetBool("hydra_fake_tls_termination") {
+			h.hydraAdminHTTPClient = &http.Client{
+				Transport: &FakeTLSTransport{T: http.DefaultTransport},
+			}
+		} else {
+			h.hydraAdminHTTPClient = http.DefaultClient
+		}
+
 		log.Infof("Hydra consent/login endpoints enabled")
 
 		if viper.IsSet("enabled_api_client_ids") {
