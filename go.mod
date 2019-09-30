@@ -2,13 +2,14 @@ module github.com/ubccr/mokey
 
 require (
 	github.com/BurntSushi/toml v0.3.0 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf
+	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
 	github.com/boombuler/barcode v1.0.0 // indirect
 	github.com/coreos/go-oidc v2.0.0+incompatible
 	github.com/dchest/captcha v0.0.0-20170622155422-6a29415a8364
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
-	github.com/go-resty/resty v0.0.0-20170925192930-9ac9c42358f7 // indirect
+	github.com/go-openapi/jsonreference v0.19.3 // indirect
+	github.com/go-openapi/runtime v0.19.6 // indirect
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/gomodule/redigo v0.0.0-20180314223443-9c11da706d9b
@@ -24,12 +25,12 @@ require (
 	github.com/labstack/gommon v0.2.1 // indirect
 	github.com/lib/pq v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.0 // indirect
+	github.com/mailru/easyjson v0.7.0 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mattn/go-sqlite3 v1.9.0 // indirect
 	github.com/onsi/ginkgo v1.6.0 // indirect
 	github.com/onsi/gomega v1.4.1 // indirect
-	github.com/ory/hydra v1.0.0-beta.8
 	github.com/ory/hydra/sdk/go/hydra v0.0.1
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0
@@ -48,9 +49,9 @@ require (
 	github.com/urfave/negroni v0.3.0
 	github.com/valyala/bytebufferpool v0.0.0-20160817181652-e746df99fe4a // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
-	golang.org/x/crypto v0.0.0-20190320223903-b7391e95e576
+	golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56
+	golang.org/x/net v0.0.0-20190930134127-c5a3c61f89f3 // indirect
 	golang.org/x/oauth2 v0.0.0-20180821212333-9a379c6b3e95a790ffc43293c2a78dee0d7b6e20
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	google.golang.org/appengine v1.1.0 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/coreos/go-oidc.v2 v2.0.0
