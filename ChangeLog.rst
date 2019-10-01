@@ -79,3 +79,4 @@ ChangeLog
 .. _v0.0.6: https://github.com/ubccr/mokey/releases/tag/v0.0.6
 .. _v0.5.1: https://github.com/ubccr/mokey/releases/tag/v0.5.1
 .. _v0.5.2: https://github.com/ubccr/mokey/releases/tag/v0.5.2
+.. _v0.5.3: https://github.com/ubccr/mokey/releases/tag/v0.5.3
