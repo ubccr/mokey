@@ -221,9 +221,9 @@ Hydra Consent and Login Endpoint for OAuth/OpenID Connect
 ------------------------------------------------------------------------
 
 mokey implements the login/consent flow for handling challenge requests from
-Hydra.  This serves as the bridge between Hydra and FreeIPA identity provider.
-For more information on Hydra and the loing/consent flow see `here
-<https://www.ory.sh/docs/guides/master/>`_.
+Hydra. This serves as the bridge between Hydra and FreeIPA identity provider.
+For more information on Hydra and the login/consent flow see `here
+<https://www.ory.sh/docs/hydra/oauth2>`_.
 
 To configure the Hydra login/consent flow set the following variables in
 ``/etc/mokey/mokey.yaml``::
@@ -238,7 +238,7 @@ application see `here <examples/mokey-oidc/main.go>`_.
 Building from source
 ------------------------------------------------------------------------
 
-First, you will need Go v1.11 or greater. Clone the repository::
+First, you will need Go v1.13 or greater. Clone the repository::
 
     $ git clone https://github.com/ubccr/mokey
     $ cd mokey

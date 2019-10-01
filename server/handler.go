@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	hydra "github.com/ory/hydra/sdk/go/hydra/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
