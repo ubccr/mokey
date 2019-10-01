@@ -9,6 +9,7 @@ ChangeLog
 - Add support for SMTP AUTH (@cdwertmann)
 - Implement fully encrypted SMTP connection (@g5pw)
 - Fix bug if session keys change or session gets corrupted
+- Upgrade to echo v4
 
 `v0.5.2`_ (2018-09-12)
 ----------------------
