@@ -9,8 +9,8 @@ import (
 
 	valid "github.com/asaskevich/govalidator"
 	"github.com/dchest/captcha"
-	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"

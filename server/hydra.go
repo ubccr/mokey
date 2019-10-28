@@ -5,12 +5,22 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo"
-	"github.com/ory/hydra/sdk/go/hydra/swagger"
+	"github.com/labstack/echo/v4"
+	"github.com/ory/hydra/sdk/go/hydra/client/admin"
+	"github.com/ory/hydra/sdk/go/hydra/models"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/model"
 )
+
+type FakeTLSTransport struct {
+	T http.RoundTripper
+}
+
+func (ftt *FakeTLSTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Add("X-Forwarded-Proto", "https")
+	return ftt.T.RoundTrip(req)
+}
 
 func (h *Handler) ConsentGet(c echo.Context) error {
 	apiKey, err := h.checkApiKey(c)
@@ -27,18 +37,18 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "consent without challenge")
 	}
 
-	consent, response, err := h.hydraClient.GetConsentRequest(challenge)
+	params := admin.NewGetConsentRequestParams()
+	params.SetConsentChallenge(challenge)
+	params.SetHTTPClient(h.hydraAdminHTTPClient)
+	response, err := h.hydraClient.Admin.GetConsentRequest(params)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Error("Failed to validate the consent challenge")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
-	} else if response.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{
-			"statusCode": response.StatusCode,
-		}).Error("HTTP Response not OK. Failed to validate the consent challenge")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
 	}
+
+	consent := response.Payload
 
 	user, err := h.client.UserShow(consent.Subject)
 	if err != nil {
@@ -64,28 +74,26 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
 		}
 
-		completedRequest, response, err := h.hydraClient.AcceptConsentRequest(challenge, swagger.AcceptConsentRequest{
-			GrantScope: consent.RequestedScope,
-			Session: swagger.ConsentRequestSession{
-				IdToken: map[string]interface{}{
+		params := admin.NewAcceptConsentRequestParams()
+		params.SetConsentChallenge(challenge)
+		params.SetHTTPClient(h.hydraAdminHTTPClient)
+		params.SetBody(&models.HandledConsentRequest{
+			GrantedScope: consent.RequestedScope,
+			Session: &models.ConsentRequestSessionData{
+				IDToken: map[string]interface{}{
 					"uid":    string(user.Uid),
 					"first":  string(user.First),
 					"last":   string(user.Last),
 					"groups": strings.Join(user.Groups, ";"),
 					"email":  string(user.Email),
 				},
-			},
-		})
+			}})
 
+		response, err := h.hydraClient.Admin.AcceptConsentRequest(params)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).Error("Failed to accept the consent challenge")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept consent")
-		} else if response.StatusCode != http.StatusOK {
-			log.WithFields(log.Fields{
-				"statusCode": response.StatusCode,
-			}).Error("HTTP response not OK. Failed to accept the consent challenge")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept consent")
 		}
 
@@ -93,13 +101,13 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 			"username": consent.Subject,
 		}).Info("Consent challenge signed successfully")
 
-		return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
+		return c.Redirect(http.StatusFound, response.Payload.RedirectTo)
 	}
 
 	if apiKey != nil && strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
 		data := map[string]string{
 			"csrf":      c.Get("csrf").(string),
-			"client_id": consent.Client.ClientId,
+			"client_id": consent.Client.ClientID,
 			"scopes":    strings.Join(consent.RequestedScope, ","),
 			"challenge": challenge,
 		}
@@ -133,18 +141,18 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "consent without challenge")
 	}
 
-	consent, response, err := h.hydraClient.GetConsentRequest(challenge)
+	getparams := admin.NewGetConsentRequestParams()
+	getparams.SetConsentChallenge(challenge)
+	getparams.SetHTTPClient(h.hydraAdminHTTPClient)
+	response, err := h.hydraClient.Admin.GetConsentRequest(getparams)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Error("Failed to validate the consent challenge")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
-	} else if response.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{
-			"statusCode": response.StatusCode,
-		}).Error("HTTP Response not OK. Failed to validate the consent challenge")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
 	}
+
+	consent := response.Payload
 
 	user, err := h.client.UserShow(consent.Subject)
 	if err != nil {
@@ -160,30 +168,28 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 		grantedScopes = []string{}
 	}
 
-	completedRequest, response, err := h.hydraClient.AcceptConsentRequest(challenge, swagger.AcceptConsentRequest{
-		GrantScope:  grantedScopes,
-		Remember:    true, // TODO: make this configurable
-		RememberFor: viper.GetInt64("hydra_consent_timeout"),
-		Session: swagger.ConsentRequestSession{
-			IdToken: map[string]interface{}{
+	acceptparams := admin.NewAcceptConsentRequestParams()
+	acceptparams.SetConsentChallenge(challenge)
+	acceptparams.SetHTTPClient(h.hydraAdminHTTPClient)
+	acceptparams.SetBody(&models.HandledConsentRequest{
+		GrantedScope: grantedScopes,
+		Remember:     true, // TODO: make this configurable
+		RememberFor:  viper.GetInt64("hydra_consent_timeout"),
+		Session: &models.ConsentRequestSessionData{
+			IDToken: map[string]interface{}{
 				"uid":    string(user.Uid),
 				"first":  string(user.First),
 				"last":   string(user.Last),
 				"groups": strings.Join(user.Groups, ";"),
 				"email":  string(user.Email),
 			},
-		},
-	})
+		}})
 
+	completedResponse, err := h.hydraClient.Admin.AcceptConsentRequest(acceptparams)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Error("Failed to accept the consent challenge")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept consent")
-	} else if response.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{
-			"statusCode": response.StatusCode,
-		}).Error("HTTP response not OK. Failed to accept the consent challenge")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept consent")
 	}
 
@@ -191,7 +197,7 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 		"username": string(user.Uid),
 	}).Info("Consent challenge signed successfully")
 
-	return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
+	return c.Redirect(http.StatusFound, completedResponse.Payload.RedirectTo)
 }
 
 func (h *Handler) LoginOAuthGet(c echo.Context) error {
@@ -209,18 +215,18 @@ func (h *Handler) LoginOAuthGet(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "login without challenge")
 	}
 
-	login, response, err := h.hydraClient.GetLoginRequest(challenge)
+	getparams := admin.NewGetLoginRequestParams()
+	getparams.SetLoginChallenge(challenge)
+	getparams.SetHTTPClient(h.hydraAdminHTTPClient)
+	response, err := h.hydraClient.Admin.GetLoginRequest(getparams)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Error("Failed to validate the login challenge")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate login")
-	} else if response.StatusCode != http.StatusOK {
-		log.WithFields(log.Fields{
-			"statusCode": response.StatusCode,
-		}).Error("HTTP Response not OK. Failed to validate the login challenge")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate login")
 	}
+
+	login := response.Payload
 
 	if login.Skip {
 		log.WithFields(log.Fields{
@@ -237,33 +243,32 @@ func (h *Handler) LoginOAuthGet(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate login")
 		}
 
-		completedRequest, response, err := h.hydraClient.AcceptLoginRequest(challenge, swagger.AcceptLoginRequest{
-			Subject: login.Subject,
+		acceptparams := admin.NewAcceptLoginRequestParams()
+		acceptparams.SetLoginChallenge(challenge)
+		acceptparams.SetHTTPClient(h.hydraAdminHTTPClient)
+		acceptparams.SetBody(&models.HandledLoginRequest{
+			Subject: &login.Subject,
 		})
 
+		completedResponse, err := h.hydraClient.Admin.AcceptLoginRequest(acceptparams)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).Error("Failed to accept the login challenge")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept login")
-		} else if response.StatusCode != http.StatusOK {
-			log.WithFields(log.Fields{
-				"statusCode": response.StatusCode,
-			}).Error("HTTP Response not OK. Failed to accept the login challenge")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to login consent")
 		}
 
 		log.WithFields(log.Fields{
 			"username": login.Subject,
 		}).Info("Login challenge signed successfully")
 
-		return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
+		return c.Redirect(http.StatusFound, completedResponse.Payload.RedirectTo)
 	}
 
 	if apiKey != nil && strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
 		data := map[string]string{
 			"csrf":      c.Get("csrf").(string),
-			"client_id": login.Client.ClientId,
+			"client_id": login.Client.ClientID,
 			"scopes":    strings.Join(login.RequestedScope, ","),
 			"challenge": challenge,
 		}
@@ -290,31 +295,31 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 	}
 
 	if apiKey != nil {
-		login, response, err := h.hydraClient.GetLoginRequest(challenge)
+		getparams := admin.NewGetLoginRequestParams()
+		getparams.SetLoginChallenge(challenge)
+		getparams.SetHTTPClient(h.hydraAdminHTTPClient)
+		response, err := h.hydraClient.Admin.GetLoginRequest(getparams)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).Error("Failed to validate the apikey login challenge")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate login")
-		} else if response.StatusCode != http.StatusOK {
-			log.WithFields(log.Fields{
-				"statusCode": response.StatusCode,
-			}).Error("HTTP Response not OK. Failed to validate the apikey login challenge")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate login")
 		}
+
+		login := response.Payload
 
 		log.WithFields(log.Fields{
 			"user":      apiKey.UserName,
-			"client_id": login.Client.ClientId,
+			"client_id": login.Client.ClientID,
 		}).Info("Api consent request")
 
 		// Check key matches client
-		if apiKey.ClientID != login.Client.ClientId {
+		if apiKey.ClientID != login.Client.ClientID {
 			log.WithFields(log.Fields{
 				"key":              apiKey.Key,
 				"user":             apiKey.UserName,
 				"apikey_client_id": apiKey.ClientID,
-				"client_id":        login.Client.ClientId,
+				"client_id":        login.Client.ClientID,
 			}).Error("Claims client id does not match api key")
 			return echo.NewHTTPError(http.StatusBadRequest, "Claims client id does not match api key")
 		}
@@ -325,29 +330,28 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 	}
 
 	if err == nil {
-		completedRequest, response, err := h.hydraClient.AcceptLoginRequest(challenge, swagger.AcceptLoginRequest{
-			Subject:     uid,
+		acceptparams := admin.NewAcceptLoginRequestParams()
+		acceptparams.SetLoginChallenge(challenge)
+		acceptparams.SetHTTPClient(h.hydraAdminHTTPClient)
+		acceptparams.SetBody(&models.HandledLoginRequest{
+			Subject:     &uid,
 			Remember:    true, // TODO: make this configurable
 			RememberFor: viper.GetInt64("hydra_login_timeout"),
 		})
 
+		completedResponse, err := h.hydraClient.Admin.AcceptLoginRequest(acceptparams)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
 			}).Error("Failed to accept the login challenge")
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to accept login")
-		} else if response.StatusCode != http.StatusOK {
-			log.WithFields(log.Fields{
-				"statusCode": response.StatusCode,
-			}).Error("HTTP Response not OK. Failed to accept the login challenge")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to login consent")
 		}
 
 		log.WithFields(log.Fields{
 			"username": uid,
 		}).Info("Login challenge signed successfully")
 
-		return c.Redirect(http.StatusFound, completedRequest.RedirectTo)
+		return c.Redirect(http.StatusFound, completedResponse.Payload.RedirectTo)
 	}
 
 	message = err.Error()

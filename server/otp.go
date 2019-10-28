@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/util"

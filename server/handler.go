@@ -3,9 +3,10 @@ package server
 import (
 	"context"
 	"net/http"
+	"net/url"
 
-	"github.com/labstack/echo"
-	"github.com/ory/hydra/sdk/go/hydra"
+	"github.com/labstack/echo/v4"
+	hydra "github.com/ory/hydra/sdk/go/hydra/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
@@ -21,8 +22,9 @@ type Handler struct {
 	emailer *util.Emailer
 
 	// Hydra consent app support
-	hydraClient *hydra.CodeGenSDK
-	apiClients  map[string]*model.ApiKeyClient
+	hydraClient          *hydra.OryHydra
+	hydraAdminHTTPClient *http.Client
+	apiClients           map[string]*model.ApiKeyClient
 
 	// Globus signup support
 	authUrl  *oauth2.Config
@@ -47,13 +49,25 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 	h.client.StickySession(false)
 
 	if viper.IsSet("hydra_admin_url") {
-		h.hydraClient, err = hydra.NewSDK(&hydra.Configuration{
-			AdminURL: viper.GetString("hydra_admin_url"),
-			Scopes:   []string{"hydra.keys.get"},
-		})
-
+		adminURL, err := url.Parse(viper.GetString("hydra_admin_url"))
 		if err != nil {
 			log.Fatal(err)
+		}
+
+		h.hydraClient = hydra.NewHTTPClientWithConfig(
+			nil,
+			&hydra.TransportConfig{
+				Schemes:  []string{adminURL.Scheme},
+				Host:     adminURL.Host,
+				BasePath: adminURL.Path,
+			})
+
+		if viper.GetBool("hydra_fake_tls_termination") {
+			h.hydraAdminHTTPClient = &http.Client{
+				Transport: &FakeTLSTransport{T: http.DefaultTransport},
+			}
+		} else {
+			h.hydraAdminHTTPClient = http.DefaultClient
 		}
 
 		log.Infof("Hydra consent/login endpoints enabled")

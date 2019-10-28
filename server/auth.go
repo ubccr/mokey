@@ -4,8 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
+	"github.com/ory/hydra/sdk/go/hydra/client/admin"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
@@ -122,21 +123,16 @@ func (h Handler) revokeHydraAuthenticationSession(c echo.Context) error {
 		return err
 	}
 
-	response, err := h.hydraClient.RevokeAuthenticationSession(string(userRec.Uid))
+	params := admin.NewRevokeAuthenticationSessionParams()
+	params.SetSubject(string(userRec.Uid))
+	_, err = h.hydraClient.Admin.RevokeAuthenticationSession(params)
 	if err != nil {
 		return err
 	}
 
-	if response.StatusCode != http.StatusNoContent {
-		log.WithFields(log.Fields{
-			"statusCode": response.StatusCode,
-			"user":       userRec.Uid,
-		}).Warn("Logout - HTTP Response not OK. Failed to revoke hydra authentication session")
-	} else {
-		log.WithFields(log.Fields{
-			"user": userRec.Uid,
-		}).Info("Successfully revoked hydra authentication session")
-	}
+	log.WithFields(log.Fields{
+		"user": userRec.Uid,
+	}).Info("Successfully revoked hydra authentication session")
 
 	return nil
 }

@@ -12,7 +12,7 @@
     <form class="form-horizontal" role="form" method="POST">
       <div class="form-group">
         <div class="col-sm-8">
-            <span class="help-block">An application (id: {{.consent.Client.ClientId}}) requested consent to access resources on your behalf. The application wants access to:</span>
+            <span class="help-block">An application (id: {{.consent.Client.ClientID}}) requested consent to access resources on your behalf. The application wants access to:</span>
      {{range .consent.RequestedScope}}
         <div class="checkbox">
           <label>

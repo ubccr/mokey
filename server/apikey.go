@@ -4,7 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
+	"github.com/ory/hydra/sdk/go/hydra/client/admin"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/model"
@@ -81,34 +82,27 @@ func (h *Handler) removeApiKey(user, clientID string) error {
 		return errors.New("Failed to remove api key")
 	}
 
-	response, err := h.hydraClient.RevokeAuthenticationSession(user)
+	authparams := admin.NewRevokeAuthenticationSessionParams()
+	authparams.SetSubject(user)
+	_, err = h.hydraClient.Admin.RevokeAuthenticationSession(authparams)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":    err,
 			"user":     user,
 			"clientID": clientID,
 		}).Warn("Failed to revoke hydra authentication session")
-	} else if response.StatusCode != http.StatusNoContent {
-		log.WithFields(log.Fields{
-			"statusCode": response.StatusCode,
-			"user":       user,
-			"clientID":   clientID,
-		}).Warn("HTTP Response not OK. Failed to revoke hydra authentication session")
 	}
 
-	response, err = h.hydraClient.RevokeUserClientConsentSessions(user, clientID)
+	consparams := admin.NewRevokeConsentSessionsParams()
+	consparams.SetSubject(user)
+	consparams.SetClient(&clientID)
+	_, err = h.hydraClient.Admin.RevokeConsentSessions(consparams)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":    err,
 			"user":     user,
 			"clientID": clientID,
 		}).Warn("Failed to revoke hydra consent session")
-	} else if response.StatusCode != http.StatusNoContent {
-		log.WithFields(log.Fields{
-			"statusCode": response.StatusCode,
-			"user":       user,
-			"clientID":   clientID,
-		}).Warn("HTTP Response not OK. Failed to revoke hydra consent session")
 	}
 
 	log.WithFields(log.Fields{
