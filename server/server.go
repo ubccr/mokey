@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/tls"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -85,8 +86,13 @@ func Run() error {
 		TokenLookup: "form:csrf",
 	}))
 
+	encKey, err := hex.DecodeString(viper.GetString("enc_key"))
+	if err != nil {
+		return err
+	}
+
 	// Sessions
-	cookieStore := sessions.NewCookieStore([]byte(viper.GetString("auth_key")), []byte(viper.GetString("enc_key")))
+	cookieStore := sessions.NewCookieStore([]byte(viper.GetString("auth_key")), encKey)
 	cookieStore.Options.Secure = !viper.GetBool("develop")
 	cookieStore.MaxAge(0)
 	e.Use(session.Middleware(cookieStore))
