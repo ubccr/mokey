@@ -397,8 +397,6 @@ gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/coreos/go-oidc.v2 v2.1.0 h1:E8PjVFdj/SLDKB0hvb70KTbMbYVHjqztiQdSkIg8E+I=
-gopkg.in/coreos/go-oidc.v2 v2.1.0/go.mod h1:fYaTe2FS96wZZwR17YTDHwG+Mw6fmyqJNxN2eNCGPCI=
 gopkg.in/ini.v1 v1.38.2 h1:dGcbywv4RufeGeiMycPT/plKB5FtmLKLnWKwBiLhUA4=
 gopkg.in/ini.v1 v1.38.2/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=
 gopkg.in/jcmturner/aescts.v1 v1.0.1 h1:cVVZBK2b1zY26haWB4vbBiZrfFQnfbTVrE3xZq6hrEw=

@@ -44,7 +44,6 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20190927073244-c990c680b611 // indirect
 	google.golang.org/appengine v1.6.4 // indirect
-	gopkg.in/coreos/go-oidc.v2 v2.1.0
 	gopkg.in/ini.v1 v1.38.2 // indirect
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
 	gopkg.in/jcmturner/gokrb5.v6 v6.1.1 // indirect

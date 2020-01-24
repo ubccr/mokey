@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	oidc "github.com/coreos/go-oidc"
 	"github.com/labstack/echo/v4"
 	hydra "github.com/ory/hydra/sdk/go/hydra/client"
 	log "github.com/sirupsen/logrus"
@@ -13,7 +14,6 @@ import (
 	"github.com/ubccr/mokey/model"
 	"github.com/ubccr/mokey/util"
 	"golang.org/x/oauth2"
-	oidc "gopkg.in/coreos/go-oidc.v2"
 )
 
 type Handler struct {
