@@ -87,7 +87,12 @@ Install MariaDB and/or setup database for mokey::
     $ yum install mariadb-server
     $ systemctl restart mariadb
     $ systemctl enable mariadb
-    $ mysqladmin -u root password 'mypass'
+    $ mysql_secure_installation
+    $ Root Password:  [Create a good, strong password here]
+    $ Remove anonymous users? [Y/n] y
+    $ Disallow root login remotely? [Y/n] y
+    $ Remove test database and access to it? [Y/n] y
+    $ Reload privilege tables now? [Y/n] y
     $ mysql -u root -p
     $ mysql> create database mokey;
     $ mysql> grant all on mokey.* to [user]@localhost identified by '[pass]'
