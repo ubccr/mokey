@@ -122,6 +122,7 @@ keytab, auth and encryption keys::
     $ vim /etc/mokey/mokey.yaml
     dsn: "user:pass@/dbname?parseTime=true"
     keytab: "/etc/mokey/keytab/mokeyapp.keytab"
+    ktuser: "mokeyapp"
     auth_key: "32 or 64 bytes random key"
     enc_key: "16, 24, or 32 byte random key"
     [ edit to taste ]
