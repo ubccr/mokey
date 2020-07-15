@@ -2,6 +2,11 @@
 ChangeLog
 ===============================================================================
 
+`v0.5.4`_ (2020-07-14)
+----------------------
+
+- Fix bug with missing set-cookie header issue #53
+
 `v0.5.3`_ (2019-10-29)
 ----------------------
 
@@ -81,3 +86,4 @@ ChangeLog
 .. _v0.5.1: https://github.com/ubccr/mokey/releases/tag/v0.5.1
 .. _v0.5.2: https://github.com/ubccr/mokey/releases/tag/v0.5.2
 .. _v0.5.3: https://github.com/ubccr/mokey/releases/tag/v0.5.3
+.. _v0.5.4: https://github.com/ubccr/mokey/releases/tag/v0.5.4

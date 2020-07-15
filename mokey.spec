@@ -3,7 +3,7 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.5.3
+Version:       0.5.4
 Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
@@ -72,6 +72,17 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Tue Jul 07 2020  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.4-1
+- Bug Fixes
+    - Fix bug with missing set-cookie header issue #53
+* Tue Oct 29 2019  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.3-1
+- New Features
+    - Update Login/Conset flow for hydra v1.0.3+oryOS.10
+    - Add support for SMTP AUTH (@cdwertmann)
+    - Implement fully encrypted SMTP connection (@g5pw)
+    - Upgrade to echo v4
+- Bug Fixes
+    - Fix bug if session keys change or session gets corrupted
 * Wed Sep 12 2018  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.2-1
 - New Features
     - Add option to disable user signup
