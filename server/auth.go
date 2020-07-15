@@ -31,6 +31,10 @@ func (h *Handler) tryAuth(uid, password string) (string, error) {
 	// Ping to get sessionID for later use
 	_, err = client.Ping()
 	if err != nil {
+		log.WithFields(log.Fields{
+			"uid":              uid,
+			"ipa_client_error": err,
+		}).Error("Failed to ping FreeIPA")
 		return "", errors.New("Error contacting FreeIPA")
 	}
 
