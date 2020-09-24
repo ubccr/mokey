@@ -1,1 +1,2 @@
-
+cd mokey
+go build .
