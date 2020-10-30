@@ -179,17 +179,18 @@ pgp_sign: false
 # default_shell: "/bin/bash"
 # default_homedir: "/home"
 #
+
 #------------------------------------------------------------------------------
-# Disable new user accounts. With this option enabled new
+# Require FreeIPA admin to activate the account. With this option enabled new
 # accounts are disabled by default until a FreeIPA admin activates them.
 # This option is mutually exclusive with require_verify_email.
 #------------------------------------------------------------------------------
-# disable_new_user: false
+# require_verify_admin: false
 
 #------------------------------------------------------------------------------
 # Require users to verify email address. With this option enabled new accounts
 # are disabled by default until the user verifies their email address
-# This option is mutually exclusive with disable_new_user.
+# This option is mutually exclusive with require_verify_admin.
 #------------------------------------------------------------------------------
 # require_verify_email: false
 
