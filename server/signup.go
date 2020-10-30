@@ -20,6 +20,7 @@ import (
 func init() {
 	viper.SetDefault("enable_user_signup", true)
 	viper.SetDefault("enable_captcha", true)
+	viper.SetDefault("disable_new_user", false)
 	viper.SetDefault("default_shell", "/bin/bash")
 	viper.SetDefault("default_homedir", "/home")
 }
@@ -29,6 +30,7 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 	vars := map[string]interface{}{
 		"csrf":                 c.Get("csrf").(string),
 		"require_verify_email": viper.GetBool("require_verify_email"),
+		"disable_new_user":     viper.GetBool("disable_new_user"),
 	}
 
 	uid := c.FormValue("uid")
@@ -217,6 +219,20 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 	log.WithFields(log.Fields{
 		"uid": uid,
 	}).Warn("User password set successfully")
+
+	if viper.GetBool("disable_new_user") {
+		err = h.client.UserDisable(uid)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+				"uid": uid,
+			}).Error("Failed to disable user")
+		} else {
+			log.WithFields(log.Fields{
+				"uid": uid,
+			}).Warn("User account successfully disabled")
+		}
+	}
 
 	if viper.GetBool("require_verify_email") {
 		// Disable new users until they have verified their email address
