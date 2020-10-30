@@ -99,6 +99,7 @@ func Run() error {
 	// Sessions
 	cookieStore := sessions.NewCookieStore([]byte(viper.GetString("auth_key")), encKey)
 	cookieStore.Options.Secure = !viper.GetBool("develop")
+	cookieStore.Options.HttpOnly = true
 	cookieStore.MaxAge(0)
 	e.Use(session.Middleware(cookieStore))
 
