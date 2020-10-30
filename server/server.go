@@ -82,8 +82,13 @@ func Run() error {
 	e.HTTPErrorHandler = HTTPErrorHandler
 	e.HideBanner = true
 	e.Use(middleware.Recover())
+	e.Use(CacheControl)
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup: "form:csrf",
+	}))
+	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
+		XFrameOptions:         "DENY",
+		ContentSecurityPolicy: "default-src 'self'",
 	}))
 
 	encKey, err := hex.DecodeString(viper.GetString("enc_key"))

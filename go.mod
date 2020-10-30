@@ -20,10 +20,10 @@ require (
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/labstack/echo-contrib v0.6.0
-	github.com/labstack/echo/v4 v4.1.10
+	github.com/labstack/echo/v4 v4.1.17
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mailru/easyjson v0.7.0 // indirect
-	github.com/mattn/go-colorable v0.1.4 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/ory/hydra/sdk/go/hydra v0.0.1
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/pkg/errors v0.8.1
@@ -39,10 +39,11 @@ require (
 	github.com/ubccr/goipa v0.0.2
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/negroni v1.0.0
-	golang.org/x/crypto v0.0.0-20191001103751-88343688bb37
-	golang.org/x/net v0.0.0-20190930134127-c5a3c61f89f3 // indirect
+	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
+	golang.org/x/net v0.0.0-20201029221708-28c70e62bb1d // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sys v0.0.0-20190927073244-c990c680b611 // indirect
+	golang.org/x/sys v0.0.0-20201029080932-201ba4db2418 // indirect
+	golang.org/x/text v0.3.4 // indirect
 	google.golang.org/appengine v1.6.4 // indirect
 	gopkg.in/ini.v1 v1.38.2 // indirect
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
