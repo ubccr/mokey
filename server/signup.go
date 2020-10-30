@@ -240,13 +240,12 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 			}).Error("Failed to send new account email")
 
 			// TODO: should we tell user about this?
+		} else {
+			log.WithFields(log.Fields{
+				"uid":   uid,
+				"email": email,
+			}).Warn("New user account email sent successfully")
 		}
 	}
-
-	log.WithFields(log.Fields{
-		"uid":   uid,
-		"email": email,
-	}).Warn("New user account email sent successfully")
-
 	return nil
 }
