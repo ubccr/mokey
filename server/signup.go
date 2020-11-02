@@ -29,6 +29,7 @@ func (h *Handler) CreateAccount(c echo.Context) error {
 	vars := map[string]interface{}{
 		"csrf":                 c.Get("csrf").(string),
 		"require_verify_email": viper.GetBool("require_verify_email"),
+		"require_verify_admin": viper.GetBool("require_verify_admin"),
 	}
 
 	uid := c.FormValue("uid")
@@ -217,6 +218,20 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 	log.WithFields(log.Fields{
 		"uid": uid,
 	}).Warn("User password set successfully")
+
+	if viper.GetBool("require_verify_admin") {
+		err = h.client.UserDisable(uid)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err": err,
+				"uid": uid,
+			}).Error("Failed to disable user")
+		} else {
+			log.WithFields(log.Fields{
+				"uid": uid,
+			}).Warn("User account successfully disabled")
+		}
+	}
 
 	if viper.GetBool("require_verify_email") {
 		// Disable new users until they have verified their email address

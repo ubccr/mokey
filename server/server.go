@@ -24,6 +24,7 @@ func init() {
 	viper.SetDefault("min_passwd_classes", 2)
 	viper.SetDefault("develop", false)
 	viper.SetDefault("require_verify_email", false)
+	viper.SetDefault("require_verify_admin", false)
 	viper.SetDefault("enable_api_keys", false)
 	viper.SetDefault("setup_max_age", 86400)
 	viper.SetDefault("reset_max_age", 3600)
