@@ -238,6 +238,13 @@ func (h *Handler) sendPasswordReset(uid, captchaID, captchaSol string) error {
 		return errors.New("Invalid username")
 	}
 
+	if userRec.NSAccountLock {
+		log.WithFields(log.Fields{
+			"uid": uid,
+		}).Error("Forgotpw: user account is disabled")
+		return errors.New("Your account is disabled")
+	}
+
 	if len(userRec.Email) == 0 {
 		log.WithFields(log.Fields{
 			"uid": uid,
