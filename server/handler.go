@@ -7,7 +7,7 @@ import (
 
 	oidc "github.com/coreos/go-oidc"
 	"github.com/labstack/echo/v4"
-	hydra "github.com/ory/hydra/sdk/go/hydra/client"
+	hydra "github.com/ory/hydra-client-go/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
