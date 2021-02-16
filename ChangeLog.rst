@@ -2,6 +2,13 @@
 ChangeLog
 ===============================================================================
 
+`v0.5.4`_ (unreleased)
+
+- Add security related HTTP headers #55
+- Upgrade to latest hydra sdk. Tested against hydra v1.9.2
+- Verify nsaccountlock before sending password reset email @cmd-ntrf
+- Add option to require admin verification to enable new account @cmd-ntrf
+
 `v0.5.4`_ (2020-07-14)
 ----------------------
 
