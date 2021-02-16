@@ -142,3 +142,11 @@ func RateLimit(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
+
+func CacheControl(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Response().Header().Set("Cache-Control", "no-store")
+		c.Response().Header().Set("Pragma", "no-cache")
+		return next(c)
+	}
+}
