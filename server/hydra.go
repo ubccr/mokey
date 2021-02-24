@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/ory/hydra-client-go/client/admin"
 	"github.com/ory/hydra-client-go/models"
@@ -330,7 +331,16 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 
 		uid = apiKey.UserName
 	} else {
-		_, err = h.tryAuth(uid, password)
+		var sid string
+		sid, err = h.tryAuth(uid, password)
+		if err == nil {
+			sess, _ := session.Get(CookieKeySession, c)
+			sess.Values[CookieKeyUser] = uid
+			sess.Values[CookieKeySID] = sid
+			sess.Values[CookieKeyAuthenticated] = true
+			delete(sess.Values, CookieKeyWYAF)
+			sess.Save(c.Request(), c.Response())
+		}
 	}
 
 	if err == nil {
