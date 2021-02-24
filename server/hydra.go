@@ -60,7 +60,7 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate consent")
 	}
 
-	if consent.Skip {
+	if viper.GetBool("hydra_consent_skip") || consent.Skip {
 		log.WithFields(log.Fields{
 			"user": consent.Subject,
 		}).Info("Hydra requested we skip consent")
