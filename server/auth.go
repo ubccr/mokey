@@ -129,6 +129,7 @@ func (h Handler) revokeHydraAuthenticationSession(c echo.Context) error {
 
 	params := admin.NewRevokeAuthenticationSessionParams()
 	params.SetSubject(string(userRec.Uid))
+	params.SetHTTPClient(h.hydraAdminHTTPClient)
 	_, err = h.hydraClient.Admin.RevokeAuthenticationSession(params)
 	if err != nil {
 		return err
