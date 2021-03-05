@@ -214,6 +214,7 @@ develop: false
 # Hydra config
 #------------------------------------------------------------------------------
 # hydra_admin_url: "https://localhost:4445"
+# hydra_consent_skip: false
 # hydra_consent_timeout: 86400
 # hydra_login_timeout: 86400
 # hydra_fake_tls_termination: true

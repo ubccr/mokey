@@ -36,6 +36,7 @@ func init() {
 	viper.SetDefault("redis", ":6379")
 	viper.SetDefault("max_requests", 15)
 	viper.SetDefault("rate_limit_expire", 3600)
+	viper.SetDefault("hydra_consent_skip", false)
 	viper.SetDefault("hydra_login_timeout", 86400)
 	viper.SetDefault("hydra_consent_timeout", 86400)
 }
