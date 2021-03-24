@@ -140,6 +140,10 @@ func (h *Handler) createAccount(uid, email, email2, first, last, pass, pass2, ca
 		return errors.New("Username must be alpha numeric")
 	}
 
+	if !valid.IsLowerCase(uid) {
+		return errors.New("Username must be lowercase")
+	}
+
 	if len(first) == 0 || len(first) > 150 {
 		return errors.New("Please provide your first name")
 	}
