@@ -3,7 +3,7 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.5.4
+Version:       0.5.5
 Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
@@ -72,6 +72,15 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Thu Mar 25 2021  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.5-1
+- New Features
+    - Add security related HTTP headers #55
+    - Upgrade to latest hydra sdk. Tested against hydra v1.9.2
+    - Add option to require admin verification to enable new account @cmd-ntrf
+    - Add option to always skip consent in hydra login flow @isard-vdi
+- Bug Fixes
+    - Verify nsaccountlock before sending password reset email @cmd-ntrf
+    - Restrict username to lowercase and not only number when signing up @cmd-ntrf
 * Tue Jul 07 2020  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.4-1
 - Bug Fixes
     - Fix bug with missing set-cookie header issue #53

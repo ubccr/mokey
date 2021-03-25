@@ -2,12 +2,14 @@
 ChangeLog
 ===============================================================================
 
-`v0.5.4`_ (unreleased)
+`v0.5.5`_ (2021-03-25)
 
 - Add security related HTTP headers #55
 - Upgrade to latest hydra sdk. Tested against hydra v1.9.2
 - Verify nsaccountlock before sending password reset email @cmd-ntrf
 - Add option to require admin verification to enable new account @cmd-ntrf
+- Restrict username to lowercase and not only number when signing up @cmd-ntrf
+- Add option to always skip consent in hydra login flow @isard-vdi
 
 `v0.5.4`_ (2020-07-14)
 ----------------------
@@ -94,3 +96,4 @@ ChangeLog
 .. _v0.5.2: https://github.com/ubccr/mokey/releases/tag/v0.5.2
 .. _v0.5.3: https://github.com/ubccr/mokey/releases/tag/v0.5.3
 .. _v0.5.4: https://github.com/ubccr/mokey/releases/tag/v0.5.4
+.. _v0.5.5: https://github.com/ubccr/mokey/releases/tag/v0.5.5
