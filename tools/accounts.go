@@ -14,7 +14,7 @@ import (
 	"github.com/ubccr/mokey/util"
 )
 
-func SendResetPasswordEmail(uid string) error {
+func SendResetPasswordEmail(uid string, email string) error {
 	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
 	if err != nil {
 		return err
@@ -40,7 +40,15 @@ func SendResetPasswordEmail(uid string) error {
 		return err
 	}
 
-	err = emailer.SendResetPasswordEmail(uid, string(userRec.Email))
+	// use explicit email if given
+	var mailAddr string
+	if email != "" {
+		mailAddr = email
+	} else {
+		mailAddr = string(userRec.Email)
+	}
+
+	err = emailer.SendResetPasswordEmail(uid, mailAddr)
 	if err != nil {
 		return err
 	}
