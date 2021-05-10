@@ -124,6 +124,10 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 	e.GET(Path("/auth/login"), h.LoginGet).Name = "login"
 	e.POST(Path("/auth/login"), RateLimit(h.LoginPost))
 
+	// Change expired password
+	e.GET(Path("/auth/change"), h.ChangeGet).Name = "change"
+	e.POST(Path("/auth/change"), RateLimit(h.ChangePost))
+
 	// Logout
 	e.GET(Path("/auth/logout"), h.Logout).Name = "logout"
 

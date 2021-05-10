@@ -31,7 +31,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.0
-	github.com/ubccr/goipa v0.0.4
+	github.com/ubccr/goipa v0.0.5
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/negroni v1.0.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897

@@ -11,7 +11,7 @@ import (
 	"github.com/ubccr/mokey/util"
 )
 
-func (h *Handler) changePassword(client *ipa.Client, user *ipa.UserRecord, current, pass, pass2, challenge string) error {
+func validatePassword(current, pass, pass2 string) error {
 	if len(current) == 0 {
 		return errors.New("Please enter you current password")
 	}
@@ -28,8 +28,45 @@ func (h *Handler) changePassword(client *ipa.Client, user *ipa.UserRecord, curre
 		return errors.New("Password do not match. Please confirm your password.")
 	}
 
-	if user.OTPOnly() && len(challenge) == 0 {
-		return errors.New("Please provide a six-digit authentication code")
+	return nil
+}
+
+func (h *Handler) setPassword(uid, current, pass, pass2, challenge string) error {
+	if err := validatePassword(current, pass, pass2); err != nil {
+		return err
+	}
+
+	err := h.client.SetPassword(uid, current, pass, challenge)
+	if err != nil {
+		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
+			log.WithFields(log.Fields{
+				"uid":   string(uid),
+				"error": ierr.Error(),
+			}).Error("password does not conform to policy")
+			return errors.New("Your password is too weak. Please ensure your password includes a number and lower/upper case character")
+		}
+
+		if ierr, ok := err.(*ipa.ErrInvalidPassword); ok {
+			log.WithFields(log.Fields{
+				"uid":   string(uid),
+				"error": ierr.Error(),
+			}).Error("invalid password from FreeIPA")
+			return errors.New("Invalid OTP code.")
+		}
+
+		log.WithFields(log.Fields{
+			"uid":   string(uid),
+			"error": err.Error(),
+		}).Error("failed to set user password in FreeIPA")
+		return errors.New("Fatal system error")
+	}
+
+	return nil
+}
+
+func (h *Handler) changePassword(client *ipa.Client, user *ipa.UserRecord, current, pass, pass2, challenge string) error {
+	if err := validatePassword(current, pass, pass2); err != nil {
+		return err
 	}
 
 	if !user.OTPOnly() {

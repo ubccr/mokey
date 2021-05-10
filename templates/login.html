@@ -6,6 +6,12 @@
     {{ . }}
 </div>
 {{ end }}
+{{ range .success }}
+<div class="alert alert-success alert-dismissable">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    {{ . }}
+</div>
+{{ end }}
 
   <form class="form-signin" role="form" method="POST">
     <h2 class="form-signin-heading">Sign in</h2>
