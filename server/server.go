@@ -86,11 +86,13 @@ func Run() error {
 	e.Use(middleware.Recover())
 	e.Use(CacheControl)
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup: "form:csrf",
+		TokenLookup:    "form:csrf",
+		CookieSecure:   !viper.GetBool("develop"),
+		CookieHTTPOnly: true,
 	}))
 	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
 		XFrameOptions:         "DENY",
-		ContentSecurityPolicy: "default-src 'self'",
+		ContentSecurityPolicy: "default-src 'self'; img-src 'self' data:;script-src 'self' 'unsafe-inline';",
 	}))
 
 	encKey, err := hex.DecodeString(viper.GetString("enc_key"))
