@@ -73,14 +73,16 @@ func main() {
 			Usage: "Send reset password email",
 			Flags: []cli.Flag{
 				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
+				&cli.StringFlag{Name: "email, e", Usage: "User email (if not provided, email from profile is used)", Value: ""},
 			},
 			Action: func(c *cli.Context) error {
 				uid := c.String("uid")
 				if len(uid) == 0 {
 					return cli.NewExitError(errors.New("Please provide a uid"), 1)
 				}
+				email := c.String("email")
 
-				err := tools.SendResetPasswordEmail(uid)
+				err := tools.SendResetPasswordEmail(uid, email)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}
