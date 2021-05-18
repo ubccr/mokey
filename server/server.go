@@ -28,6 +28,7 @@ func init() {
 	viper.SetDefault("enable_api_keys", false)
 	viper.SetDefault("setup_max_age", 86400)
 	viper.SetDefault("reset_max_age", 3600)
+	viper.SetDefault("replace_token", false)
 	viper.SetDefault("max_attempts", 10)
 	viper.SetDefault("bind", "")
 	viper.SetDefault("driver", "mysql")
