@@ -2,7 +2,16 @@
 ChangeLog
 ===============================================================================
 
+`v0.5.6`_ (2021-05-18)
+----------------------
+
+- Add config option to replace unexpired password tokens
+- Add email flag to resetpw command
+- Relax CSP settings to allow inline images and js
+- Add change expired password login flow
+
 `v0.5.5`_ (2021-03-25)
+----------------------
 
 - Add security related HTTP headers #55
 - Upgrade to latest hydra sdk. Tested against hydra v1.9.2
@@ -97,3 +106,4 @@ ChangeLog
 .. _v0.5.3: https://github.com/ubccr/mokey/releases/tag/v0.5.3
 .. _v0.5.4: https://github.com/ubccr/mokey/releases/tag/v0.5.4
 .. _v0.5.5: https://github.com/ubccr/mokey/releases/tag/v0.5.5
+.. _v0.5.6: https://github.com/ubccr/mokey/releases/tag/v0.5.6

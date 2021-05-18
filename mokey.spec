@@ -3,7 +3,7 @@
 
 Summary:       FreeIPA self-service account managment tool
 Name:          mokey
-Version:       0.5.5
+Version:       0.5.6
 Release:       1%{?dist}
 License:       BSD
 Group:         Applications/Internet
@@ -72,6 +72,13 @@ rm -rf %{buildroot}
 %attr(644,root,root) %{_usr}/lib/systemd/system/%{name}.service
 
 %changelog
+* Tue May 18 2021  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.6-1
+- New Features
+    - Add config option to replace unexpired password tokens
+    - Add email flag to resetpw command
+    - Add change expired password login flow
+- Bug Fixes
+    - Relax CSP settings to allow inline images and js
 * Thu Mar 25 2021  Andrew E. Bruno <aebruno2@buffalo.edu> 0.5.5-1
 - New Features
     - Add security related HTTP headers #55
