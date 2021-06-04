@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/server"
 	"github.com/ubccr/mokey/tools"
+	"github.com/ubccr/mokey/util"
 	"github.com/urfave/cli"
 )
 
@@ -49,7 +50,25 @@ func main() {
 		}
 
 		if !viper.IsSet("enc_key") || !viper.IsSet("auth_key") {
-			log.Fatal("Please ensure authentication and encryption keys are set")
+			if !viper.IsSet("enc_key") {
+				secret, err := util.GenerateSecret(16)
+				if err != nil {
+					return fmt.Errorf("Failed to generate enc_key - %s", err)
+				}
+				viper.Set("enc_key", secret)
+			}
+			if !viper.IsSet("auth_key") {
+				secret, err := util.GenerateSecret(32)
+				if err != nil {
+					return fmt.Errorf("Failed to generate auth_key - %s", err)
+				}
+				viper.Set("auth_key", secret)
+			}
+
+			err = viper.WriteConfig()
+			if err != nil {
+				return fmt.Errorf("Failed to save secret keys to config file  - %s", err)
+			}
 		}
 
 		return nil
