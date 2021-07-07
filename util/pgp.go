@@ -26,13 +26,7 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
-const (
-	ResetSalt  = "resetpw"
-	VerifySalt = "acctsetup"
-)
-
 type Emailer struct {
-	db        model.Datastore
 	templates map[string]*template.Template
 }
 
@@ -46,7 +40,7 @@ func init() {
 	viper.SetDefault("email_from", "helpdesk@example.com")
 }
 
-func NewEmailer(db model.Datastore) (*Emailer, error) {
+func NewEmailer() (*Emailer, error) {
 	tmpldir := GetTemplateDir()
 
 	tmpls, err := filepath.Glob(tmpldir + "/email/*.txt")
@@ -60,19 +54,20 @@ func NewEmailer(db model.Datastore) (*Emailer, error) {
 		templates[base] = template.Must(template.New(base).ParseFiles(t))
 	}
 
-	return &Emailer{db: db, templates: templates}, nil
+	return &Emailer{templates: templates}, nil
 }
 
 func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
-	token, err := e.db.CreateToken(uid, email)
+	token, err := model.NewToken(uid, email, viper.GetUint32("reset_max_age"))
 	if err != nil {
 		return err
 	}
 
 	vars := map[string]interface{}{
-		"link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), e.db.SignToken(ResetSalt, token.Token))}
+		"link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), token),
+	}
 
-	err = e.sendEmail(token.Email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
+	err = e.sendEmail(email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
 	if err != nil {
 		return err
 	}
@@ -81,16 +76,17 @@ func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
 }
 
 func (e *Emailer) SendVerifyAccountEmail(uid, email string) error {
-	token, err := e.db.CreateToken(uid, email)
+	token, err := model.NewToken(uid, email, viper.GetUint32("setup_max_age"))
 	if err != nil {
 		return err
 	}
 
 	vars := map[string]interface{}{
 		"uid":  uid,
-		"link": fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), e.db.SignToken(VerifySalt, token.Token))}
+		"link": fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), token),
+	}
 
-	err = e.sendEmail(token.Email, fmt.Sprintf("[%s] Verify your email", viper.GetString("email_prefix")), "setup-account.txt", vars)
+	err = e.sendEmail(email, fmt.Sprintf("[%s] Verify your email", viper.GetString("email_prefix")), "setup-account.txt", vars)
 	if err != nil {
 		return err
 	}

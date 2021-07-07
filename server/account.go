@@ -3,7 +3,6 @@ package server
 import (
 	"errors"
 	"net/http"
-	"path"
 
 	"github.com/dchest/captcha"
 	"github.com/labstack/echo/v4"
@@ -15,20 +14,20 @@ import (
 )
 
 func (h *Handler) SetupAccount(c echo.Context) error {
-	_, tk := path.Split(c.Request().URL.Path)
-	token, err := h.verifyToken(tk, util.VerifySalt, viper.GetInt("setup_max_age"))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"token": tk,
-		}).Error("Invalid token found")
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid token")
+	token := c.Param("token")
+	if token == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing token")
 	}
 
-	userRec, err := h.client.UserShow(token.UserName)
+	claims, err := model.ParseToken(token, viper.GetUint32("setup_max_age"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid token").SetInternal(err)
+	}
+
+	userRec, err := h.client.UserShow(claims.UserName)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"uid":   token.UserName,
+			"uid":   claims.UserName,
 			"error": err,
 		}).Error("Failed to fetch user record from freeipa")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
@@ -43,23 +42,14 @@ func (h *Handler) SetupAccount(c echo.Context) error {
 	if c.Request().Method == "POST" {
 		if userRec.Locked() {
 			// Enable user account
-			err := h.client.UserEnable(token.UserName)
+			err := h.client.UserEnable(claims.UserName)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"uid":   token.UserName,
+					"uid":   claims.UserName,
 					"error": err,
 				}).Error("Failed enable user in FreeIPA")
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to enable user")
 			}
-		}
-
-		// Destroy token
-		err = h.db.DestroyToken(token.Token)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"uid":   token.UserName,
-				"error": err,
-			}).Error("Failed to remove token from database")
 		}
 
 		vars["completed"] = true
@@ -94,20 +84,20 @@ func (h *Handler) ForgotPassword(c echo.Context) error {
 }
 
 func (h *Handler) ResetPassword(c echo.Context) error {
-	_, tk := path.Split(c.Request().URL.Path)
-	token, err := h.verifyToken(tk, util.ResetSalt, viper.GetInt("reset_max_age"))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"token": tk,
-		}).Error("Invalid token found")
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid token")
+	token := c.Param("token")
+	if token == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing token")
 	}
 
-	userRec, err := h.client.UserShow(token.UserName)
+	claims, err := model.ParseToken(token, viper.GetUint32("reset_max_age"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "invalid token").SetInternal(err)
+	}
+
+	userRec, err := h.client.UserShow(claims.UserName)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"uid":   token.UserName,
+			"uid":   claims.UserName,
 			"error": err,
 		}).Error("Failed to fetch user record from freeipa")
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
@@ -127,24 +117,8 @@ func (h *Handler) ResetPassword(c echo.Context) error {
 		err := h.resetPassword(userRec, pass, pass2, challenge)
 		if err != nil {
 			vars["message"] = err.Error()
-
-			err := h.db.IncrementToken(token.Token)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err.Error(),
-				}).Error("Failed to increment token attempts")
-			}
 		} else {
 			vars["success"] = true
-
-			// Destroy token
-			err := h.db.DestroyToken(token.Token)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"uid":   token.UserName,
-					"error": err.Error(),
-				}).Error("failed to remove token from database")
-			}
 		}
 	}
 
@@ -221,16 +195,6 @@ func (h *Handler) sendPasswordReset(uid, captchaID, captchaSol string) error {
 		}
 	}
 
-	if !viper.GetBool("replace_token") {
-		_, err := h.db.FetchTokenByUser(uid, viper.GetInt("reset_max_age"))
-		if err == nil {
-			log.WithFields(log.Fields{
-				"uid": uid,
-			}).Error("Forgotpw: user already has active token")
-			return nil
-		}
-	}
-
 	userRec, err := h.client.UserShow(uid)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -263,26 +227,4 @@ func (h *Handler) sendPasswordReset(uid, captchaID, captchaSol string) error {
 	}
 
 	return nil
-}
-
-func (h *Handler) verifyToken(rawToken, salt string, maxAge int) (*model.Token, error) {
-	tk, ok := h.db.VerifyToken(salt, rawToken)
-	if !ok {
-		return nil, errors.New("Invalid token")
-	}
-
-	token, err := h.db.FetchToken(tk, maxAge)
-	if err != nil {
-		return nil, err
-	}
-
-	if token.Attempts > viper.GetInt("max_attempts") {
-		log.WithFields(log.Fields{
-			"token": token.Token,
-			"uid":   token.UserName,
-		}).Error("Too many attempts for token.")
-		return nil, errors.New("Too many attempts")
-	}
-
-	return token, nil
 }

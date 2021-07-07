@@ -36,9 +36,6 @@
                 <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "sshpubkey" }}">SSH Keys</a></li>
                 <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "otptokens" }}">OTP Tokens</a></li>
                 <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "2fa" }}">Two-Factor Auth</a></li>
-                {{ if $.apiEnabled }}
-                <li class="hidden-lg hidden-md hidden-sm"><a href="{{ uri $.ctx "apikey" }}">Api Keys</a></li>
-                {{ end }}
               </ul>
           {{ else }}
               <p class="navbar-text navbar-right"><a href="{{ uri $.ctx "login" }}">Sign In</a></p>
@@ -59,9 +56,6 @@
                     <a href="{{ uri $.ctx "sshpubkey" }}" class="list-group-item">SSH Keys</a>
                     <a href="{{ uri $.ctx "otptokens" }}" class="list-group-item">OTP Tokens</a>
                     <a href="{{ uri $.ctx "2fa" }}" class="list-group-item">Two-Factor Auth</a>
-                    {{ if $.apiEnabled }}
-                    <a href="{{ uri $.ctx "apikey" }}" class="list-group-item">Api Keys</a>
-                    {{ end }}
                 </div>
             </div>
         </div>

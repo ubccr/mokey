@@ -14,7 +14,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/mokey/model"
 	"github.com/ubccr/mokey/util"
 )
 
@@ -108,12 +107,7 @@ func Run() error {
 	cookieStore.MaxAge(0)
 	e.Use(session.Middleware(cookieStore))
 
-	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
-	if err != nil {
-		return err
-	}
-
-	h, err := NewHandler(db)
+	h, err := NewHandler()
 	if err != nil {
 		return err
 	}

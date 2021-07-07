@@ -10,9 +10,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/mokey/model"
 	"github.com/ubccr/mokey/server"
 	"github.com/ubccr/mokey/tools"
-	"github.com/ubccr/mokey/util"
 	"github.com/urfave/cli"
 )
 
@@ -51,14 +51,14 @@ func main() {
 
 		if !viper.IsSet("enc_key") || !viper.IsSet("auth_key") {
 			if !viper.IsSet("enc_key") {
-				secret, err := util.GenerateSecret(16)
+				secret, err := model.GenerateSecret(16)
 				if err != nil {
 					return fmt.Errorf("Failed to generate enc_key - %s", err)
 				}
 				viper.Set("enc_key", secret)
 			}
 			if !viper.IsSet("auth_key") {
-				secret, err := util.GenerateSecret(32)
+				secret, err := model.GenerateSecret(32)
 				if err != nil {
 					return fmt.Errorf("Failed to generate auth_key - %s", err)
 				}
@@ -122,26 +122,6 @@ func main() {
 				}
 
 				err := tools.SendVerifyEmail(uid)
-				if err != nil {
-					return cli.NewExitError(err, 1)
-				}
-
-				return nil
-			},
-		},
-		{
-			Name:  "status",
-			Usage: "Display token status for user",
-			Flags: []cli.Flag{
-				&cli.StringFlag{Name: "uid, u", Usage: "User id"},
-			},
-			Action: func(c *cli.Context) error {
-				uid := c.String("uid")
-				if len(uid) == 0 {
-					return cli.NewExitError(errors.New("Please provide a uid"), 1)
-				}
-
-				err := tools.Status(uid)
 				if err != nil {
 					return cli.NewExitError(err, 1)
 				}

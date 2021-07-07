@@ -11,28 +11,25 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
-	"github.com/ubccr/mokey/model"
 	"github.com/ubccr/mokey/util"
 	"golang.org/x/oauth2"
 )
 
 type Handler struct {
-	db      model.Datastore
 	client  *ipa.Client
 	emailer *util.Emailer
 
 	// Hydra consent app support
 	hydraClient          *hydra.OryHydra
 	hydraAdminHTTPClient *http.Client
-	apiClients           map[string]*model.ApiKeyClient
 
 	// Globus signup support
 	authUrl  *oauth2.Config
 	verifier *oidc.IDTokenVerifier
 }
 
-func NewHandler(db model.Datastore) (*Handler, error) {
-	h := &Handler{db: db}
+func NewHandler() (*Handler, error) {
+	h := &Handler{}
 
 	h.client = ipa.NewDefaultClient()
 
@@ -41,7 +38,7 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 		return nil, err
 	}
 
-	h.emailer, err = util.NewEmailer(db)
+	h.emailer, err = util.NewEmailer()
 	if err != nil {
 		return nil, err
 	}
@@ -71,28 +68,6 @@ func NewHandler(db model.Datastore) (*Handler, error) {
 		}
 
 		log.Infof("Hydra consent/login endpoints enabled")
-
-		if viper.IsSet("enabled_api_client_ids") {
-			h.apiClients = make(map[string]*model.ApiKeyClient)
-
-			ids := viper.GetStringSlice("enabled_api_client_ids")
-			for _, clientID := range ids {
-				if !viper.IsSet(clientID) {
-					log.Fatalf("Api Client ID config not found: %s", clientID)
-				}
-
-				apiKeyConfig := viper.Sub(clientID)
-				var a model.ApiKeyClient
-				err = apiKeyConfig.Unmarshal(&a)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				log.Infof("Enabling oauth2 Api client: %s", clientID)
-				a.ClientID = clientID
-				h.apiClients[clientID] = &a
-			}
-		}
 	}
 
 	if viper.GetBool("globus_signup") {
@@ -135,12 +110,12 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 		// Signup
 		e.GET(Path("/auth/signup"), h.Signup).Name = "signup"
 		e.POST(Path("/auth/signup"), RateLimit(h.CreateAccount))
-		e.Match([]string{"GET", "POST"}, Path("/auth/verify/*"), h.SetupAccount)[0].Name = "verify"
+		e.Match([]string{"GET", "POST"}, Path("/auth/verify/:token"), h.SetupAccount)[0].Name = "verify"
 	}
 
 	// Forgot Password
 	e.Match([]string{"GET", "POST"}, Path("/auth/forgotpw"), RateLimit(h.ForgotPassword))[0].Name = "forgotpw"
-	e.Match([]string{"GET", "POST"}, Path("/auth/resetpw/*"), RateLimit(h.ResetPassword))[0].Name = "resetpw"
+	e.Match([]string{"GET", "POST"}, Path("/auth/resetpw/:token"), RateLimit(h.ResetPassword))[0].Name = "resetpw"
 
 	// Login Required
 	e.GET(Path("/"), LoginRequired(h.Index)).Name = "index"
@@ -158,10 +133,6 @@ func (h *Handler) SetupRoutes(e *echo.Echo) {
 		e.GET(Path("/oauth/login"), h.LoginOAuthGet).Name = "login-oauth"
 		e.POST(Path("/oauth/login"), RateLimit(h.LoginOAuthPost))
 		e.GET(Path("/oauth/error"), h.HydraError).Name = "hydra-error"
-
-		if viper.GetBool("enable_api_keys") {
-			e.Match([]string{"GET", "POST"}, Path("/apikey"), LoginRequired(h.ApiKey))[0].Name = "apikey"
-		}
 	}
 
 	if viper.GetBool("enable_user_signup") && viper.GetBool("globus_signup") {

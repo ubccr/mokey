@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/ory/hydra-client-go/models"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/mokey/model"
 )
 
 type FakeTLSTransport struct {
@@ -24,11 +22,6 @@ func (ftt *FakeTLSTransport) RoundTrip(req *http.Request) (*http.Response, error
 }
 
 func (h *Handler) ConsentGet(c echo.Context) error {
-	apiKey, err := h.checkApiKey(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid api key")
-	}
-
 	// Get the challenge from the query.
 	challenge := c.Request().URL.Query().Get("consent_challenge")
 	if challenge == "" {
@@ -105,17 +98,6 @@ func (h *Handler) ConsentGet(c echo.Context) error {
 		}).Info("Consent challenge signed successfully")
 
 		return c.Redirect(http.StatusFound, *response.Payload.RedirectTo)
-	}
-
-	if apiKey != nil && strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
-		data := map[string]string{
-			"csrf":      c.Get("csrf").(string),
-			"client_id": consent.Client.ClientID,
-			"scopes":    strings.Join(consent.RequestedScope, ","),
-			"challenge": challenge,
-		}
-
-		return c.JSON(http.StatusOK, data)
 	}
 
 	vars := map[string]interface{}{
@@ -206,11 +188,6 @@ func (h *Handler) ConsentPost(c echo.Context) error {
 }
 
 func (h *Handler) LoginOAuthGet(c echo.Context) error {
-	apiKey, err := h.checkApiKey(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid api key")
-	}
-
 	// Get the challenge from the query.
 	challenge := c.Request().URL.Query().Get("login_challenge")
 	if challenge == "" {
@@ -270,17 +247,6 @@ func (h *Handler) LoginOAuthGet(c echo.Context) error {
 		return c.Redirect(http.StatusFound, *completedResponse.Payload.RedirectTo)
 	}
 
-	if apiKey != nil && strings.Contains(c.Request().Header.Get("Accept"), "application/json") {
-		data := map[string]string{
-			"csrf":      c.Get("csrf").(string),
-			"client_id": login.Client.ClientID,
-			"scopes":    strings.Join(login.RequestedScope, ","),
-			"challenge": challenge,
-		}
-
-		return c.JSON(http.StatusOK, data)
-	}
-
 	vars := map[string]interface{}{
 		"csrf":      c.Get("csrf").(string),
 		"challenge": challenge,
@@ -294,53 +260,16 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 	uid := c.FormValue("uid")
 	password := c.FormValue("password")
 	challenge := c.FormValue("challenge")
-	apiKey, err := h.checkApiKey(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid api key")
-	}
 
-	if apiKey != nil {
-		getparams := admin.NewGetLoginRequestParams()
-		getparams.SetLoginChallenge(challenge)
-		getparams.SetHTTPClient(h.hydraAdminHTTPClient)
-		response, err := h.hydraClient.Admin.GetLoginRequest(getparams)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Error("Failed to validate the apikey login challenge")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate login")
-		}
-
-		login := response.Payload
-
-		log.WithFields(log.Fields{
-			"user":      apiKey.UserName,
-			"client_id": login.Client.ClientID,
-		}).Info("Api consent request")
-
-		// Check key matches client
-		if apiKey.ClientID != login.Client.ClientID {
-			log.WithFields(log.Fields{
-				"key":              apiKey.Key,
-				"user":             apiKey.UserName,
-				"apikey_client_id": apiKey.ClientID,
-				"client_id":        login.Client.ClientID,
-			}).Error("Claims client id does not match api key")
-			return echo.NewHTTPError(http.StatusBadRequest, "Claims client id does not match api key")
-		}
-
-		uid = apiKey.UserName
-	} else {
-		var sid string
-		sid, err = h.tryAuth(uid, password)
-		if err == nil {
-			sess, _ := session.Get(CookieKeySession, c)
-			sess.Values[CookieKeyUser] = uid
-			sess.Values[CookieKeySID] = sid
-			sess.Values[CookieKeyAuthenticated] = true
-			delete(sess.Values, CookieKeyWYAF)
-			sess.Save(c.Request(), c.Response())
-		}
+	var sid string
+	sid, err := h.tryAuth(uid, password)
+	if err == nil {
+		sess, _ := session.Get(CookieKeySession, c)
+		sess.Values[CookieKeyUser] = uid
+		sess.Values[CookieKeySID] = sid
+		sess.Values[CookieKeyAuthenticated] = true
+		delete(sess.Values, CookieKeyWYAF)
+		sess.Save(c.Request(), c.Response())
 	}
 
 	if err == nil {
@@ -376,62 +305,6 @@ func (h *Handler) LoginOAuthPost(c echo.Context) error {
 		"message":   message}
 
 	return c.Render(http.StatusOK, "login-oauth.html", vars)
-}
-
-func (h *Handler) checkApiKey(c echo.Context) (*model.ApiKey, error) {
-	accept := c.Request().Header.Get("Accept")
-	auth := strings.Split(c.Request().Header.Get("Authorization"), " ")
-	apiKeyString := ""
-	if strings.Contains(accept, "application/json") &&
-		len(auth) == 2 && strings.ToLower(auth[0]) == "bearer" &&
-		len(auth[1]) > 0 {
-
-		apiKeyString = auth[1]
-	}
-
-	if len(apiKeyString) == 0 {
-		return nil, nil
-	}
-
-	key, err := h.db.FetchApiKey(apiKeyString)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"key":   apiKeyString,
-			"error": err,
-		}).Error("Failed to fetch api key")
-		return nil, err
-	}
-
-	// Check api client is enabled in config
-	if _, ok := h.apiClients[key.ClientID]; !ok {
-		log.WithFields(log.Fields{
-			"key":       key.Key,
-			"user":      key.UserName,
-			"client_id": key.ClientID,
-		}).Error("Api client is not enabled in mokey.yaml")
-		return nil, errors.New("Invalid api client")
-	}
-
-	err = h.db.RefreshApiKey(key)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"key":   apiKeyString,
-			"error": err,
-		}).Error("Failed to save api key")
-		return nil, err
-	}
-
-	_, err = h.client.UserShow(key.UserName)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"key":   apiKeyString,
-			"user":  key.UserName,
-			"error": err,
-		}).Error("Failed to fetch user from ipa")
-		return nil, err
-	}
-
-	return key, nil
 }
 
 func (h *Handler) HydraError(c echo.Context) error {

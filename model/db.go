@@ -20,17 +20,6 @@ type Datastore interface {
 	RefreshApiKey(ak *ApiKey) error
 	DestroyApiKey(user, clientID string) error
 	DestroyApiKeys(uid string) error
-
-	// Token
-	RandToken() (string, error)
-	SignToken(salt, token string) string
-	VerifyToken(salt, signedToken string) (string, bool)
-	FetchTokenByUser(uid string, maxAge int) (*Token, error)
-	FetchToken(token string, maxAge int) (*Token, error)
-	CreateToken(uid, email string) (*Token, error)
-	IncrementToken(token string) error
-	DestroyToken(token string) error
-	DestroyTokenByUser(uid string) error
 }
 
 type DB struct {

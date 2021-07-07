@@ -18,6 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/mokey/model"
 	"golang.org/x/oauth2"
 )
 
@@ -82,7 +83,7 @@ func (h *Handler) GlobusSignup(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
 	}
 
-	state, err := h.db.RandToken()
+	state, err := model.GenerateSecret(16)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err.Error(),

@@ -11,5 +11,4 @@ const (
 	CookieKeyGlobusUsername = "globus_username"
 	ContextKeyUser          = "user"
 	ContextKeyIPAClient     = "ipa"
-	ContextKeyApi           = "apikey"
 )

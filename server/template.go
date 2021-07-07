@@ -55,7 +55,6 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 	if viewContext, isMap := data.(map[string]interface{}); isMap {
 		viewContext["ctx"] = c
-		viewContext["apiEnabled"] = viper.GetBool("enable_api_keys")
 	}
 
 	return t.templates[name].ExecuteTemplate(w, "layout", data)
