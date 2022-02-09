@@ -111,6 +111,7 @@ to be installed)::
     $ ipa role-add-privilege 'Mokey User Manager' --privilege='User Administrators'
     $ ipa user-add mokeyapp --first Mokey --last App
     $ ipa role-add-member 'Mokey User Manager' --users=mokeyapp
+    $ ipa permission-mod 'System: Modify Users' --includedattrs=ipauserauthtype
     $ ipa-getkeytab -s [your.ipa-master.server] -p mokeyapp -k /etc/mokey/keytab/mokeyapp.keytab
     $ chmod 640 /etc/mokey/keytab/mokeyapp.keytab
     $ chgrp mokey /etc/mokey/keytab/mokeyapp.keytab
