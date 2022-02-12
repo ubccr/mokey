@@ -1,0 +1,58 @@
+{{define "content"}}
+<h3 class="mb-4">Account Settings</h3>
+<div class="row">
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">First Name</label>
+		  	<input type="text" class="form-control" value="Andrew">
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">Last Name</label>
+		  	<input type="text" class="form-control" value="Bruno">
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">Email</label>
+		  	<input type="text" class="form-control" value="aebruno2@buffalo.edu">
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">Phone number</label>
+		  	<input type="text" class="form-control" value="+91 9876543215">
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">UID</label>
+		  	<input type="text" class="form-control" value="aebruno2" disabled readonly>
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">Password Expiration</label>
+		  	<input type="text" class="form-control" value="Jan 01, 0001 00:00:00 UTC" disabled readonly>
+		</div>
+	</div>
+	<div class="col-md-12">
+		<div class="mb-3">
+		  	<label class="form-label">Groups</label>
+            <div class="form-control-plaintext">
+                    <span class="badge rounded-pill bg-dark">big</span> 
+                    <span class="badge rounded-pill bg-dark">ccrtech</span> 
+                    <span class="badge rounded-pill bg-dark">sysadmin</span> 
+                    <span class="badge rounded-pill bg-dark">academic</span> 
+                    <span class="badge rounded-pill bg-dark">lakeeffect-ccradmin</span> 
+                    <span class="badge rounded-pill bg-dark">ccrstaff</span> 
+                    <span class="badge rounded-pill bg-dark">admins</span> 
+		    </div>
+		</div>
+	</div>
+</div>
+<div>
+	<button class="btn btn-primary">Update</button>
+</div>
+{{end}}

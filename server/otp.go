@@ -11,7 +11,7 @@ import (
 	"github.com/ubccr/mokey/util"
 )
 
-func (h *Handler) OTPTokens(c echo.Context) error {
+func (h *Handler) OTPTokensOld(c echo.Context) error {
 	user := c.Get(ContextKeyUser).(*ipa.UserRecord)
 	client := c.Get(ContextKeyIPAClient).(*ipa.Client)
 

@@ -1,111 +1,149 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
-	"encoding/hex"
+	"embed"
 	"fmt"
+	"io/fs"
+	"net"
 	"net/http"
-	"path/filepath"
+	"os"
+	"strconv"
 	"time"
 
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/mokey/util"
 )
 
-func init() {
-	viper.SetDefault("port", 8080)
-	viper.SetDefault("min_passwd_len", 8)
-	viper.SetDefault("min_passwd_classes", 2)
-	viper.SetDefault("develop", false)
-	viper.SetDefault("require_verify_email", false)
-	viper.SetDefault("require_verify_admin", false)
-	viper.SetDefault("enable_api_keys", false)
-	viper.SetDefault("setup_max_age", 86400)
-	viper.SetDefault("reset_max_age", 3600)
-	viper.SetDefault("replace_token", false)
-	viper.SetDefault("max_attempts", 10)
-	viper.SetDefault("bind", "")
-	viper.SetDefault("driver", "mysql")
-	viper.SetDefault("dsn", "/mokey?parseTime=true")
-	viper.SetDefault("rate_limit", false)
-	viper.SetDefault("redis", ":6379")
-	viper.SetDefault("max_requests", 15)
-	viper.SetDefault("rate_limit_expire", 3600)
-	viper.SetDefault("hydra_consent_skip", false)
-	viper.SetDefault("hydra_login_timeout", 86400)
-	viper.SetDefault("hydra_consent_timeout", 86400)
+const (
+	DefaultPort = 80
+)
+
+//go:embed templates/static
+var staticFiles embed.FS
+
+type Server struct {
+	ListenAddress net.IP
+	Port          int
+	Scheme        string
+	KeyFile       string
+	CertFile      string
+	httpServer    *http.Server
 }
 
-// Render custom error templates if available
-func HTTPErrorHandler(err error, c echo.Context) {
-	code := http.StatusInternalServerError
-	if he, ok := err.(*echo.HTTPError); ok {
-		code = he.Code
+func NewServer(address string) (*Server, error) {
+	s := &Server{}
+
+	shost, sport, err := net.SplitHostPort(address)
+	if err != nil {
+		return nil, err
 	}
 
-	if code == http.StatusNotFound {
-		log.WithFields(log.Fields{
-			"path": c.Request().URL,
-			"ip":   c.RealIP(),
-		}).Error("Requested path not found")
+	if shost == "" {
+		shost = net.IPv4zero.String()
 	}
 
-	viewContext := map[string]interface{}{
-		"ctx": c,
-	}
-	errorPage := fmt.Sprintf("%d.html", code)
-	if err := c.Render(code, errorPage, viewContext); err != nil {
-		c.Logger().Error(err)
-		c.String(code, "")
+	port := DefaultPort
+	if sport != "" {
+		var err error
+		port, err = strconv.Atoi(sport)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	c.Logger().Error(err)
+	s.Port = port
+
+	ip := net.ParseIP(shost)
+	if ip == nil || ip.To4() == nil {
+		return nil, fmt.Errorf("Invalid IPv4 address: %s", shost)
+	}
+
+	s.ListenAddress = ip
+
+	return s, nil
 }
 
-// Start web server
-func Run() error {
-	e := echo.New()
+func getAssetsFS() http.FileSystem {
+	staticLocalPath := viper.GetString("static_assets_dir")
+	if staticLocalPath != "" {
+		log.Debug("Using local static assets dir: %s", staticLocalPath)
+		return http.FS(os.DirFS(staticLocalPath))
+	}
 
-	tmplDir := util.GetTemplateDir()
-	log.Infof("Using template dir: %s", tmplDir)
-
-	renderer, err := NewTemplateRenderer(tmplDir)
+	fsys, err := fs.Sub(staticFiles, "templates/static")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	e.Renderer = renderer
-	e.Static(Path("/static"), filepath.Join(tmplDir, "static"))
+	return http.FS(fsys)
+}
+
+func newEcho() (*echo.Echo, error) {
+	e := echo.New()
 	e.HTTPErrorHandler = HTTPErrorHandler
 	e.HideBanner = true
 	e.Use(middleware.Recover())
-	e.Use(CacheControl)
-	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup:    "form:csrf",
-		CookieSecure:   !viper.GetBool("develop"),
-		CookieHTTPOnly: true,
-	}))
-	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
-		XFrameOptions:         "DENY",
-		ContentSecurityPolicy: "default-src 'self'; img-src 'self' data:;script-src 'self' 'unsafe-inline';",
-	}))
+	e.Logger = EchoLogger()
+	assetHandler := http.FileServer(getAssetsFS())
+	e.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", assetHandler)))
 
-	encKey, err := hex.DecodeString(viper.GetString("enc_key"))
+	renderer, err := NewTemplateRenderer()
+	if err != nil {
+		return nil, err
+	}
+
+	e.Renderer = renderer
+
+	return e, nil
+}
+
+func HTTPErrorHandler(err error, c echo.Context) {
+	if c.Response().Committed {
+		return
+	}
+
+	path := c.Request().URL.Path
+	code := http.StatusInternalServerError
+
+	if he, ok := err.(*echo.HTTPError); ok {
+		if he.Code == http.StatusNotFound {
+			log.WithFields(log.Fields{
+				"path": path,
+				"ip":   c.RealIP(),
+			}).Info("Requested path not found")
+		} else {
+			log.WithFields(log.Fields{
+				"code": he.Code,
+				"err":  he.Internal,
+				"path": path,
+				"ip":   c.RealIP(),
+			}).Error(he.Message)
+		}
+		code = he.Code
+	} else {
+		log.WithFields(log.Fields{
+			"err":  err,
+			"path": path,
+			"ip":   c.RealIP(),
+		}).Error("HTTP Error")
+	}
+
+	errorPage := fmt.Sprintf("%d.html", code)
+	if err := c.Render(code, errorPage, nil); err != nil {
+		c.Logger().Error(err)
+		c.String(code, "")
+	}
+}
+
+func (s *Server) Serve() error {
+	e, err := newEcho()
 	if err != nil {
 		return err
 	}
-
-	// Sessions
-	cookieStore := sessions.NewCookieStore([]byte(viper.GetString("auth_key")), encKey)
-	cookieStore.Options.Secure = !viper.GetBool("develop")
-	cookieStore.Options.HttpOnly = true
-	cookieStore.MaxAge(0)
-	e.Use(session.Middleware(cookieStore))
 
 	h, err := NewHandler()
 	if err != nil {
@@ -114,68 +152,44 @@ func Run() error {
 
 	h.SetupRoutes(e)
 
-	log.Printf("IPA server: %s", viper.GetString("ipahost"))
-
-	// Redirect to https if enabled
-	if viper.IsSet("insecure_redirect_port") && viper.IsSet("insecure_redirect_host") {
-		log.Infof("Redirecting insecure http requests on port %d to https://%s:%d",
-			viper.GetInt("insecure_redirect_port"),
-			viper.GetString("insecure_redirect_host"),
-			viper.GetInt("port"))
-
-		srv := &http.Server{
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 5 * time.Second,
-			IdleTimeout:  120 * time.Second,
-			Addr:         fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("insecure_redirect_port")),
-			Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				w.Header().Set("Connection", "close")
-				url := fmt.Sprintf("https://%s:%d%s", viper.GetString("insecure_redirect_host"), viper.GetInt("port"), req.URL.String())
-				http.Redirect(w, req, url, http.StatusMovedPermanently)
-			}),
-		}
-		go func() { log.Fatal(srv.ListenAndServe()) }()
-	}
-
-	s := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+	httpServer := &http.Server{
+		Addr:         fmt.Sprintf("%s:%d", s.ListenAddress, s.Port),
+		ReadTimeout:  15 * time.Minute,
+		WriteTimeout: 15 * time.Minute,
 		IdleTimeout:  120 * time.Second,
 	}
 
-	certFile := viper.GetString("cert")
-	keyFile := viper.GetString("key")
-	if certFile != "" && keyFile != "" {
+	if s.CertFile != "" && s.KeyFile != "" {
 		cfg := &tls.Config{
 			MinVersion: tls.VersionTLS12,
-			CurvePreferences: []tls.CurveID{
-				tls.CurveP256,
-				tls.X25519,
-			},
-			PreferServerCipherSuites: true,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			},
 		}
 
-		s.TLSConfig = cfg
-		s.TLSConfig.Certificates = make([]tls.Certificate, 1)
-		s.TLSConfig.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
+		httpServer.TLSConfig = cfg
+		httpServer.TLSConfig.Certificates = make([]tls.Certificate, 1)
+		httpServer.TLSConfig.Certificates[0], err = tls.LoadX509KeyPair(s.CertFile, s.KeyFile)
 		if err != nil {
 			return err
 		}
 
-		log.Printf("Running on https://%s:%d%s", viper.GetString("bind"), viper.GetInt("port"), Path("/"))
+		s.Scheme = "https"
+		httpServer.Addr = fmt.Sprintf("%s:%d", s.ListenAddress, s.Port)
 	} else {
-		log.Warn("**WARNING*** SSL/TLS not enabled. HTTP communication will not be encrypted and vulnerable to snooping.")
-		log.Printf("Running on http://%s:%d%s", viper.GetString("bind"), viper.GetInt("port"), Path("/"))
+		s.Scheme = "http"
 	}
 
-	return e.StartServer(s)
+	s.httpServer = httpServer
+	log.Infof("Listening on %s://%s:%d", s.Scheme, s.ListenAddress, s.Port)
+	if err := e.StartServer(httpServer); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	if s.httpServer == nil {
+		return nil
+	}
+
+	return s.httpServer.Shutdown(ctx)
 }

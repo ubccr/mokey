@@ -92,65 +92,56 @@ func NewHandler() (*Handler, error) {
 }
 
 func (h *Handler) SetupRoutes(e *echo.Echo) {
-	// Public
-	e.GET(Path("/auth/captcha/*.png"), h.Captcha).Name = "captcha"
-
-	// Login
-	e.GET(Path("/auth/login"), h.LoginGet).Name = "login"
-	e.POST(Path("/auth/login"), RateLimit(h.LoginPost))
-
-	// Change expired password
-	e.GET(Path("/auth/change"), h.ChangeGet).Name = "change"
-	e.POST(Path("/auth/change"), RateLimit(h.ChangePost))
-
-	// Logout
-	e.GET(Path("/auth/logout"), h.Logout).Name = "logout"
-
-	if viper.GetBool("enable_user_signup") {
-		// Signup
-		e.GET(Path("/auth/signup"), h.Signup).Name = "signup"
-		e.POST(Path("/auth/signup"), RateLimit(h.CreateAccount))
-		e.Match([]string{"GET", "POST"}, Path("/auth/verify/:token"), h.SetupAccount)[0].Name = "verify"
-	}
-
-	// Forgot Password
-	e.Match([]string{"GET", "POST"}, Path("/auth/forgotpw"), RateLimit(h.ForgotPassword))[0].Name = "forgotpw"
-	e.Match([]string{"GET", "POST"}, Path("/auth/resetpw/:token"), RateLimit(h.ResetPassword))[0].Name = "resetpw"
-
-	// Login Required
-	e.GET(Path("/"), LoginRequired(h.Index)).Name = "index"
-	e.Match([]string{"GET", "POST"}, Path("/changepw"), LoginRequired(h.ChangePassword))[0].Name = "changepw"
-	e.GET(Path("/sshpubkey/new"), LoginRequired(h.NewSSHPubKey)).Name = "sshpubkey-new"
-	e.POST(Path("/sshpubkey/new"), LoginRequired(h.AddSSHPubKey))
-	e.Match([]string{"GET", "POST"}, Path("/sshpubkey"), LoginRequired(h.SSHPubKey))[0].Name = "sshpubkey"
-	e.GET(Path("/otptokens"), LoginRequired(h.OTPTokens)).Name = "otptokens"
-	e.POST(Path("/otptokens"), LoginRequired(h.ModifyOTPTokens))
-	e.Match([]string{"GET", "POST"}, Path("/2fa"), LoginRequired(h.TwoFactorAuth))[0].Name = "2fa"
-
-	if viper.IsSet("hydra_admin_url") {
-		e.GET(Path("/oauth/consent"), h.ConsentGet).Name = "consent"
-		e.POST(Path("/oauth/consent"), RateLimit(h.ConsentPost))
-		e.GET(Path("/oauth/login"), h.LoginOAuthGet).Name = "login-oauth"
-		e.POST(Path("/oauth/login"), RateLimit(h.LoginOAuthPost))
-		e.GET(Path("/oauth/error"), h.HydraError).Name = "hydra-error"
-	}
-
-	if viper.GetBool("enable_user_signup") && viper.GetBool("globus_signup") {
-		e.GET(Path("/auth/globus/redirect"), h.GlobusRedirect)
-		e.GET(Path("/auth/globus"), h.GlobusSignup).Name = "globus"
-	}
+	e.GET(Path("/"), h.Index).Name = "index"
+	e.GET(Path("/security"), h.Security).Name = "security"
+	e.GET(Path("/sshkeys"), h.SSHKeys).Name = "sshkeys"
+	e.GET(Path("/otp"), h.OTPTokens).Name = "otptokens"
+	e.GET(Path("/password"), h.Password).Name = "password"
 }
 
 func (h *Handler) Index(c echo.Context) error {
-	user := c.Get(ContextKeyUser)
-	if user == nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+	vars := map[string]interface{}{
+		"user": "test",
+		"page": "account",
 	}
 
-	vars := map[string]interface{}{
-		"user": user.(*ipa.UserRecord)}
-
 	return c.Render(http.StatusOK, "index.html", vars)
+}
+
+func (h *Handler) SSHKeys(c echo.Context) error {
+	vars := map[string]interface{}{
+		"user": "test",
+		"page": "sshkeys",
+	}
+
+	return c.Render(http.StatusOK, "ssh-keys.html", vars)
+}
+
+func (h *Handler) Security(c echo.Context) error {
+	vars := map[string]interface{}{
+		"user": "test",
+		"page": "security",
+	}
+
+	return c.Render(http.StatusOK, "security.html", vars)
+}
+
+func (h *Handler) Password(c echo.Context) error {
+	vars := map[string]interface{}{
+		"user": "test",
+		"page": "password",
+	}
+
+	return c.Render(http.StatusOK, "password.html", vars)
+}
+
+func (h *Handler) OTPTokens(c echo.Context) error {
+	vars := map[string]interface{}{
+		"user": "test",
+		"page": "otp",
+	}
+
+	return c.Render(http.StatusOK, "otp-tokens.html", vars)
 }
 
 func (h *Handler) removeAllOTPTokens(uid string) error {
