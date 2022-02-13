@@ -14,8 +14,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const defaultTemplateGlob = "/usr/share/mokey/templates/*.xxx"
-
 //go:embed templates
 var templateFiles embed.FS
 
@@ -67,7 +65,7 @@ func NewTemplateRenderer() (*TemplateRenderer, error) {
 		}
 
 		switch base {
-		case "404.html", "401.html", "500.html":
+		case "login.html", "404.html", "401.html", "500.html":
 			tmpl[base] = template.Must(template.ParseFS(templateFiles, file)).Funcs(funcMap)
 		default:
 			tmpl[base] = template.Must(template.New("layout").Funcs(funcMap).ParseFS(templateFiles, file))
@@ -98,7 +96,7 @@ func NewTemplateRenderer() (*TemplateRenderer, error) {
 		}
 
 		switch base {
-		case "404.html", "401.html", "500.html":
+		case "login.html", "404.html", "401.html", "500.html":
 			tmpl[base] = template.Must(template.ParseFiles(file)).Funcs(funcMap)
 		default:
 			tmpl[base] = template.Must(template.New("layout").Funcs(funcMap).ParseFiles(file))
@@ -164,7 +162,7 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 	}
 
 	switch name {
-	case "404.html", "401.html", "500.html":
+	case "login.html", "404.html", "401.html", "500.html":
 		return t.templates[name].Execute(w, data)
 	default:
 		return t.templates[name].ExecuteTemplate(w, "layout", data)
@@ -174,7 +172,7 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 func URI(c echo.Context, name string) string {
 	if strings.HasPrefix(name, "/static") || strings.HasPrefix(name, "/auth/captcha/") {
-		return Path(name)
+		return name
 	}
 
 	if c != nil {
@@ -186,15 +184,4 @@ func URI(c echo.Context, name string) string {
 	}).Error("Failed to build URI. Echo context nil")
 
 	return name
-}
-
-func Path(path string) string {
-	if viper.IsSet("path_prefix") {
-		if path == "/" {
-			path = ""
-		}
-		return viper.GetString("path_prefix") + path
-	}
-
-	return path
 }

@@ -20,6 +20,10 @@ body {
     max-width: 400px;
 }
 
+#login-failed {
+    max-width: 500px;
+}
+
 .navbar-inverse {
     background-color: #0055bb;
     border-color: #ccc;

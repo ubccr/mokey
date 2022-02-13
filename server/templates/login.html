@@ -1,0 +1,41 @@
+{{ template "header.html" . }}
+
+<section class="main-content">
+        <div id="login-failed" style="display: none" class="login-failed alert alert-danger mx-auto" role="alert">
+            Something bad happened. Please contact site administrator
+        </div>
+        <div id="login" class="container">
+            <div class="login-card rounded-3 overflow-hidden bg-white mx-auto">
+                <div class="login-head bg-dark text-light p-4">
+                    <h3 class="text-center m-0">Login</h3>
+                </div>
+                <div class="login-body p-4 p-md-5">
+                    <div class="login-body-wrapper mx-auto">
+                        <form>
+                        <div class="mb-3">
+                            <label for="uid" class="form-label">Username</label>
+                            <input type="uid" class="form-control form-control-lg" name="uid" id="uid" placeholder="">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control form-control-lg" name="password" id="password" placeholder="">
+                            <a href="#">Forgot password?</a>
+                        </div>
+                        <div class="d-grid gap-2">
+                          <input type="hidden" name="csrf" value="{{ .csrf }}" />
+                          <button hx-target-error="login-failed" hx-post="/auth/login" hx-trigger="click" hx-target="#login" hx-swap="innerHTML" class="btn btn-primary btn-lg" type="button">
+                          <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
+                          Login
+                          </button>
+                        </div>
+                        </form>
+
+                        <p class="text-muted text-center">New user? <a href="#">Create Account</a></p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </section>
+
+{{ template "footer.html" . }}

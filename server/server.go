@@ -88,8 +88,20 @@ func newEcho() (*echo.Echo, error) {
 	e.HideBanner = true
 	e.Use(middleware.Recover())
 	e.Logger = EchoLogger()
+
 	assetHandler := http.FileServer(getAssetsFS())
 	e.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", assetHandler)))
+
+	e.Use(CacheControl)
+	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		TokenLookup:    "form:csrf",
+		CookieSecure:   !viper.GetBool("develop"),
+		CookieHTTPOnly: true,
+	}))
+	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
+		XFrameOptions:         "DENY",
+		ContentSecurityPolicy: "default-src 'self' 'unsafe-inline'; img-src 'self' data:;script-src 'self' 'unsafe-inline';",
+	}))
 
 	renderer, err := NewTemplateRenderer()
 	if err != nil {

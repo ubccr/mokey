@@ -28,6 +28,15 @@ type Handler struct {
 	verifier *oidc.IDTokenVerifier
 }
 
+type FakeTLSTransport struct {
+	T http.RoundTripper
+}
+
+func (ftt *FakeTLSTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Add("X-Forwarded-Proto", "https")
+	return ftt.T.RoundTrip(req)
+}
+
 func NewHandler() (*Handler, error) {
 	h := &Handler{}
 
@@ -82,7 +91,7 @@ func NewHandler() (*Handler, error) {
 			ClientSecret: viper.GetString("globus_secret"),
 			Endpoint:     provider.Endpoint(),
 			Scopes:       []string{"openid", "profile", "urn:globus:auth:scope:auth.globus.org:view_identity_set", "email", "urn:globus:auth:scope:auth.globus.org:view_identities"},
-			RedirectURL:  viper.GetString("email_link_base") + Path("/auth/globus/redirect"),
+			RedirectURL:  viper.GetString("email_link_base") + "/auth/globus/redirect",
 		}
 
 		h.verifier = provider.Verifier(&oidc.Config{ClientID: clientID, SupportedSigningAlgs: []string{"RS512"}})
@@ -92,11 +101,13 @@ func NewHandler() (*Handler, error) {
 }
 
 func (h *Handler) SetupRoutes(e *echo.Echo) {
-	e.GET(Path("/"), h.Index).Name = "index"
-	e.GET(Path("/security"), h.Security).Name = "security"
-	e.GET(Path("/sshkeys"), h.SSHKeys).Name = "sshkeys"
-	e.GET(Path("/otp"), h.OTPTokens).Name = "otptokens"
-	e.GET(Path("/password"), h.Password).Name = "password"
+	e.GET("/", h.Index).Name = "index"
+	e.GET("/auth/login", h.LoginGet).Name = "login"
+	e.POST("/auth/login", h.LoginPost).Name = "login-post"
+	e.GET("/security", h.Security).Name = "security"
+	e.GET("/sshkeys", h.SSHKeys).Name = "sshkeys"
+	e.GET("/otp", h.OTPTokens).Name = "otptokens"
+	e.GET("/password", h.Password).Name = "password"
 }
 
 func (h *Handler) Index(c echo.Context) error {
