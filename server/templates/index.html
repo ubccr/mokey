@@ -1,58 +1,260 @@
-{{define "content"}}
-<h3 class="mb-4">Account Settings</h3>
-<div class="row">
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">First Name</label>
-		  	<input type="text" class="form-control" value="Andrew">
+{{ template "header.html" . }}
+
+<section class="col-lg-8 mx-auto p-3 py-md-5">
+	<div class="container">
+		<h1 class="mb-5">Account Settings</h1>
+		<div class="bg-white shadow rounded-3 d-block d-sm-flex">
+			<div class="profile-tab-nav border-end">
+				<div class="p-4">
+					<div class="img-circle text-center mb-3">
+						<img src="/static/images/user-circle.png" alt="Gravatar" class="shadow">
+					</div>
+					<h4 class="text-center">Andrew Bruno</h4>
+				</div>
+				<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+					<a class="nav-link active" id="account-tab" data-bs-toggle="pill" href="#account" role="tab" aria-controls="account" aria-selected="true">
+						<i class="fa fa-home text-center me-1"></i> 
+						Account
+					</a>
+					<a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" role="tab" aria-controls="password" aria-selected="false">
+						<i class="fa fa-lock text-center me-1"></i> 
+						Password
+					</a>
+					<a class="nav-link" id="security-tab" data-bs-toggle="pill" href="#security" role="tab" aria-controls="security" aria-selected="false">
+						<i class="fa fa-shield text-center me-1"></i> 
+						Security
+					</a>
+					<a class="nav-link" id="sshkey-tab" data-bs-toggle="pill" href="#sshkey" role="tab" aria-controls="sshkey" aria-selected="false">
+						<i class="fa fa-key text-center me-1"></i> 
+						SSH Keys
+					</a>
+					<a class="nav-link" id="otp-tab" data-bs-toggle="pill" href="#otp" role="tab" aria-controls="otp" aria-selected="false">
+						<i class="fa fa-fingerprint text-center me-1"></i> 
+						OTP Tokens
+					</a>
+					<a class="nav-link" id="logout" href="#logout" role="tab" aria-controls="otp" aria-selected="false">
+						<i class="fa fa-arrow-right-from-bracket text-center me-1"></i> 
+						Logout
+					</a>
+				</div>
+			</div>
+			<div class="tab-content p-4 p-md-5" id="v-pills-tabContent">
+				<div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab">
+					<h3 class="mb-4">Account Settings</h3>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">First Name</label>
+							  	<input type="text" class="form-control" value="Andrew">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">Last Name</label>
+							  	<input type="text" class="form-control" value="Bruno">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">Email</label>
+							  	<input type="text" class="form-control" value="aebruno2@buffalo.edu">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">Phone number</label>
+							  	<input type="text" class="form-control" value="+91 9876543215">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">UID</label>
+							  	<input type="text" class="form-control" value="aebruno2" disabled readonly>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">Password Expiration</label>
+							  	<input type="text" class="form-control" value="Jan 01, 0001 00:00:00 UTC" disabled readonly>
+							</div>
+						</div>
+						<div class="col-md-12">
+							<div class="mb-3">
+							  	<label class="form-label">Groups</label>
+                                <div class="form-control-plaintext">
+                                        <span class="badge rounded-pill bg-dark">big</span> 
+                                        <span class="badge rounded-pill bg-dark">ccrtech</span> 
+                                        <span class="badge rounded-pill bg-dark">sysadmin</span> 
+                                        <span class="badge rounded-pill bg-dark">academic</span> 
+                                        <span class="badge rounded-pill bg-dark">lakeeffect-ccradmin</span> 
+                                        <span class="badge rounded-pill bg-dark">ccrstaff</span> 
+                                        <span class="badge rounded-pill bg-dark">admins</span> 
+							    </div>
+							</div>
+						</div>
+					</div>
+					<div>
+						<button class="btn btn-primary">Update</button>
+					</div>
+				</div>
+				<div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
+					<h3 class="mb-4">Change Password</h3>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">OTP Code</label>
+							  	<input type="otp" class="form-control">
+                                <div id="otpHelp" class="form-text">Enter the six-digit auth code from your mobile app</div>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">Current password</label>
+							  	<input type="password" class="form-control">
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">New password</label>
+							  	<input type="password" class="form-control">
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+							  	<label class="form-label">Confirm new password</label>
+							  	<input type="password" class="form-control">
+							</div>
+						</div>
+					</div>
+					<div>
+						<button class="btn btn-primary">Update</button>
+					</div>
+				</div>
+				<div class="tab-pane fade" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab">
+					<h3 class="mb-4">SSH Keys</h3>
+					<div class="text-end">
+						<button type="button" class="btn btn-success end">
+						  <i class="fa fa-plus"></i> New SSH Key
+						</button>
+					</div>
+					<div class="row">
+
+						<div class="d-flex flex-items-center">
+							<div class="text-center d-flex flex-column">
+							   <i class="fa fa-key fa-2x"></i>
+							</div>
+							<div class="flex-grow-1 ms-3">
+							  <strong class="d-block">cardno:000604239319</strong>
+							  <span title="Public key fingerprint">
+								<code style="overflow-wrap: anywhere">SHA256:T4api9xBqxGmmCVk2o+A8YUlxOLvTBga2ky4YcaJhmw</code>
+							  </span>
+							  <span class="text-muted d-block">
+								  <span class="">aebruno2@buffalo.edu ssh-rsa</span>
+							  </span>
+                              <p>
+                                  <button class="btn btn-sm btn-outline-danger ml-1" role="button">Delete</button>
+                              </p>
+							</div>
+						</div>
+
+					</div>
+                    <div class="row">
+
+						<div class="d-flex flex-items-center">
+							<div class="text-center d-flex flex-column">
+							   <i class="fa fa-key fa-2x"></i>
+							</div>
+							<div class="flex-grow-1 ms-3">
+							  <strong class="d-block">cardno:000604239319</strong>
+							  <span title="Public key fingerprint">
+								<code style="overflow-wrap: anywhere">SHA256:T4api9xBqxGmmCVk2o+A8YUlxOLvTBga2ky4YcaJhmw</code>
+							  </span>
+							  <span class="text-muted d-block">
+								  <span class="">aebruno2@buffalo.edu ssh-rsa</span>
+							  </span>
+                              <p>
+                                  <button class="btn btn-sm btn-outline-danger ml-1" role="button">Delete</button>
+                              </p>
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+				<div class="tab-pane fade" id="otp" role="tabpanel" aria-labelledby="otp-tab">
+					<h3 class="mb-4">OTP Tokens</h3>
+					<div class="text-end">
+						<button type="button" class="btn btn-success end">
+						  <i class="fa fa-plus"></i> New Token
+						</button>
+					</div>
+					<div class="row">
+
+						<div class="d-flex flex-items-center">
+							<div class="text-center d-flex flex-column">
+							   <i class="fa fa-fingerprint fa-2x"></i>
+							   <span title="Type">
+							       <code style="overflow-wrap: anywhere">TOTP</code>
+							   </span>
+							</div>
+							<div class="flex-grow-1 ms-3">
+							  <strong class="d-block">82119e7b-78d8-4c22-a6b3-53362002be4f</strong>
+							  <span class="text-muted d-block">
+								  <span class="">Description</span>
+							  </span>
+                              <p>
+                                  <button class="btn btn-sm btn-success ml-1" title="Click to Disable" role="button"><i class="fa fa-toggle-on fa-lg"></i> Enabled</button>
+                                  <button class="btn btn-sm btn-outline-danger ml-1" role="button">Delete</button>
+                              </p>
+							</div>
+						</div>
+
+					</div>
+                    <div class="row">
+
+						<div class="d-flex flex-items-center">
+							<div class="text-center d-flex flex-column">
+							   <i class="fa fa-fingerprint fa-2x"></i>
+							   <span title="Type">
+							       <code style="overflow-wrap: anywhere">HOTP</code>
+							   </span>
+							</div>
+							<div class="flex-grow-1 ms-3">
+							  <strong class="d-block">aebruno2-yubi</strong>
+							  <span class="text-muted d-block">
+								  <span class="">Description</span>
+							  </span>
+                              <p>
+                                  <button class="btn btn-sm btn-outline-secondary ml-1" title="Click to Enable" role="button"><i class="fa fa-toggle-off fa-lg"></i> Disabled</button>
+                                  <button class="btn btn-sm btn-outline-danger ml-1" role="button">Delete</button>
+                              </p>
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+				<div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+					<h3 class="mb-4">Security Settings</h3>
+					<div class="card">
+					  <div class="card-header">
+						Authentication Methods
+					  </div>
+					  <ul class="list-group list-group-flush">
+						<li class="list-group-item">Two-factor authentication
+                        <button role="button" class="btn btn-sm btn-success text-center position-absolute top-50 end-0 translate-middle btn-alternate-hide">Enabled</button>
+                        <button type="button" class="btn btn-sm btn-danger text-center position-absolute top-50 end-0 translate-middle btn-alternate-show">Disable</button>
+						</li>
+					  </ul>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Last Name</label>
-		  	<input type="text" class="form-control" value="Bruno">
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Email</label>
-		  	<input type="text" class="form-control" value="aebruno2@buffalo.edu">
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Phone number</label>
-		  	<input type="text" class="form-control" value="+91 9876543215">
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">UID</label>
-		  	<input type="text" class="form-control" value="aebruno2" disabled readonly>
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Password Expiration</label>
-		  	<input type="text" class="form-control" value="Jan 01, 0001 00:00:00 UTC" disabled readonly>
-		</div>
-	</div>
-	<div class="col-md-12">
-		<div class="mb-3">
-		  	<label class="form-label">Groups</label>
-            <div class="form-control-plaintext">
-                    <span class="badge rounded-pill bg-dark">big</span> 
-                    <span class="badge rounded-pill bg-dark">ccrtech</span> 
-                    <span class="badge rounded-pill bg-dark">sysadmin</span> 
-                    <span class="badge rounded-pill bg-dark">academic</span> 
-                    <span class="badge rounded-pill bg-dark">lakeeffect-ccradmin</span> 
-                    <span class="badge rounded-pill bg-dark">ccrstaff</span> 
-                    <span class="badge rounded-pill bg-dark">admins</span> 
-		    </div>
-		</div>
-	</div>
-</div>
-<div>
-	<button class="btn btn-primary">Update</button>
-</div>
-{{end}}
+</section>
+
+{{ template "footer.html" . }}

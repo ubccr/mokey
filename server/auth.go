@@ -24,8 +24,8 @@ func (h *Handler) LoginPost(c echo.Context) error {
 		"enable_user_signup": viper.GetBool("enable_user_signup"),
 	}
 
-	time.Sleep(time.Second * 15)
-	return c.Render(http.StatusOK, "partials/login-form.html", vars)
+	time.Sleep(time.Second * 3)
+	return c.Render(http.StatusOK, "login-form.html", vars)
 }
 
 func (h *Handler) LoginGet(c echo.Context) error {

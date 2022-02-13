@@ -27,6 +27,26 @@ document.body.addEventListener('htmx:beforeRequest', function (evt) {
     document.getElementById(targetError.value).style.display = "none";
   }
 });
+
+var triggerTabList = [].slice.call(document.querySelectorAll('#v-pills-tab a'))
+triggerTabList.forEach(function (triggerEl) {
+  var tabTrigger = new bootstrap.Tab(triggerEl)
+
+  triggerEl.addEventListener('click', function (event) {
+    event.preventDefault()
+    tabTrigger.show()
+  })
+})
+
+
+var url = window.location.href;
+var activeTab = url.substring(url.indexOf("#") + 1);
+var triggerEl = document.querySelector('#v-pills-tab a[href="#'+activeTab+'"]');
+if(triggerEl == null) {
+    triggerEl = document.querySelector('#v-pills-tab a[href="#account"]');
+}
+
+bootstrap.Tab.getInstance(triggerEl).show();
 </script>
 </body>
 </html>
