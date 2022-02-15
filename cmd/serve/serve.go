@@ -31,6 +31,8 @@ func init() {
 	viper.BindPFlag("cert", serveCmd.Flags().Lookup("cert"))
 	serveCmd.Flags().String("key", "", "path to ssl key")
 	viper.BindPFlag("key", serveCmd.Flags().Lookup("key"))
+	serveCmd.Flags().String("dbpath", "/var/mokey/mokey.db", "path to mokey database")
+	viper.BindPFlag("dbpath", serveCmd.Flags().Lookup("dbpath"))
 
 	cmd.Root.AddCommand(serveCmd)
 }
@@ -45,17 +47,15 @@ func serve() error {
 	srv.CertFile = viper.GetString("cert")
 
 	go func() {
-		if err := srv.Serve(); err != nil {
-			logrus.Errorf("Server failed with error: %s", err)
-		}
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, os.Interrupt)
+		<-quit
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		logrus.Debug("Shutting down server")
+		srv.Shutdown(ctx)
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	logrus.Debug("Shutting down server")
-	return srv.Shutdown(ctx)
+	return srv.Serve()
 }

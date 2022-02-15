@@ -5,13 +5,77 @@
 package server
 
 import (
-	"github.com/labstack/echo/v4"
+	"fmt"
+
+	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 )
 
-func CacheControl(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		c.Response().Header().Set("Cache-Control", "no-store")
-		c.Response().Header().Set("Pragma", "no-cache")
-		return next(c)
+func SecureHeaders(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderXXSSProtection, "1; mode=block")
+	c.Set(fiber.HeaderXContentTypeOptions, "nosniff")
+	c.Set(fiber.HeaderXFrameOptions, "DENY")
+	c.Set(fiber.HeaderContentSecurityPolicy, "default-src 'self' 'unsafe-inline'; img-src 'self' data:;script-src 'self' 'unsafe-inline'")
+	c.Set("Cache-Control", "no-store")
+	c.Set("Pragma", "no-cache")
+	return c.Next()
+}
+
+func NotFoundHandler(c *fiber.Ctx) error {
+	log.WithFields(log.Fields{
+		"path": c.Path(),
+		"ip":   c.IP(),
+	}).Info("Requested path not found")
+
+	return c.Render("404.html", fiber.Map{})
+}
+
+func CSRFErrorHandler(c *fiber.Ctx, err error) error {
+	log.WithFields(log.Fields{
+		"path": c.Path(),
+		"err":  err,
+		"ip":   c.IP(),
+	}).Error("Invalid CSRF token in POST request")
+
+	return fiber.ErrForbidden
+}
+
+func HTTPErrorHandler(c *fiber.Ctx, err error) error {
+	path := c.Path()
+	code := fiber.StatusInternalServerError
+
+	if e, ok := err.(*fiber.Error); ok {
+		code = e.Code
 	}
+
+	log.WithFields(log.Fields{
+		"code": code,
+		"path": path,
+		"ip":   c.IP(),
+	}).Error(err)
+
+	if c.Locals("partial") == "true" {
+		return c.Status(code).SendString("")
+	}
+
+	errorPage := fmt.Sprintf("%d.html", code)
+	err = c.Render(errorPage, nil)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"code":  code,
+			"path":  path,
+			"error": err,
+			"ip":    c.IP(),
+		}).Error("Failed to render custom error page")
+		return c.Status(code).SendString("")
+	}
+
+	return nil
+}
+
+func LimitReachedHandler(c *fiber.Ctx) error {
+	log.WithFields(log.Fields{
+		"ip": c.IP(),
+	}).Warn("Limit reached")
+	return c.Status(fiber.StatusForbidden).SendString("Too many requests")
 }

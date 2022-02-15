@@ -6,10 +6,11 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/labstack/echo/v4"
-	log "github.com/sirupsen/logrus"
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/viper"
+	"github.com/ubccr/goipa"
 )
 
 //go:embed templates
@@ -17,7 +18,8 @@ var templateFiles embed.FS
 
 // Template functions
 var funcMap = template.FuncMap{
-	"uri": URI,
+	"SplitSSHFP": SplitSSHFP,
+	"TimeAgo":    TimeAgo,
 }
 
 type TemplateRenderer struct {
@@ -26,7 +28,9 @@ type TemplateRenderer struct {
 
 func NewTemplateRenderer() (*TemplateRenderer, error) {
 
-	tmpl, err := template.ParseFS(templateFiles, "templates/*.html")
+	tmpl := template.New("")
+	tmpl.Funcs(funcMap)
+	tmpl, err := tmpl.ParseFS(templateFiles, "templates/*.html")
 	if err != nil {
 		return nil, err
 	}
@@ -53,6 +57,15 @@ func NewTemplateRenderer() (*TemplateRenderer, error) {
 	return t, nil
 }
 
+func (t *TemplateRenderer) Load() error {
+	return nil
+}
+
+func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, layouts ...string) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+/*
 func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	if viewContext, isMap := data.(map[string]interface{}); isMap {
 		viewContext["reverse"] = c.Echo().Reverse
@@ -60,19 +73,27 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 
 	return t.templates.ExecuteTemplate(w, name, data)
 }
+*/
 
-func URI(c echo.Context, name string) string {
-	if strings.HasPrefix(name, "/static") || strings.HasPrefix(name, "/auth/captcha/") {
-		return name
+func TimeAgo(dt *ipa.IpaDateTime) string {
+	return humanize.Time(time.Time(*dt))
+}
+
+func SplitSSHFP(fp string) []string {
+	if fp == "" {
+		return []string{"", "", ""}
 	}
 
-	if c != nil {
-		return c.Echo().Reverse(name)
+	parts := strings.Split(fp, " ")
+	if len(parts) == 1 {
+		return []string{parts[0], "", ""}
 	}
 
-	log.WithFields(log.Fields{
-		"name": name,
-	}).Error("Failed to build URI. Echo context nil")
+	if len(parts) == 2 {
+		return []string{parts[0], parts[1], ""}
+	}
 
-	return name
+	parts[2] = strings.TrimLeft(parts[2], "(")
+	parts[2] = strings.TrimRight(parts[2], ")")
+	return parts
 }

@@ -2,18 +2,20 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"embed"
-	"fmt"
+	"errors"
 	"io/fs"
-	"net"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/csrf"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
+	frecover "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/storage/sqlite3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -23,46 +25,26 @@ const (
 )
 
 //go:embed templates/static
-var staticFiles embed.FS
+var staticFS embed.FS
 
 type Server struct {
-	ListenAddress net.IP
-	Port          int
+	ListenAddress string
 	Scheme        string
 	KeyFile       string
 	CertFile      string
-	httpServer    *http.Server
+	app           *fiber.App
 }
 
 func NewServer(address string) (*Server, error) {
 	s := &Server{}
+	s.ListenAddress = address
 
-	shost, sport, err := net.SplitHostPort(address)
+	app, err := newFiber()
 	if err != nil {
 		return nil, err
 	}
 
-	if shost == "" {
-		shost = net.IPv4zero.String()
-	}
-
-	port := DefaultPort
-	if sport != "" {
-		var err error
-		port, err = strconv.Atoi(sport)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	s.Port = port
-
-	ip := net.ParseIP(shost)
-	if ip == nil || ip.To4() == nil {
-		return nil, fmt.Errorf("Invalid IPv4 address: %s", shost)
-	}
-
-	s.ListenAddress = ip
+	s.app = app
 
 	return s, nil
 }
@@ -74,7 +56,7 @@ func getAssetsFS() http.FileSystem {
 		return http.FS(os.DirFS(staticLocalPath))
 	}
 
-	fsys, err := fs.Sub(staticFiles, "templates/static")
+	fsys, err := fs.Sub(staticFS, "templates/static")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,116 +64,108 @@ func getAssetsFS() http.FileSystem {
 	return http.FS(fsys)
 }
 
-func newEcho() (*echo.Echo, error) {
-	e := echo.New()
-	e.HTTPErrorHandler = HTTPErrorHandler
-	e.HideBanner = true
-	e.Use(middleware.Recover())
-	e.Logger = EchoLogger()
+func recoverInvalidStorage() {
+	if r := recover(); r != nil {
+		log.Errorf("dbpath %s: %s", viper.GetString("dbpath"), r)
+	}
+}
 
-	assetHandler := http.FileServer(getAssetsFS())
-	e.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", assetHandler)))
+func newStorage() fiber.Storage {
+	defer recoverInvalidStorage()
+	storage := sqlite3.New(sqlite3.Config{
+		Database: viper.GetString("dbpath"),
+		Table:    "mokey_data",
+	})
 
-	e.Use(CacheControl)
-	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup:    "form:csrf",
-		CookieSecure:   !viper.GetBool("develop"),
-		CookieHTTPOnly: true,
+	return storage
+}
+
+func newFiber() (*fiber.App, error) {
+	engine, err := NewTemplateRenderer()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storage := newStorage()
+	if storage == nil {
+		return nil, errors.New("Failed to open mokey storage database")
+	}
+
+	app := fiber.New(fiber.Config{
+		Prefork:               false,
+		CaseSensitive:         true,
+		StrictRouting:         true,
+		ReadTimeout:           5 * time.Second,
+		WriteTimeout:          5 * time.Second,
+		IdleTimeout:           120 * time.Second,
+		AppName:               "mokey",
+		DisableStartupMessage: false,
+		PassLocalsToViews:     true,
+		ErrorHandler:          HTTPErrorHandler,
+		Views:                 engine,
+	})
+
+	app.Use(frecover.New())
+
+	app.Use(csrf.New(csrf.Config{
+		//KeyLookup: "form:csrf",
+		KeyLookup:      "header:X-CSRF-Token",
+		CookieName:     "csrf_",
+		CookieSameSite: "Strict",
+		Expiration:     1 * time.Hour,
+		ContextKey:     "csrf",
+		ErrorHandler:   CSRFErrorHandler,
+		//Storage:        storage,
 	}))
-	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
-		XFrameOptions:         "DENY",
-		ContentSecurityPolicy: "default-src 'self' 'unsafe-inline'; img-src 'self' data:;script-src 'self' 'unsafe-inline';",
+
+	app.Use(SecureHeaders)
+
+	app.Use(limiter.New(limiter.Config{
+		SkipSuccessfulRequests: false,
+		Storage:                storage,
+		LimitReached:           LimitReachedHandler,
+		Next: func(c *fiber.Ctx) bool {
+			// Only limit POST requests
+			return c.Method() != "POST"
+		},
 	}))
 
-	renderer, err := NewTemplateRenderer()
+	router, err := NewRouter(storage)
 	if err != nil {
 		return nil, err
 	}
 
-	e.Renderer = renderer
+	router.SetupRoutes(app)
 
-	return e, nil
-}
+	assetsFS := getAssetsFS()
+	app.Use("/static", filesystem.New(filesystem.Config{
+		Root:   assetsFS,
+		Browse: false,
+	}))
 
-func HTTPErrorHandler(err error, c echo.Context) {
-	if c.Response().Committed {
-		return
-	}
+	app.Use(favicon.New(favicon.Config{
+		File:       "images/favicon.ico",
+		FileSystem: assetsFS,
+	}))
 
-	path := c.Request().URL.Path
-	code := http.StatusInternalServerError
+	// This must be last
+	app.Use(NotFoundHandler)
 
-	if he, ok := err.(*echo.HTTPError); ok {
-		if he.Code == http.StatusNotFound {
-			log.WithFields(log.Fields{
-				"path": path,
-				"ip":   c.RealIP(),
-			}).Info("Requested path not found")
-		} else {
-			log.WithFields(log.Fields{
-				"code": he.Code,
-				"err":  he.Internal,
-				"path": path,
-				"ip":   c.RealIP(),
-			}).Error(he.Message)
-		}
-		code = he.Code
-	} else {
-		log.WithFields(log.Fields{
-			"err":  err,
-			"path": path,
-			"ip":   c.RealIP(),
-		}).Error("HTTP Error")
-	}
-
-	errorPage := fmt.Sprintf("%d.html", code)
-	if err := c.Render(code, errorPage, nil); err != nil {
-		c.Logger().Error(err)
-		c.String(code, "")
-	}
+	return app, nil
 }
 
 func (s *Server) Serve() error {
-	e, err := newEcho()
-	if err != nil {
-		return err
-	}
-
-	h, err := NewHandler()
-	if err != nil {
-		return err
-	}
-
-	h.SetupRoutes(e)
-
-	httpServer := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", s.ListenAddress, s.Port),
-		ReadTimeout:  15 * time.Minute,
-		WriteTimeout: 15 * time.Minute,
-		IdleTimeout:  120 * time.Second,
-	}
-
 	if s.CertFile != "" && s.KeyFile != "" {
-		cfg := &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		}
-
-		httpServer.TLSConfig = cfg
-		httpServer.TLSConfig.Certificates = make([]tls.Certificate, 1)
-		httpServer.TLSConfig.Certificates[0], err = tls.LoadX509KeyPair(s.CertFile, s.KeyFile)
-		if err != nil {
+		s.Scheme = "https"
+		log.Infof("Listening on %s://%s", s.Scheme, s.ListenAddress)
+		if err := s.app.ListenTLS(":8080", s.CertFile, s.KeyFile); err != nil {
 			return err
 		}
-
-		s.Scheme = "https"
-		httpServer.Addr = fmt.Sprintf("%s:%d", s.ListenAddress, s.Port)
-	} else {
-		s.Scheme = "http"
 	}
 
-	s.httpServer = httpServer
-	log.Infof("Listening on %s://%s:%d", s.Scheme, s.ListenAddress, s.Port)
-	if err := e.StartServer(httpServer); err != nil && err != http.ErrServerClosed {
+	s.Scheme = "http"
+	log.Infof("Listening on %s://%s", s.Scheme, s.ListenAddress)
+	if err := s.app.Listen(":8080"); err != nil {
 		return err
 	}
 
@@ -199,9 +173,9 @@ func (s *Server) Serve() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	if s.httpServer == nil {
+	if s.app == nil {
 		return nil
 	}
 
-	return s.httpServer.Shutdown(ctx)
+	return s.app.Shutdown()
 }

@@ -1,13 +1,10 @@
 
 <div class="container">
   <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
-    <p class="col-md-4 mb-0 text-muted">&copy; Center for Computational Research</p>
+    <p class="col-md-4 mb-0 text-muted">Powered by <a href="https://github.com/ubccr/mokey"><i class="fa-brands fa-github" aria-hidden="true"></i> mokey</a></p>
 
     <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
       <li class="ms-3"><a class="text-muted" href="#"><i class="fa fa-circle-question fa-lg"></i></a></li>
-      <li class="ms-3"><a class="text-muted" href="#"><i class="fa-brands fa-twitter fa-lg"></i></a></li>
-      <li class="ms-3"><a class="text-muted" href="#"><i class="fa-brands fa-youtube fa-lg"></i></li>
-      <li class="ms-3"><a class="text-muted" href="#"><i class="fa-brands fa-facebook fa-lg"></i></li>
     </ul>
   </footer>
 </div>
@@ -18,6 +15,12 @@
 document.body.addEventListener('htmx:afterRequest', function (evt) {
   const targetError = evt.target.attributes.getNamedItem('hx-target-error')
   if (evt.detail.failed && targetError) {
+    msg = "Something bad happened. Please contact site admin";
+    if(evt.detail.xhr.status == 400 || evt.detail.xhr.status == 401) {
+        msg = evt.detail.xhr.responseText;
+    }
+
+    document.getElementById(targetError.value).innerHTML = msg;
     document.getElementById(targetError.value).style.display = "block";
   }
 });
@@ -28,10 +31,10 @@ document.body.addEventListener('htmx:beforeRequest', function (evt) {
   }
 });
 
+/*
 var triggerTabList = [].slice.call(document.querySelectorAll('#v-pills-tab a'))
 triggerTabList.forEach(function (triggerEl) {
   var tabTrigger = new bootstrap.Tab(triggerEl)
-
   triggerEl.addEventListener('click', function (event) {
     event.preventDefault()
     tabTrigger.show()
@@ -47,6 +50,7 @@ if(triggerEl == null) {
 }
 
 bootstrap.Tab.getInstance(triggerEl).show();
+*/
 </script>
 </body>
 </html>
