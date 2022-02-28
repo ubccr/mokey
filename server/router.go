@@ -70,30 +70,30 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 }
 
 func (r *Router) Index(c *fiber.Ctx) error {
-	user := c.Locals(ContextKeyUser).(string)
+	username := c.Locals(ContextKeyUser).(string)
 	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
 
-	userRec, err := client.UserShow(user)
+	user, err := client.UserShow(username)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error":            err,
-			"uid":              user,
+			"username":         username,
 			"ipa_client_error": err,
 		}).Error("Failed to fetch user info from FreeIPA")
 		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
 	}
 
-	tokens, err := client.FetchOTPTokens(user)
+	tokens, err := client.FetchOTPTokens(username)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"user":  user,
-			"error": err,
+			"username": username,
+			"error":    err,
 		}).Error("failed to fetch OTP Tokens")
 		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
 	}
 
 	vars := fiber.Map{
-		"user":      userRec,
+		"user":      user,
 		"otptokens": tokens,
 	}
 

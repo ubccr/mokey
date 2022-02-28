@@ -68,8 +68,8 @@
 						</div>
 						<div class="col-md-6">
 							<div class="mb-3">
-							  	<label class="form-label">UID</label>
-							  	<input type="text" class="form-control" value="{{ .user.Uid }}" disabled readonly>
+							  	<label class="form-label">Username</label>
+							  	<input type="text" class="form-control" value="{{ .user.Username }}" disabled readonly>
 							</div>
 						</div>
 						<div class="col-md-6">
@@ -142,21 +142,20 @@
 						</button>
 					</div>
 
-                    {{ range $i, $fp := .user.SSHPubKeyFps }}
-                    {{$sshfp := SplitSSHFP $fp}}
+                    {{ range $i, $key := .user.SSHAuthKeys }}
 					<div class="row">
 
 						<div class="d-flex flex-items-center">
 							<div class="text-center d-flex flex-column">
 							   <i class="fa fa-key fa-2x"></i>
 							   <span title="Type" class="border d-block f6 mt-1 px-1 rounded-pill text-muted">
-							       {{ index $sshfp 2 }}
+							       {{ $key.PublicKey.Type }}
 							   </span>
 							</div>
 							<div class="flex-grow-1 ms-3">
-							  <strong class="d-block">{{ index $sshfp 1 }}</strong>
+							  <strong class="d-block">{{ $key.Comment }}</strong>
 							  <span title="Public key fingerprint">
-								<code style="overflow-wrap: anywhere">{{ index $sshfp 0 }}</code>
+								<code style="overflow-wrap: anywhere">{{ $key.Fingerprint }}</code>
 							  </span>
                               <p>
                                   <button class="btn btn-sm btn-outline-danger ml-1" role="button">Delete</button>
@@ -190,7 +189,7 @@
 							<div class="flex-grow-1 ms-3">
 							  <strong class="d-block">{{ $tok.UUID }}</strong>
 							  <span class="text-muted d-block">
-								  <span class=""><!-- description goes here --></span>
+								  <span class="">{{ $tok.Description }}</span>
 							  </span>
                               <p>
                                   <button class="btn btn-sm btn-success ml-1" title="Click to Disable" role="button"><i class="fa fa-toggle-on fa-lg"></i> Enabled</button>

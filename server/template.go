@@ -10,7 +10,6 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
 )
 
 //go:embed templates
@@ -75,8 +74,8 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 }
 */
 
-func TimeAgo(dt *ipa.IpaDateTime) string {
-	return humanize.Time(time.Time(*dt))
+func TimeAgo(t time.Time) string {
+	return humanize.Time(t)
 }
 
 func SplitSSHFP(fp string) []string {
