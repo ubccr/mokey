@@ -40,30 +40,38 @@ func (r *Router) logout(c *fiber.Ctx) {
 	}
 }
 
+func (r *Router) redirectLogin(c *fiber.Ctx) error {
+	r.logout(c)
+
+	if c.Get("HX-Request", "false") == "true" {
+		c.Set("HX-Redirect", "/auth/login")
+		return c.Status(fiber.StatusNoContent).SendString("")
+	}
+
+	return c.Redirect("/auth/login")
+}
+
 func (r *Router) LoginRequired(c *fiber.Ctx) error {
 	sess, err := r.session(c)
 	if err != nil {
 		log.Warn("Failed to get user session. Logging out")
-		r.logout(c)
-		return c.Redirect("/auth/login")
+		return r.redirectLogin(c)
 	}
 
 	user := sess.Get(SessionKeyUser)
 	sid := sess.Get(SessionKeySID)
 	if sid == nil || user == nil {
-		return c.Redirect("/auth/login")
+		return r.redirectLogin(c)
 	}
 
 	if _, ok := user.(string); !ok {
 		log.Error("Invalid user in session")
-		r.logout(c)
-		return c.Redirect("/auth/login")
+		return r.redirectLogin(c)
 	}
 
 	if _, ok := sid.(string); !ok {
 		log.Error("Invalid sid in session")
-		r.logout(c)
-		return c.Redirect("/auth/login")
+		return r.redirectLogin(c)
 	}
 
 	client := ipa.NewDefaultClientWithSession(sid.(string))
@@ -75,8 +83,7 @@ func (r *Router) LoginRequired(c *fiber.Ctx) error {
 			"ip":               c.IP(),
 			"ipa_client_error": err,
 		}).Error("Failed to ping FreeIPA")
-		r.logout(c)
-		return c.Redirect("/auth/login")
+		return r.redirectLogin(c)
 	}
 
 	c.Locals(ContextKeyUser, user)
