@@ -20,7 +20,7 @@ body {
     max-width: 400px;
 }
 
-#login-failed {
+.login-failed {
     max-width: 500px;
 }
 

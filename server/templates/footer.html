@@ -11,26 +11,8 @@
 
 <script src="/static/js/htmx.min.js" integrity="sha384-tvG/2mnCFmGQzYC1Oh3qxQ7CkQ9kMzYjWZSNtrRZygHPDDqottzEJsqS4oUVodhW" crossorigin="anonymous"></script>
 <script src="/static/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+<script src="/static/js/site.js"></script>
 <script>
-document.body.addEventListener('htmx:afterRequest', function (evt) {
-  const targetError = evt.target.attributes.getNamedItem('hx-target-error')
-  if (evt.detail.failed && targetError) {
-    msg = "Something bad happened. Please contact site admin";
-    if(evt.detail.xhr.status == 400 || evt.detail.xhr.status == 401) {
-        msg = evt.detail.xhr.responseText;
-    }
-
-    document.getElementById(targetError.value).innerHTML = msg;
-    document.getElementById(targetError.value).style.display = "block";
-  }
-});
-document.body.addEventListener('htmx:beforeRequest', function (evt) {
-  const targetError = evt.target.attributes.getNamedItem('hx-target-error')
-  if (targetError) {
-    document.getElementById(targetError.value).style.display = "none";
-  }
-});
-
 /*
 var triggerTabList = [].slice.call(document.querySelectorAll('#v-pills-tab a'))
 triggerTabList.forEach(function (triggerEl) {
