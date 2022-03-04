@@ -28,7 +28,7 @@
 						<i class="fa fa-key text-center me-1"></i> 
 						SSH Keys
 					</a>
-					<a class="nav-link" id="otp-tab" data-bs-toggle="pill" href="#otp" role="tab" aria-controls="otp" aria-selected="false">
+					<a class="nav-link" id="otp-tab" data-bs-toggle="pill" href="#otp" data-hx-get="/otptoken/list" data-hx-target="#otp" role="tab" aria-controls="otp" aria-selected="false">
 						<i class="fa fa-fingerprint text-center me-1"></i> 
 						OTP Tokens
 					</a>
@@ -170,39 +170,6 @@
 
 				</div>
 				<div class="tab-pane fade" id="otp" role="tabpanel" aria-labelledby="otp-tab">
-					<h3 class="mb-4">OTP Tokens</h3>
-					<div class="mb-4 text-end">
-						<button type="button" class="btn btn-success end">
-						  <i class="fa fa-plus"></i> New Token
-						</button>
-					</div>
-
-                    {{ range $i, $tok := $.otptokens }}
-					<div class="row">
-						<div class="d-flex flex-items-center">
-							<div class="text-center d-flex flex-column">
-							   <i class="fa fa-fingerprint fa-2x"></i>
-							   <span title="Type">
-							       <code style="overflow-wrap: anywhere">{{ $tok.Type }}</code>
-							   </span>
-							</div>
-							<div class="flex-grow-1 ms-3">
-							  <strong class="d-block">{{ $tok.UUID }}</strong>
-							  <span class="text-muted d-block">
-								  <span class="">{{ $tok.Description }}</span>
-							  </span>
-                              <p>
-                                  <button class="btn btn-sm btn-success ml-1" title="Click to Disable" role="button"><i class="fa fa-toggle-on fa-lg"></i> Enabled</button>
-                                  <button class="btn btn-sm btn-outline-danger ml-1" role="button">Delete</button>
-                              </p>
-							</div>
-						</div>
-
-					</div>
-                    {{ else }}
-                        <p>No OTP tokens found</p>
-                    {{ end }}
-
 				</div>
 				<div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
 					<h3 class="mb-4">Security Settings</h3>

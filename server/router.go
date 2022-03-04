@@ -39,6 +39,7 @@ func (r *Router) session(c *fiber.Ctx) (*session.Session, error) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"path": c.Path(),
+			"err":  err,
 			"ip":   c.IP(),
 		}).Error("Failed to fetch session from storage")
 
@@ -52,6 +53,7 @@ func (r *Router) sessionSave(c *fiber.Ctx, sess *session.Session) error {
 	if err := sess.Save(); err != nil {
 		log.WithFields(log.Fields{
 			"path": c.Path(),
+			"err":  err,
 			"ip":   c.IP(),
 		}).Error("Failed to save session to storage")
 
@@ -62,7 +64,9 @@ func (r *Router) sessionSave(c *fiber.Ctx, sess *session.Session) error {
 }
 
 func (r *Router) SetupRoutes(app *fiber.App) {
-	app.Get("/", r.LoginRequired, r.Index)
+	app.Get("/", r.RequireLogin, r.Index)
+	app.Get("/otptoken/list", r.RequireLogin, r.RequireHTMX, r.OTPTokenList)
+	app.Post("/otptoken/add", r.RequireLogin, r.RequireHTMX, r.OTPTokenAdd)
 	app.Get("/auth/login", r.Login)
 	app.Get("/auth/logout", r.Logout)
 	app.Post("/auth/login", r.CheckUser)
@@ -75,26 +79,11 @@ func (r *Router) Index(c *fiber.Ctx) error {
 
 	user, err := client.UserShow(username)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error":            err,
-			"username":         username,
-			"ipa_client_error": err,
-		}).Error("Failed to fetch user info from FreeIPA")
-		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
-	}
-
-	tokens, err := client.FetchOTPTokens(username)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"username": username,
-			"error":    err,
-		}).Error("failed to fetch OTP Tokens")
-		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
+		return err
 	}
 
 	vars := fiber.Map{
-		"user":      user,
-		"otptokens": tokens,
+		"user": user,
 	}
 
 	return c.Render("index.html", vars)

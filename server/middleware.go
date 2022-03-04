@@ -27,6 +27,17 @@ func NotFoundHandler(c *fiber.Ctx) error {
 		"ip":   c.IP(),
 	}).Info("Requested path not found")
 
+	if c.Get("HX-Request", "false") == "true" {
+		err := c.Render("404-partial.html", nil)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("Failed to render custom error partial")
+			return c.Status(fiber.StatusNotFound).SendString("")
+		}
+		return nil
+	}
+
 	return c.Render("404.html", fiber.Map{})
 }
 
@@ -41,6 +52,7 @@ func CSRFErrorHandler(c *fiber.Ctx, err error) error {
 }
 
 func HTTPErrorHandler(c *fiber.Ctx, err error) error {
+	username := c.Locals(ContextKeyUser)
 	path := c.Path()
 	code := fiber.StatusInternalServerError
 
@@ -49,23 +61,33 @@ func HTTPErrorHandler(c *fiber.Ctx, err error) error {
 	}
 
 	log.WithFields(log.Fields{
-		"code": code,
-		"path": path,
-		"ip":   c.IP(),
+		"code":     code,
+		"username": username,
+		"path":     path,
+		"ip":       c.IP(),
 	}).Error(err)
 
-	if c.Locals("partial") == "true" {
+	if c.Locals("NoErrorTemplate") == "true" {
 		return c.Status(code).SendString("")
+	}
+
+	if c.Get("HX-Request", "false") == "true" {
+		errorPage := fmt.Sprintf("%d-partial.html", code)
+		err := c.Render(errorPage, nil)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Error("Failed to render custom error partial")
+			return c.Status(code).SendString("")
+		}
+		return nil
 	}
 
 	errorPage := fmt.Sprintf("%d.html", code)
 	err = c.Render(errorPage, nil)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"code":  code,
-			"path":  path,
 			"error": err,
-			"ip":    c.IP(),
 		}).Error("Failed to render custom error page")
 		return c.Status(code).SendString("")
 	}
@@ -78,4 +100,12 @@ func LimitReachedHandler(c *fiber.Ctx) error {
 		"ip": c.IP(),
 	}).Warn("Limit reached")
 	return c.Status(fiber.StatusForbidden).SendString("Too many requests")
+}
+
+func (r *Router) RequireHTMX(c *fiber.Ctx) error {
+	if c.Get("HX-Request", "false") == "true" {
+		return c.Next()
+	}
+
+	return c.Status(fiber.StatusBadRequest).SendString("")
 }

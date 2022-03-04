@@ -51,7 +51,7 @@ func (r *Router) redirectLogin(c *fiber.Ctx) error {
 	return c.Redirect("/auth/login")
 }
 
-func (r *Router) LoginRequired(c *fiber.Ctx) error {
+func (r *Router) RequireLogin(c *fiber.Ctx) error {
 	sess, err := r.session(c)
 	if err != nil {
 		log.Warn("Failed to get user session. Logging out")
@@ -93,7 +93,7 @@ func (r *Router) LoginRequired(c *fiber.Ctx) error {
 }
 
 func (r *Router) CheckUser(c *fiber.Ctx) error {
-	c.Locals("partial", "true")
+	c.Locals("NoErrorTemplate", "true")
 	username := c.FormValue("username")
 
 	if username == "" {
@@ -140,7 +140,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 }
 
 func (r *Router) Authenticate(c *fiber.Ctx) error {
-	c.Locals("partial", "true")
+	c.Locals("NoErrorTemplate", "true")
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 	otp := c.FormValue("otp")
@@ -174,14 +174,14 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 
 	sess, err := r.session(c)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("")
+		return err
 	}
 	sess.Set(SessionKeyAuthenticated, true)
 	sess.Set(SessionKeyUser, username)
 	sess.Set(SessionKeySID, client.SessionID())
 
 	if err := r.sessionSave(c, sess); err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("")
+		return err
 	}
 
 	c.Set("HX-Redirect", "/")
