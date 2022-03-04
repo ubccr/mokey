@@ -1,0 +1,46 @@
+{{  with $.message }}
+<div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+  {{ . }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{{ end }}
+<div id="mokey-modal"></div>
+<h3 class="mb-4">OTP Tokens</h3>
+<div class="mb-4 text-end">
+    <button type="button" 
+            hx-get="/otptoken/modal" 
+            hx-target="#mokey-modal" 
+            hx-trigger="click"
+            _="on htmx:afterOnLoad wait 10ms then add .show to #modal then add .show to #modal-backdrop"
+            class="btn btn-success end">
+      <i class="fa fa-plus"></i> New Token
+    </button>
+</div>
+{{ range $i, $tok := $.otptokens }}
+<div class="row">
+    <div class="d-flex flex-items-center">
+        <div class="text-center d-flex flex-column">
+           <i class="fa fa-fingerprint fa-2x"></i>
+           <span title="Type">
+               <code style="overflow-wrap: anywhere">{{ $tok.Type }}</code>
+           </span>
+        </div>
+        <div class="flex-grow-1 ms-3 mb-3">
+          <strong class="d-block">{{ if $tok.Description }}{{ $tok.Description }}{{ else }}{{ $tok.UUID }}{{ end }}</strong>
+          {{ if $tok.Description }}
+          <span title="UUID">
+            <code class="text-secondary" style="overflow-wrap: anywhere">UUID: {{ $tok.UUID }}</code>
+          </span>
+          {{ end }}
+          <span class="text-muted d-block mb-2">{{ if not $tok.NotBefore.IsZero }}Added on {{ $tok.NotBefore.Format "Jan 02, 2006" }}{{ end }}</span>
+          <p>
+              <button class="btn btn-sm btn-success ml-1" title="Click to Disable" role="button"><i class="fa fa-toggle-on fa-lg"></i> Enabled</button>
+              <button class="btn btn-sm btn-outline-danger ml-1" role="button">Delete</button>
+          </p>
+        </div>
+    </div>
+
+</div>
+{{ else }}
+    <p>No OTP tokens found</p>
+{{ end }}

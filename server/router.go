@@ -66,6 +66,7 @@ func (r *Router) sessionSave(c *fiber.Ctx, sess *session.Session) error {
 func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Get("/", r.RequireLogin, r.Index)
 	app.Get("/otptoken/list", r.RequireLogin, r.RequireHTMX, r.OTPTokenList)
+	app.Get("/otptoken/modal", r.RequireLogin, r.RequireHTMX, r.OTPTokenModal)
 	app.Post("/otptoken/add", r.RequireLogin, r.RequireHTMX, r.OTPTokenAdd)
 	app.Get("/auth/login", r.Login)
 	app.Get("/auth/logout", r.Logout)

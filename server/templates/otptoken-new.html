@@ -1,0 +1,44 @@
+<div id="modal-backdrop" class="modal-backdrop fade show" style="display:block;"></div>
+<div id="modal" class="modal fade show" tabindex="-1" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form>
+        <div class="modal-header">
+           <h5 class="modal-title" id="modalLabel"><i class="fa fa-fingerprint"></i> Add New TOTP Token</h5>
+        </div>
+        <div id="modal-body" class="modal-body">
+            <div id="add-token-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto" role="alert">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Token Description</label>
+                <input type="text" class="form-control" name="desc" id="desc" value="" aria-describedby="tokenHelpBlock">
+                <div id="tokenHelpBlock" class="form-text">
+                    Enter description of token (for example what device this will
+                    be used with) then click Add button below to create new TOTP
+                    token. The QR code will appear on the next screen. Make sure you scan
+                    using your authenticator app.
+                </div>
+            </div>
+            <div class="mb-3">
+                <img src="/static/images/scan-qr-code.png" class="img-fluid" alt="Scan QR Code">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Close</button>
+          <button 
+            hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+            hx-target-error="add-token-failed"
+            hx-post="/otptoken/add"
+            hx-target="#modal"
+            hx-swap="innerHTML"
+            class="btn btn-success"
+            type="submit">
+          <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
+          Add
+          </button>
+        </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
