@@ -4,11 +4,12 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/util"
 )
 
-func (r *Router) OTPTokenList(c *fiber.Ctx) error {
+func (r *Router) tokenList(c *fiber.Ctx, vars fiber.Map) error {
 	username := c.Locals(ContextKeyUser).(string)
 	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
 
@@ -17,15 +18,74 @@ func (r *Router) OTPTokenList(c *fiber.Ctx) error {
 		return err
 	}
 
-	vars := fiber.Map{
-		"otptokens": tokens,
-	}
+	vars["otptokens"] = tokens
 	return c.Render("otptoken-list.html", vars)
+}
+
+func (r *Router) OTPTokenList(c *fiber.Ctx) error {
+	return r.tokenList(c, fiber.Map{})
 }
 
 func (r *Router) OTPTokenModal(c *fiber.Ctx) error {
 	vars := fiber.Map{}
 	return c.Render("otptoken-new.html", vars)
+}
+
+func (r *Router) OTPTokenRemove(c *fiber.Ctx) error {
+	uuid := c.FormValue("uuid")
+	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	username := c.Locals(ContextKeyUser).(string)
+	vars := fiber.Map{}
+
+	err := client.RemoveOTPToken(uuid)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uuid":     uuid,
+			"username": username,
+			"err":      err,
+		}).Error("Failed to delete OTP token")
+		vars["message"] = "Failed to remove token"
+	}
+
+	return r.tokenList(c, vars)
+}
+
+func (r *Router) OTPTokenEnable(c *fiber.Ctx) error {
+	uuid := c.FormValue("uuid")
+	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	username := c.Locals(ContextKeyUser).(string)
+	vars := fiber.Map{}
+
+	err := client.EnableOTPToken(uuid)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uuid":     uuid,
+			"username": username,
+			"err":      err,
+		}).Error("Failed to enable OTP token")
+		vars["message"] = "Failed to enable token"
+	}
+
+	return r.tokenList(c, vars)
+}
+
+func (r *Router) OTPTokenDisable(c *fiber.Ctx) error {
+	uuid := c.FormValue("uuid")
+	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	username := c.Locals(ContextKeyUser).(string)
+	vars := fiber.Map{}
+
+	err := client.DisableOTPToken(uuid)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"uuid":     uuid,
+			"username": username,
+			"err":      err,
+		}).Error("Failed to disable OTP token")
+		vars["message"] = "Failed to disable token"
+	}
+
+	return r.tokenList(c, vars)
 }
 
 func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
@@ -52,7 +112,7 @@ func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
 		return err
 	}
 
-	otpdata, err := util.QRCode(token)
+	otpdata, err := util.QRCode(token, client.Realm())
 	if err != nil {
 		return err
 	}
