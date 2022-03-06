@@ -6,12 +6,12 @@
 {{ end }}
 <div id="otptoken-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
 </div>
-<div id="mokey-modal"></div>
+<div id="otptoken-modal"></div>
 <h3 class="mb-4">OTP Tokens</h3>
 <div class="mb-4 text-end">
     <button type="button" 
             hx-get="/otptoken/modal" 
-            hx-target="#mokey-modal" 
+            hx-target="#otptoken-modal" 
             hx-trigger="click"
             _="on htmx:afterOnLoad wait 10ms then add .show to #modal then add .show to #modal-backdrop"
             class="btn btn-primary end">

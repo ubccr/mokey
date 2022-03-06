@@ -65,16 +65,26 @@ func (r *Router) sessionSave(c *fiber.Ctx, sess *session.Session) error {
 
 func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Get("/", r.RequireLogin, r.Index)
+
+	// Auth
+	app.Get("/auth/login", r.Login)
+	app.Get("/auth/logout", r.Logout)
+	app.Post("/auth/login", r.CheckUser)
+	app.Post("/auth/authenticate", r.Authenticate)
+
+	// SSH Keys
+	app.Get("/sshkey/list", r.RequireLogin, r.RequireHTMX, r.SSHKeyList)
+	app.Get("/sshkey/modal", r.RequireLogin, r.RequireHTMX, r.SSHKeyModal)
+	app.Post("/sshkey/add", r.RequireLogin, r.RequireHTMX, r.SSHKeyAdd)
+	app.Post("/sshkey/remove", r.RequireLogin, r.RequireHTMX, r.SSHKeyRemove)
+
+	// OTP Tokens
 	app.Get("/otptoken/list", r.RequireLogin, r.RequireHTMX, r.OTPTokenList)
 	app.Get("/otptoken/modal", r.RequireLogin, r.RequireHTMX, r.OTPTokenModal)
 	app.Post("/otptoken/add", r.RequireLogin, r.RequireHTMX, r.OTPTokenAdd)
 	app.Post("/otptoken/remove", r.RequireLogin, r.RequireHTMX, r.OTPTokenRemove)
 	app.Post("/otptoken/enable", r.RequireLogin, r.RequireHTMX, r.OTPTokenEnable)
 	app.Post("/otptoken/disable", r.RequireLogin, r.RequireHTMX, r.OTPTokenDisable)
-	app.Get("/auth/login", r.Login)
-	app.Get("/auth/logout", r.Logout)
-	app.Post("/auth/login", r.CheckUser)
-	app.Post("/auth/authenticate", r.Authenticate)
 }
 
 func (r *Router) Index(c *fiber.Ctx) error {

@@ -1,0 +1,43 @@
+<div id="modal-backdrop" class="modal-backdrop fade show" style="display:block;"></div>
+<div id="modal" class="modal fade show" tabindex="-1" style="display:block;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form>
+        <div class="modal-header">
+           <h5 class="modal-title" id="modalLabel"><i class="fa fa-key"></i> Add New SSH Key</h5>
+        </div>
+        <div id="modal-body" class="modal-body">
+            <div id="add-key-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto" role="alert">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" name="title" id="title" value="">
+            </div>
+            <div class="mb-3">
+              <label for="key" class="form-label">Public Key</label>
+              <textarea class="form-control" id="key" name="key" rows="5" aria-describedby="keyHelp"></textarea>
+              <div id="keyHelp" class="form-text">Paste SSH public key contents above. Should begin with 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', or 'sk-ssh-ed25519@openssh.com'</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <div id="add-indicator" class="htmx-indicator spinner-border text-primary" role="status">
+              <span class="visually-hidden">Adding ssh key...</span>
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('sshkey-modal')">Cancel</button>
+          <button 
+            hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+            hx-post="/sshkey/add"
+            hx-target-error="add-key-failed"
+            hx-target="#sshkey"
+            hx-indicator="#add-indicator"
+            hx-swap="innerHTML"
+            class="btn btn-primary"
+            type="submit">
+          Add
+          </button>
+        </div>
+
+        </form>
+      </div>
+    </div>
+  </div>

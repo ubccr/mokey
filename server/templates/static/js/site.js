@@ -23,8 +23,8 @@ document.body.addEventListener('htmx:beforeRequest', function (evt) {
   }
 });
 
-function closeModal() {
-    var container = document.getElementById("mokey-modal")
+function closeModal(ele) {
+    var container = document.getElementById(ele)
     var backdrop = document.getElementById("modal-backdrop")
     var modal = document.getElementById("modal")
 

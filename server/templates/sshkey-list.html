@@ -1,0 +1,61 @@
+{{  with $.message }}
+<div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+  {{ . }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{{ end }}
+<div id="sshkey-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+</div>
+<div id="sshkey-modal"></div>
+<h3 class="mb-4">SSH Keys</h3>
+<div class="mb-4 text-end">
+    <button type="button" 
+            hx-get="/sshkey/modal" 
+            hx-target="#sshkey-modal" 
+            hx-trigger="click"
+            _="on htmx:afterOnLoad wait 10ms then add .show to #modal then add .show to #modal-backdrop"
+            class="btn btn-primary end">
+      <i class="fa fa-plus"></i> New SSH Key
+    </button>
+</div>
+{{ range $i, $key := $.keys }}
+<div class="row">
+    <div class="d-flex flex-items-center">
+        <div class="text-center d-flex flex-column">
+           <i class="fa fa-key fa-2x"></i>
+           <span title="Type" class="border d-block f6 mt-1 px-1 rounded-pill text-muted">
+               {{ $key.PublicKey.Type }}
+           </span>
+        </div>
+        <div class="flex-grow-1 ms-3 mb-3">
+          <strong class="d-block">{{ $key.Comment }}</strong>
+          <span title="Public key fingerprint">
+            <code style="overflow-wrap: anywhere">{{ $key.Fingerprint }}</code>
+          </span>
+          <p>
+              <button class="btn btn-sm btn-outline-danger ml-1" hx-target-error="sshkey-failed"
+                      hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                      data-hx-trigger="keyremove"
+                      data-hx-vals='{"csrf": "{{ $.csrf }}", "fp": "{{ $key.Fingerprint }}"}'
+                      data-hx-target="#sshkey" data-hx-post="/sshkey/remove" 
+                      _="on click call 
+                            Swal.fire({
+                                title: 'Delete Key?',
+                                backdrop: true,
+                                html: '<code>{{ $key.Comment }}</code><br/><br/>This action <strong>CANNOT</strong> be undone. This will permanently delete the key and you will not be able to use it again in the future',
+                                focusCancel: true,
+                                reverseButtons: true,
+                                confirmButtonColor: '#dc3545',
+                                confirmButtonText: 'Delete',
+                                showCancelButton: true,
+                                icon: 'warning'})
+                            if result.isConfirmed trigger keyremove">
+                Delete
+              </button>
+          </p>
+        </div>
+    </div>
+</div>
+{{ else }}
+<p>No ssh keys uploaded</p>
+{{ end }}
