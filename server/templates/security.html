@@ -1,14 +1,43 @@
-{{define "content"}}
+{{  with $.message }}
+<div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+  {{ . }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{{ end }}
+<div id="security-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+</div>
 <h3 class="mb-4">Security Settings</h3>
 <div class="card">
   <div class="card-header">
-	Authentication Methods
+    Authentication Methods
   </div>
   <ul class="list-group list-group-flush">
-	<li class="list-group-item">Two-factor authentication
+    <li class="list-group-item">Two-factor authentication
+    {{ if .user.OTPOnly }}
     <button role="button" class="btn btn-sm btn-success text-center position-absolute top-50 end-0 translate-middle btn-alternate-hide">Enabled</button>
-    <button type="button" class="btn btn-sm btn-danger text-center position-absolute top-50 end-0 translate-middle btn-alternate-show">Disable</button>
-	</li>
+    <button role="button" class="btn btn-sm btn-danger text-center position-absolute top-50 end-0 translate-middle btn-alternate-show" hx-target-error="security-failed"
+            hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+            data-hx-trigger="mfadisable"
+            data-hx-vals='{"csrf": "{{ $.csrf }}"}'
+            data-hx-target="#security" data-hx-post="/security/mfa/disable" 
+            _="on click call 
+                  Swal.fire({
+                      title: 'Disable Two-factor authentication?',
+                      backdrop: true,
+                      html: 'This will disable Two-factor authentication. Are you sure?',
+                      focusCancel: true,
+                      reverseButtons: true,
+                      confirmButtonColor: '#dc3545',
+                      confirmButtonText: 'Disable',
+                      showCancelButton: true,
+                      icon: 'warning'})
+                  if result.isConfirmed trigger mfadisable">
+      Disable
+    </button>
+    {{ else }}
+    <button role="button" class="btn btn-sm btn-danger text-center position-absolute top-50 end-0 translate-middle btn-alternate-hide">Disabled</button>
+    <button type="button" class="btn btn-sm btn-success text-center position-absolute top-50 end-0 translate-middle btn-alternate-show">Enabled</button>
+    {{ end }}
+    </li>
   </ul>
 </div>
-{{end}}
