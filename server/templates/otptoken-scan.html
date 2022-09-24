@@ -1,16 +1,41 @@
 <div class="modal-dialog modal-dialog-centered">
   <div class="modal-content">
+    <form>
     <div class="modal-header">
        <h5 class="modal-title" id="modalLabel"><i class="fa fa-qrcode"></i> Scan QR code with authenticator app</h5>
     </div>
     <div id="modal-body" class="modal-body">
+        <div id="verify-token-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto" role="alert">
+        </div>
         <div class="text-center">
-            <p><span class="badge bg-success"><i class="fa-regular fa-circle-check"></i> TOTP Token Added Successfully</span></p>
             <img class="img-fluid" alt="QRCode" src="data:image/png;base64,{{ .otpdata }}" />
+        </div>
+        <div class="p-4 p-md-5">
+            <label class="form-label">6-Digit Code</label>
+            <input type="text" class="form-control" name="otpcode" id="otpcode" value="" aria-describedby="tokenHelpBlock">
+            <input type="hidden" name="uuid" value="{{ $.otptoken.UUID }}" />
+            <input type="hidden" name="uri" value="{{ $.otptoken.URI }}" />
+            <div id="tokenHelpBlock" class="form-text">
+                Enter the 6-digit code from your mobile app
+            </div>
         </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" data-hx-get="/otptoken/list" data-hx-target="#otp" _="on htmx:beforeOnLoad call closeModal('otptoken-modal')">Done</button>
+      <div id="verify-indicator" class="htmx-indicator spinner-border text-primary" role="status">
+          <span class="visually-hidden">Verifying token...</span>
+      </div>
+      <button 
+        hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+        hx-target-error="verify-token-failed"
+        hx-post="/otptoken/verify"
+        hx-target="#otp"
+        hx-indicator="#verify-indicator"
+        hx-swap="innerHTML"
+        class="btn btn-primary"
+        type="submit">
+      Verify
+      </button>
     </div>
+    </form>
   </div>
 </div>

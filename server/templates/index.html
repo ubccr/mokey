@@ -20,7 +20,7 @@
 						<i class="fa fa-lock text-center me-1"></i> 
 						Password
 					</a>
-					<a class="nav-link" id="security-tab" data-bs-toggle="pill" href="#security" role="tab" aria-controls="security" aria-selected="false">
+					<a class="nav-link" id="security-tab" data-bs-toggle="pill" href="#security" data-hx-get="/security" data-hx-target="#security" role="tab" aria-controls="security" aria-selected="false">
 						<i class="fa fa-shield text-center me-1"></i> 
 						Security
 					</a>
@@ -136,25 +136,7 @@
 				</div>
 				<div class="tab-pane fade" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab"></div>
 				<div class="tab-pane fade" id="otp" role="tabpanel" aria-labelledby="otp-tab"></div>
-				<div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
-					<h3 class="mb-4">Security Settings</h3>
-					<div class="card">
-					  <div class="card-header">
-						Authentication Methods
-					  </div>
-					  <ul class="list-group list-group-flush">
-						<li class="list-group-item">Two-factor authentication
-                        {{ if .user.OTPOnly }}
-                        <button role="button" class="btn btn-sm btn-success text-center position-absolute top-50 end-0 translate-middle btn-alternate-hide">Enabled</button>
-                        <button type="button" class="btn btn-sm btn-danger text-center position-absolute top-50 end-0 translate-middle btn-alternate-show">Disable</button>
-                        {{ else }}
-                        <button role="button" class="btn btn-sm btn-danger text-center position-absolute top-50 end-0 translate-middle btn-alternate-hide">Disabled</button>
-                        <button type="button" class="btn btn-sm btn-success text-center position-absolute top-50 end-0 translate-middle btn-alternate-show">Enabled</button>
-                        {{ end }}
-						</li>
-					  </ul>
-					</div>
-				</div>
+				<div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab"></div>
 			</div>
 		</div>
 	</div>

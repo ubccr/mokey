@@ -72,6 +72,9 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/auth/login", r.CheckUser)
 	app.Post("/auth/authenticate", r.Authenticate)
 
+	// Security
+	app.Get("/security", r.RequireLogin, r.RequireHTMX, r.SecurityList)
+
 	// SSH Keys
 	app.Get("/sshkey/list", r.RequireLogin, r.RequireHTMX, r.SSHKeyList)
 	app.Get("/sshkey/modal", r.RequireLogin, r.RequireHTMX, r.SSHKeyModal)
@@ -82,6 +85,7 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Get("/otptoken/list", r.RequireLogin, r.RequireHTMX, r.OTPTokenList)
 	app.Get("/otptoken/modal", r.RequireLogin, r.RequireHTMX, r.OTPTokenModal)
 	app.Post("/otptoken/add", r.RequireLogin, r.RequireHTMX, r.OTPTokenAdd)
+	app.Post("/otptoken/verify", r.RequireLogin, r.RequireHTMX, r.OTPTokenVerify)
 	app.Post("/otptoken/remove", r.RequireLogin, r.RequireHTMX, r.OTPTokenRemove)
 	app.Post("/otptoken/enable", r.RequireLogin, r.RequireHTMX, r.OTPTokenEnable)
 	app.Post("/otptoken/disable", r.RequireLogin, r.RequireHTMX, r.OTPTokenDisable)

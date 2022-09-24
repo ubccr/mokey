@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/pquerna/otp"
+	"github.com/pquerna/otp/totp"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/util"
@@ -88,6 +90,44 @@ func (r *Router) OTPTokenDisable(c *fiber.Ctx) error {
 	return r.tokenList(c, vars)
 }
 
+func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
+	otpcode := c.FormValue("otpcode")
+	uri := c.FormValue("uri")
+	uuid := c.FormValue("uuid")
+	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	username := c.Locals(ContextKeyUser).(string)
+	vars := fiber.Map{}
+
+	key, err := otp.NewKeyFromURL(uri)
+	if err != nil {
+		client.RemoveOTPToken(uuid)
+		vars["message"] = "Failed to verify token. Invalid 6-digit code."
+		return r.tokenList(c, vars)
+	}
+
+	valid, _ := totp.ValidateCustom(
+		otpcode,
+		key.Secret(),
+		time.Now().UTC(),
+		totp.ValidateOpts{
+			Period:    30,
+			Skew:      1,
+			Digits:    otp.DigitsSix,
+			Algorithm: otp.AlgorithmSHA256,
+		},
+	)
+	if !valid {
+		client.RemoveOTPToken(uuid)
+		log.WithFields(log.Fields{
+			"uuid":     uuid,
+			"username": username,
+		}).Error("Failed to verify OTP token")
+		vars["message"] = "Failed to verify token. Invalid 6-digit code."
+	}
+
+	return r.tokenList(c, vars)
+}
+
 func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
 	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
 
@@ -118,7 +158,8 @@ func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
 	}
 
 	vars := fiber.Map{
-		"otpdata": otpdata,
+		"otpdata":  otpdata,
+		"otptoken": token,
 	}
 	return c.Render("otptoken-scan.html", vars)
 }
