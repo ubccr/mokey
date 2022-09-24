@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Copyright 2016 Jan Pazdziora
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+
+# Upon the first run, populates the /data directory, to be used during
+# subsequent startups.
+
+set -e
+
+exec >> /run/docker-console/fd/1 2>> /run/docker-console/fd/2
+
+if [ -f /data/volume-version ] ; then
+	echo "The data volume is already populated on $HOSTNAME."
+	exit
+fi
+
+cat /etc/volume-data-list | while read f ; do [ -e $f ] && echo $f ; done | ( set -x ; xargs cp --parents -rp -t /data )
+set -x
+echo 0.1 > /data/volume-version

@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Copyright 2016--2017 Jan Pazdziora
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+
+# If the FreeIPA server does not contain ipa-server-install-options
+# and the server was not configured yet, produce some default
+# configuration for the developer setup.
+
+set -e
+
+cd /
+
+UNAME=$( uname -n )
+if [ "$HOSTNAME" != "$UNAME" -a "$HOSTNAME" == "${UNAME%%.*}" ] ; then
+	HOSTNAME="$UNAME"
+fi
+
+DATA=/data
+if ! [ -f /etc/ipa/ca.crt -a -f $DATA/ipa-server-install-options ] ; then
+	echo "Configuring $HOSTNAME ..."
+	echo $IPA_ADMIN_PASS > $DATA/admin-password
+	echo $IPA_DS_PASS > $DATA/ds-master-password
+	DOMAIN=${HOSTNAME#*.}
+	REALM=${DOMAIN^^}
+	cat > $DATA/ipa-server-install-options <<EOS
+--admin-password='$( cat $DATA/admin-password )'
+--ds-password='$( cat $DATA/ds-master-password )'
+--realm $REALM
+--setup-dns
+--no-forwarders
+--no-dnssec-validation
+--no-ntp
+-U
+EOS
+fi
+
+(
+	trap '' SIGHUP
+	rm -rf /run/docker-console
+	mkdir -p /run/docker-console
+	(sleep infinity) &
+	ln -s /proc/$!/fd /run/docker-console/
+)
+
+export SHOW_LOG=1
+if [ -f /usr/sbin/init-data ] ; then
+	exec /usr/sbin/init-data
+else
+	exec /usr/local/sbin/init
+fi
