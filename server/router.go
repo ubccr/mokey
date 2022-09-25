@@ -74,6 +74,8 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 
 	// Security
 	app.Get("/security", r.RequireLogin, r.RequireHTMX, r.SecurityList)
+	app.Post("/security/mfa/enable", r.RequireLogin, r.RequireHTMX, r.TwoFactorEnable)
+	app.Post("/security/mfa/disable", r.RequireLogin, r.RequireHTMX, r.TwoFactorDisable)
 
 	// SSH Keys
 	app.Get("/sshkey/list", r.RequireLogin, r.RequireHTMX, r.SSHKeyList)

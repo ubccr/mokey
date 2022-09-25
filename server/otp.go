@@ -45,8 +45,13 @@ func (r *Router) OTPTokenRemove(c *fiber.Ctx) error {
 			"uuid":     uuid,
 			"username": username,
 			"err":      err,
-		}).Error("Failed to delete OTP token")
-		vars["message"] = "Failed to remove token"
+		}).Error("Failed to remove OTP token")
+
+		if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4203 {
+			vars["message"] = "You can't remove your last active token while Two-Factor auth is enabled"
+		} else {
+			vars["message"] = "Failed to remove token"
+		}
 	}
 
 	return r.tokenList(c, vars)
@@ -83,8 +88,13 @@ func (r *Router) OTPTokenDisable(c *fiber.Ctx) error {
 			"uuid":     uuid,
 			"username": username,
 			"err":      err,
-		}).Error("Failed to disable OTP token")
-		vars["message"] = "Failed to disable token"
+		}).Error("Failed to enable OTP token")
+
+		if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4203 {
+			vars["message"] = "You can't disable your last active token while Two-Factor auth is enabled"
+		} else {
+			vars["message"] = "Failed to disable token"
+		}
 	}
 
 	return r.tokenList(c, vars)
