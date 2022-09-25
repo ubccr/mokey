@@ -9,10 +9,12 @@
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control form-control-lg" name="password" id="password" autofocus="autofocus" placeholder="">
             </div>
+            {{ if $.user.OTPOnly }}
             <div class="mb-3">
                 <label for="otp" class="form-label">OTP six digit code</label>
                 <input type="otp" class="form-control form-control-lg" name="otp" id="otp" placeholder="">
             </div>
+            {{ end }}
             <div class="mb-3 d-grid gap-2">
               <input type="hidden" name="csrf" value="{{ $.csrf }}" />
               <input type="hidden" name="username" value="{{ $.user.Username }}" />
