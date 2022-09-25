@@ -16,7 +16,7 @@
 						<i class="fa fa-home text-center me-1"></i> 
 						Account
 					</a>
-					<a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" role="tab" aria-controls="password" aria-selected="false">
+					<a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" data-hx-get="/cpw" data-hx-target="#password" role="tab" aria-controls="password" aria-selected="false">
 						<i class="fa fa-lock text-center me-1"></i> 
 						Password
 					</a>
@@ -95,45 +95,7 @@
 						<button class="btn btn-primary">Update</button>
 					</div>
 				</div>
-				<div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
-					<h3 class="mb-4">Change Password</h3>
-                    {{ if .user.OTPOnly }}
-					<div class="row">
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">OTP Code</label>
-							  	<input type="otp" class="form-control">
-                                <div id="otpHelp" class="form-text">Enter the six-digit auth code from your mobile app</div>
-							</div>
-						</div>
-					</div>
-                   {{ end }}
-					<div class="row">
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">Current password</label>
-							  	<input type="password" class="form-control">
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">New password</label>
-							  	<input type="password" class="form-control">
-							</div>
-						</div>
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">Confirm new password</label>
-							  	<input type="password" class="form-control">
-							</div>
-						</div>
-					</div>
-					<div>
-						<button class="btn btn-primary">Update</button>
-					</div>
-				</div>
+				<div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab"></div>
 				<div class="tab-pane fade" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab"></div>
 				<div class="tab-pane fade" id="otp" role="tabpanel" aria-labelledby="otp-tab"></div>
 				<div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab"></div>
