@@ -121,6 +121,8 @@ func newFiber() (*fiber.App, error) {
 	app.Use(SecureHeaders)
 
 	app.Use(limiter.New(limiter.Config{
+		Max:                    15,
+		Expiration:             1 * time.Minute,
 		SkipSuccessfulRequests: false,
 		Storage:                storage,
 		LimitReached:           LimitReachedHandler,
