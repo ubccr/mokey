@@ -12,8 +12,8 @@ import (
 )
 
 func (r *Router) tokenList(c *fiber.Ctx, vars fiber.Map) error {
-	username := c.Locals(ContextKeyUser).(string)
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	username := r.username(c)
+	client := r.userClient(c)
 
 	tokens, err := client.FetchOTPTokens(username)
 	if err != nil {
@@ -35,8 +35,8 @@ func (r *Router) OTPTokenModal(c *fiber.Ctx) error {
 
 func (r *Router) OTPTokenRemove(c *fiber.Ctx) error {
 	uuid := c.FormValue("uuid")
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-	username := c.Locals(ContextKeyUser).(string)
+	client := r.userClient(c)
+	username := r.username(c)
 	vars := fiber.Map{}
 
 	err := client.RemoveOTPToken(uuid)
@@ -59,8 +59,8 @@ func (r *Router) OTPTokenRemove(c *fiber.Ctx) error {
 
 func (r *Router) OTPTokenEnable(c *fiber.Ctx) error {
 	uuid := c.FormValue("uuid")
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-	username := c.Locals(ContextKeyUser).(string)
+	client := r.userClient(c)
+	username := r.username(c)
 	vars := fiber.Map{}
 
 	err := client.EnableOTPToken(uuid)
@@ -78,8 +78,8 @@ func (r *Router) OTPTokenEnable(c *fiber.Ctx) error {
 
 func (r *Router) OTPTokenDisable(c *fiber.Ctx) error {
 	uuid := c.FormValue("uuid")
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-	username := c.Locals(ContextKeyUser).(string)
+	client := r.userClient(c)
+	username := r.username(c)
 	vars := fiber.Map{}
 
 	err := client.DisableOTPToken(uuid)
@@ -104,8 +104,8 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 	otpcode := c.FormValue("otpcode")
 	uri := c.FormValue("uri")
 	uuid := c.FormValue("uuid")
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-	username := c.Locals(ContextKeyUser).(string)
+	client := r.userClient(c)
+	username := r.username(c)
 	vars := fiber.Map{}
 
 	key, err := otp.NewKeyFromURL(uri)
@@ -139,7 +139,7 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 }
 
 func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	client := r.userClient(c)
 
 	desc := c.FormValue("desc")
 

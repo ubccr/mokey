@@ -128,7 +128,7 @@ func newFiber() (*fiber.App, error) {
 		LimitReached:           LimitReachedHandler,
 		Next: func(c *fiber.Ctx) bool {
 			// Only limit POST requests
-			return c.Method() != "POST"
+			return c.Method() != fiber.MethodPost
 		},
 	}))
 

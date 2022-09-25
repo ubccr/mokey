@@ -33,8 +33,8 @@ func validatePassword(current, pass, pass2 string) error {
 }
 
 func (r *Router) ChangePassword(c *fiber.Ctx) error {
-	username := c.Locals(ContextKeyUser).(string)
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	username := r.username(c)
+	client := r.userClient(c)
 
 	user, err := client.UserShow(username)
 	if err != nil {

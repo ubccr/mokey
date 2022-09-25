@@ -3,14 +3,10 @@ package server
 import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/ubccr/goipa"
 )
 
 func (r *Router) securityList(c *fiber.Ctx, vars fiber.Map) error {
-	username := c.Locals(ContextKeyUser).(string)
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-
-	user, err := client.UserShow(username)
+	user, err := r.user(c)
 	if err != nil {
 		return err
 	}
@@ -24,10 +20,10 @@ func (r *Router) SecurityList(c *fiber.Ctx) error {
 }
 
 func (r *Router) TwoFactorDisable(c *fiber.Ctx) error {
-	username := c.Locals(ContextKeyUser).(string)
+	username := r.username(c)
 	vars := fiber.Map{}
 
-	err := r.client.SetAuthTypes(username, nil)
+	err := r.adminClient.SetAuthTypes(username, nil)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"username": username,
@@ -40,8 +36,8 @@ func (r *Router) TwoFactorDisable(c *fiber.Ctx) error {
 }
 
 func (r *Router) TwoFactorEnable(c *fiber.Ctx) error {
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-	username := c.Locals(ContextKeyUser).(string)
+	client := r.userClient(c)
+	username := r.username(c)
 	vars := fiber.Map{}
 
 	tokens, err := client.FetchOTPTokens(username)
@@ -59,7 +55,7 @@ func (r *Router) TwoFactorEnable(c *fiber.Ctx) error {
 		return r.securityList(c, vars)
 	}
 
-	err = r.client.SetAuthTypes(username, []string{"otp"})
+	err = r.adminClient.SetAuthTypes(username, []string{"otp"})
 	if err != nil {
 		log.WithFields(log.Fields{
 			"username": username,

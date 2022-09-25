@@ -100,7 +100,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Please provide a username")
 	}
 
-	userRec, err := r.client.UserShow(username)
+	userRec, err := r.adminClient.UserShow(username)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4001 {
 			log.WithFields(log.Fields{

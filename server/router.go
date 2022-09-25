@@ -9,21 +9,21 @@ import (
 )
 
 type Router struct {
-	client       *ipa.Client
+	adminClient  *ipa.Client
 	sessionStore *session.Store
 }
 
 func NewRouter(storage fiber.Storage) (*Router, error) {
 	r := &Router{}
 
-	r.client = ipa.NewDefaultClient()
+	r.adminClient = ipa.NewDefaultClient()
 
-	err := r.client.LoginWithKeytab(viper.GetString("keytab"), viper.GetString("ktuser"))
+	err := r.adminClient.LoginWithKeytab(viper.GetString("keytab"), viper.GetString("ktuser"))
 	if err != nil {
 		return nil, err
 	}
 
-	r.client.StickySession(false)
+	r.adminClient.StickySession(false)
 
 	r.sessionStore = session.New(session.Config{
 		Storage:        storage,
@@ -97,11 +97,23 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/otptoken/disable", r.RequireLogin, r.RequireHTMX, r.OTPTokenDisable)
 }
 
-func (r *Router) Index(c *fiber.Ctx) error {
+func (r *Router) userClient(c *fiber.Ctx) *ipa.Client {
+	return c.Locals(ContextKeyIPAClient).(*ipa.Client)
+}
+
+func (r *Router) username(c *fiber.Ctx) string {
+	return c.Locals(ContextKeyUser).(string)
+}
+
+func (r *Router) user(c *fiber.Ctx) (*ipa.User, error) {
 	username := c.Locals(ContextKeyUser).(string)
 	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
 
-	user, err := client.UserShow(username)
+	return client.UserShow(username)
+}
+
+func (r *Router) Index(c *fiber.Ctx) error {
+	user, err := r.user(c)
 	if err != nil {
 		return err
 	}

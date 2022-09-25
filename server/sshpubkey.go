@@ -7,10 +7,7 @@ import (
 )
 
 func (r *Router) SSHKeyList(c *fiber.Ctx) error {
-	username := c.Locals(ContextKeyUser).(string)
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-
-	user, err := client.UserShow(username)
+	user, err := r.user(c)
 	if err != nil {
 		return err
 	}
@@ -27,8 +24,8 @@ func (r *Router) SSHKeyModal(c *fiber.Ctx) error {
 }
 
 func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
-	username := c.Locals(ContextKeyUser).(string)
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
+	username := r.username(c)
+	client := r.userClient(c)
 
 	title := c.FormValue("title")
 	key := c.FormValue("key")
@@ -72,8 +69,8 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 
 func (r *Router) SSHKeyRemove(c *fiber.Ctx) error {
 	fp := c.FormValue("fp")
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-	username := c.Locals(ContextKeyUser).(string)
+	client := r.userClient(c)
+	username := r.username(c)
 
 	user, err := client.UserShow(username)
 	if err != nil {
