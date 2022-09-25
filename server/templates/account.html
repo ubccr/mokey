@@ -1,4 +1,19 @@
+{{  with $.message }}
+<div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+  {{ . }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{{ end }}
+{{  with $.success }}
+<div class="alert alert-success alert-dismissible mx-auto fade show" role="alert">
+  Account settings updated successfully
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{{ end }}
+<div id="account-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+</div>
 <h3 class="mb-4">Account Settings</h3>
+<form>
 <div class="row">
 	<div class="col-md-6">
 		<div class="mb-3">
@@ -15,7 +30,7 @@
 	<div class="col-md-6">
 		<div class="mb-3">
 		  	<label class="form-label">Email</label>
-		  	<input type="text" class="form-control" name="email" id="email" value="{{ .user.Email }}">
+		  	<input type="text" class="form-control" value="{{ .user.Email }}" disabled readonly>
 		</div>
 	</div>
 	<div class="col-md-6">
@@ -50,5 +65,11 @@
 	</div>
 </div>
 <div>
-	<button class="btn btn-primary">Update</button>
+    <button class="btn btn-primary" hx-target-error="account-failed"
+            hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+            data-hx-vals='{"csrf": "{{ $.csrf }}"}'
+            data-hx-target="#account" data-hx-post="/account/settings">
+      Update
+    </button>
+</form>
 </div>

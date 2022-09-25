@@ -79,9 +79,9 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/auth/login", r.CheckUser)
 	app.Post("/auth/authenticate", r.Authenticate)
 
-	// Account Info
-	app.Get("/account/info", r.RequireLogin, r.RequireHTMX, r.AccountInfo)
-	app.Post("/account/info", r.RequireLogin, r.RequireHTMX, r.AccountInfo)
+	// Account Settings
+	app.Get("/account/settings", r.RequireLogin, r.RequireHTMX, r.AccountSettings)
+	app.Post("/account/settings", r.RequireLogin, r.RequireHTMX, r.AccountSettings)
 
 	// Password
 	app.Get("/password/change", r.RequireLogin, r.RequireHTMX, r.ChangePassword)
