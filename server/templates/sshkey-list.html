@@ -7,8 +7,9 @@
 <div id="sshkey-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
 </div>
 <div id="sshkey-modal"></div>
-<h3 class="mb-4">SSH Keys</h3>
-<div class="mb-4 text-end">
+
+<div class="d-flex w-100 justify-content-between mb-4">
+    <h3 class="mb-1">SSH Keys</h3>
     <button type="button" 
             hx-get="/sshkey/modal" 
             hx-target="#sshkey-modal" 
@@ -24,13 +25,16 @@
         <div class="text-center d-flex flex-column">
            <i class="fa fa-key fa-2x"></i>
            <span title="Type" class="border d-block f6 mt-1 px-1 rounded-pill text-muted">
-               {{ $key.PublicKey.Type }}
+               SSH
            </span>
         </div>
         <div class="flex-grow-1 ms-3 mb-3">
           <strong class="d-block">{{ $key.Comment }}</strong>
           <span title="Public key fingerprint">
             <code style="overflow-wrap: anywhere">{{ $key.Fingerprint }}</code>
+          </span>
+          <span class="d-block fst-italic">
+            Type: {{ slice $key.PublicKey.Type 4 }}
           </span>
           <p>
               <button class="btn btn-sm btn-outline-danger ml-1" hx-target-error="sshkey-failed"
