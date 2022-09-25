@@ -12,15 +12,15 @@
 					<h4 class="text-center">{{ .user.First }} {{ .user.Last }}</h4>
 				</div>
 				<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-					<a class="nav-link active" id="account-tab" data-bs-toggle="pill" href="#account" role="tab" aria-controls="account" aria-selected="true">
+					<a class="nav-link active" id="account-tab" data-bs-toggle="pill" href="#account" data-hx-get="/account/info" data-hx-target="#account" data-hx-trigger="load, click" role="tab" aria-controls="account" aria-selected="true">
 						<i class="fa fa-home text-center me-1"></i> 
 						Account
 					</a>
-					<a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" data-hx-get="/cpw" data-hx-target="#password" role="tab" aria-controls="password" aria-selected="false">
+					<a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" data-hx-get="/password/change" data-hx-target="#password" role="tab" aria-controls="password" aria-selected="false">
 						<i class="fa fa-lock text-center me-1"></i> 
 						Password
 					</a>
-					<a class="nav-link" id="security-tab" data-bs-toggle="pill" href="#security" data-hx-get="/security" data-hx-target="#security" role="tab" aria-controls="security" aria-selected="false">
+					<a class="nav-link" id="security-tab" data-bs-toggle="pill" href="#security" data-hx-get="/security/settings" data-hx-target="#security" role="tab" aria-controls="security" aria-selected="false">
 						<i class="fa fa-shield text-center me-1"></i> 
 						Security
 					</a>
@@ -39,62 +39,7 @@
 				</div>
 			</div>
 			<div class="tab-content p-4 p-md-5" id="v-pills-tabContent">
-				<div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab">
-					<h3 class="mb-4">Account Settings</h3>
-					<div class="row">
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">First Name</label>
-							  	<input type="text" class="form-control" name="first" id="first" value="{{ .user.First }}">
-							</div>
-						</div>
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">Last Name</label>
-							  	<input type="text" class="form-control" name="last" id="last" value="{{ .user.Last }}">
-							</div>
-						</div>
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">Email</label>
-							  	<input type="text" class="form-control" name="email" id="email" value="{{ .user.Email }}">
-							</div>
-						</div>
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">Phone number</label>
-							  	<input type="text" class="form-control" name="phone" id="phone" value="{{ .user.Mobile }}">
-							</div>
-						</div>
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">Username</label>
-							  	<input type="text" class="form-control" value="{{ .user.Username }}" disabled readonly>
-							</div>
-						</div>
-						<div class="col-md-6">
-							<div class="mb-3">
-							  	<label class="form-label">Last Password Change</label>
-							  	<input type="text" class="form-control" value="{{ if not .user.LastPasswdChange.IsZero }}{{ TimeAgo .user.LastPasswdChange }}{{ else }}Never{{ end }}" disabled readonly>
-							</div>
-						</div>
-						<div class="col-md-12">
-							<div class="mb-3">
-							  	<label class="form-label">Groups</label>
-                                <div class="form-control-plaintext">
-                                        {{ range $g := .user.Groups }}
-                                            <span class="badge rounded-pill bg-dark">{{ $g }}</span> 
-                                        {{ else }}
-                                            &nbsp;
-                                        {{ end }}
-							    </div>
-							</div>
-						</div>
-					</div>
-					<div>
-						<button class="btn btn-primary">Update</button>
-					</div>
-				</div>
+				<div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab"></div>
 				<div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab"></div>
 				<div class="tab-pane fade" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab"></div>
 				<div class="tab-pane fade" id="otp" role="tabpanel" aria-labelledby="otp-tab"></div>

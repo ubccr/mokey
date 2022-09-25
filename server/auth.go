@@ -108,7 +108,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 				"username":         username,
 				"ipa_client_error": err,
 			}).Warn("Username not found in FreeIPA")
-			return c.Status(fiber.StatusUnauthorized).SendString("Username not found")
+			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 		}
 
 		log.WithFields(log.Fields{
@@ -123,7 +123,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": username,
 		}).Warn("User account is locked in FreeIPA")
-		return c.Status(fiber.StatusUnauthorized).SendString("Username not found")
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 
 	}
 

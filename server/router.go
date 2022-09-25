@@ -72,12 +72,16 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/auth/login", r.CheckUser)
 	app.Post("/auth/authenticate", r.Authenticate)
 
+	// Account Info
+	app.Get("/account/info", r.RequireLogin, r.RequireHTMX, r.AccountInfo)
+	app.Post("/account/info", r.RequireLogin, r.RequireHTMX, r.AccountInfo)
+
 	// Password
-	app.Get("/cpw", r.RequireLogin, r.RequireHTMX, r.ChangePassword)
-	app.Post("/cpw", r.RequireLogin, r.RequireHTMX, r.ChangePassword)
+	app.Get("/password/change", r.RequireLogin, r.RequireHTMX, r.ChangePassword)
+	app.Post("/password/change", r.RequireLogin, r.RequireHTMX, r.ChangePassword)
 
 	// Security
-	app.Get("/security", r.RequireLogin, r.RequireHTMX, r.SecurityList)
+	app.Get("/security/settings", r.RequireLogin, r.RequireHTMX, r.SecurityList)
 	app.Post("/security/mfa/enable", r.RequireLogin, r.RequireHTMX, r.TwoFactorEnable)
 	app.Post("/security/mfa/disable", r.RequireLogin, r.RequireHTMX, r.TwoFactorDisable)
 
