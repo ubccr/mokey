@@ -12,23 +12,23 @@
 					<h4 class="text-center">{{ .user.First }} {{ .user.Last }}</h4>
 				</div>
 				<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-					<a class="nav-link active" id="account-tab" data-bs-toggle="pill" href="#account" data-hx-get="/account/info" data-hx-target="#account" data-hx-trigger="load, click" role="tab" aria-controls="account" aria-selected="true">
+					<a class="nav-link{{ if eq $.path "account" }} active{{end}}" id="account-tab" href="/account" role="tab">
 						<i class="fa fa-home text-center me-1"></i> 
 						Account
 					</a>
-					<a class="nav-link" id="password-tab" data-bs-toggle="pill" href="#password" data-hx-get="/password/change" data-hx-target="#password" role="tab" aria-controls="password" aria-selected="false">
+					<a class="nav-link{{ if eq $.path "password" }} active{{end}}" id="password-tab" href="/password" role="tab">
 						<i class="fa fa-lock text-center me-1"></i> 
 						Password
 					</a>
-					<a class="nav-link" id="security-tab" data-bs-toggle="pill" href="#security" data-hx-get="/security/settings" data-hx-target="#security" role="tab" aria-controls="security" aria-selected="false">
+					<a class="nav-link{{ if eq $.path "security" }} active{{end}}" id="security-tab" href="/security" role="tab">
 						<i class="fa fa-shield text-center me-1"></i> 
 						Security
 					</a>
-					<a class="nav-link" id="sshkey-tab" data-bs-toggle="pill" href="#sshkey" data-hx-get="/sshkey/list" data-hx-target="#sshkey" role="tab" aria-controls="sshkey" aria-selected="false">
+					<a class="nav-link{{ if eq $.path "sshkey" }} active{{end}}" id="sshkey-tab" href="/sshkey" role="tab">
 						<i class="fa fa-key text-center me-1"></i> 
 						SSH Keys
 					</a>
-					<a class="nav-link" id="otp-tab" data-bs-toggle="pill" href="#otp" data-hx-get="/otptoken/list" data-hx-target="#otp" role="tab" aria-controls="otp" aria-selected="false">
+					<a class="nav-link{{ if eq $.path "otp" }} active{{end}}" id="otp-tab" href="/otp" role="tab">
 						<i class="fa fa-fingerprint text-center me-1"></i> 
 						OTP Tokens
 					</a>
@@ -39,11 +39,27 @@
 				</div>
 			</div>
 			<div class="tab-content p-4 p-md-5" id="v-pills-tabContent">
-				<div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab"></div>
-				<div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab"></div>
-				<div class="tab-pane fade" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab"></div>
-				<div class="tab-pane fade" id="otp" role="tabpanel" aria-labelledby="otp-tab"></div>
-				<div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab"></div>
+                {{ if eq $.path "account" }}
+				<div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab">
+                    {{ template "account.html" . }}
+                </div>
+                {{ else if eq $.path "password" }}
+				<div class="tab-pane fade show active" id="password" role="tabpanel" aria-labelledby="password-tab">
+                    {{ template "password.html" . }}
+                </div>
+                {{ else if eq $.path "security" }}
+				<div class="tab-pane fade show active" id="security" role="tabpanel" aria-labelledby="security-tab">
+                    {{ template "security.html" . }}
+                </div>
+                {{ else if eq $.path "sshkey" }}
+				<div class="tab-pane fade show active" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab">
+                    {{ template "sshkey-list.html" . }}
+                </div>
+                {{ else if eq $.path "otp" }}
+				<div class="tab-pane fade show active" id="otp" role="tabpanel" aria-labelledby="otp-tab">
+                    {{ template "otptoken-list.html" . }}
+                </div>
+                {{ end }}
 			</div>
 		</div>
 	</div>

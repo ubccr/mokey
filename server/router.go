@@ -1,6 +1,8 @@
 package server
 
 import (
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	log "github.com/sirupsen/logrus"
@@ -65,6 +67,11 @@ func (r *Router) sessionSave(c *fiber.Ctx, sess *session.Session) error {
 
 func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Get("/", r.RequireLogin, r.Index)
+	app.Get("/account", r.RequireLogin, r.Index)
+	app.Get("/password", r.RequireLogin, r.Index)
+	app.Get("/security", r.RequireLogin, r.Index)
+	app.Get("/sshkey", r.RequireLogin, r.Index)
+	app.Get("/otp", r.RequireLogin, r.Index)
 
 	// Auth
 	app.Get("/auth/login", r.Login)
@@ -122,8 +129,28 @@ func (r *Router) Index(c *fiber.Ctx) error {
 		return err
 	}
 
+	path := strings.TrimPrefix(c.Path(), "/")
+	if path == "" {
+		path = "account"
+	}
+
 	vars := fiber.Map{
 		"user": user,
+		"path": path,
+	}
+
+	if path == "sshkey" {
+		vars["keys"] = user.SSHAuthKeys
+	} else if path == "otp" {
+		username := r.username(c)
+		client := r.userClient(c)
+
+		tokens, err := client.FetchOTPTokens(username)
+		if err != nil {
+			return err
+		}
+
+		vars["otptokens"] = tokens
 	}
 
 	return c.Render("index.html", vars)
