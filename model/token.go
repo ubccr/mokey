@@ -17,8 +17,7 @@ type UserClaims struct {
 }
 
 func init() {
-	viper.SetDefault("setup_max_age", 86400)
-	viper.SetDefault("reset_max_age", 3600)
+	viper.SetDefault("token_max_age", 3600)
 
 	if !viper.IsSet("token_secret") {
 		secret, err := GenerateSecret(16)

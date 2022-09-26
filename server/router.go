@@ -8,15 +8,20 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
+	"github.com/ubccr/mokey/util"
 )
 
 type Router struct {
 	adminClient  *ipa.Client
 	sessionStore *session.Store
+	emailer      *util.Emailer
+	storage      fiber.Storage
 }
 
 func NewRouter(storage fiber.Storage) (*Router, error) {
-	r := &Router{}
+	r := &Router{
+		storage: storage,
+	}
 
 	r.adminClient = ipa.NewDefaultClient()
 
@@ -32,6 +37,11 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 		CookieSecure:   !viper.GetBool("develop"),
 		CookieHTTPOnly: true,
 	})
+
+	r.emailer, err = util.NewEmailer()
+	if err != nil {
+		return nil, err
+	}
 
 	return r, nil
 }
@@ -73,11 +83,18 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Get("/sshkey", r.RequireLogin, r.Index)
 	app.Get("/otp", r.RequireLogin, r.Index)
 
+	// Account Create
+	app.Get("/signup", r.AccountCreate)
+	app.Post("/signup", r.AccountCreate)
+
 	// Auth
 	app.Get("/auth/login", r.Login)
 	app.Get("/auth/logout", r.Logout)
 	app.Post("/auth/login", r.CheckUser)
 	app.Post("/auth/authenticate", r.Authenticate)
+	app.Get("/auth/captcha/:id.png", r.Captcha)
+	app.Get("/auth/verify/:token", r.AccountVerify)
+	app.Post("/auth/verify/:token", r.AccountVerify)
 
 	// Account Settings
 	app.Get("/account/settings", r.RequireLogin, r.RequireHTMX, r.AccountSettings)

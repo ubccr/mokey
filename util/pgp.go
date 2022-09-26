@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/tls"
+	"embed"
 	"fmt"
 	"mime/multipart"
 	"mime/quotedprintable"
@@ -26,8 +27,11 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
+//go:embed templates
+var templateFiles embed.FS
+
 type Emailer struct {
-	templates map[string]*template.Template
+	templates *template.Template
 }
 
 func init() {
@@ -41,20 +45,26 @@ func init() {
 }
 
 func NewEmailer() (*Emailer, error) {
-	tmpldir := GetTemplateDir()
-
-	tmpls, err := filepath.Glob(tmpldir + "/email/*.txt")
+	tmpl := template.New("")
+	tmpl, err := tmpl.ParseFS(templateFiles, "templates/*.txt")
 	if err != nil {
 		return nil, err
 	}
 
-	templates := make(map[string]*template.Template)
-	for _, t := range tmpls {
-		base := filepath.Base(t)
-		templates[base] = template.Must(template.New(base).ParseFiles(t))
+	localTemplatePath := filepath.Join(viper.GetString("email_templates_dir"), "*.txt")
+	localTemplates, err := filepath.Glob(localTemplatePath)
+	if err != nil {
+		return nil, err
 	}
 
-	return &Emailer{templates: templates}, nil
+	if len(localTemplates) > 0 {
+		tmpl, err = tmpl.ParseGlob(localTemplatePath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Emailer{templates: tmpl}, nil
 }
 
 func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
@@ -165,12 +175,8 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 	data["contact"] = viper.GetString("email_from")
 	data["sig"] = viper.GetString("email_sig")
 
-	if _, ok := e.templates[tmpl]; !ok {
-		return fmt.Errorf("Failed to find email template: %s", tmpl)
-	}
-
 	var text bytes.Buffer
-	err := e.templates[tmpl].ExecuteTemplate(&text, tmpl, data)
+	err := e.templates.ExecuteTemplate(&text, tmpl, data)
 	if err != nil {
 		return err
 	}

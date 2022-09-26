@@ -1,8 +1,10 @@
 module github.com/ubccr/mokey
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible
+	github.com/dchest/captcha v1.0.0 // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/eknkc/basex v1.0.1 // indirect
 	github.com/go-ini/ini v1.66.3 // indirect

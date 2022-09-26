@@ -9,6 +9,7 @@ document.body.addEventListener('htmx:afterRequest', function (evt) {
     errAlert = document.getElementById(targetError.value)
     errAlert.innerHTML = msg;
     errAlert.style.display = "block";
+    window.scrollTo(0, 0);
     if(targetError.value.indexOf('dismiss') !== -1) {
         setTimeout(() => {
             errAlert.style.display = "none";
