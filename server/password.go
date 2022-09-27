@@ -5,7 +5,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
+	"github.com/ubccr/mokey/model"
 )
 
 func validatePassword(current, pass, pass2 string) error {
@@ -85,4 +87,35 @@ func (r *Router) ChangePassword(c *fiber.Ctx) error {
 	}
 
 	return c.Render("password.html", vars)
+}
+
+func (r *Router) ResetPassword(c *fiber.Ctx) error {
+	token := c.Params("token")
+
+	claims, err := model.ParseToken(token, viper.GetUint32("token_max_age"))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).SendString("")
+	}
+
+	tokenUsed, err := r.storage.Get(token)
+	if tokenUsed != nil {
+		// Token already used
+		log.WithFields(log.Fields{
+			"username": claims.UserName,
+			"email":    claims.Email,
+		}).Warn("Attempt to re-use reset password token")
+		return c.Status(fiber.StatusNotFound).SendString("")
+	}
+
+	vars := fiber.Map{
+		"claims": claims,
+	}
+
+	if c.Method() == fiber.MethodGet {
+		return c.Render("password-reset.html", vars)
+	}
+
+	//r.storage.Set(token, []byte("true"), time.Until(time.Now().Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+
+	return c.Render("password-reset-success.html", vars)
 }
