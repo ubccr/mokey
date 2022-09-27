@@ -8,13 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
-	"github.com/ubccr/mokey/util"
 )
 
 type Router struct {
 	adminClient  *ipa.Client
 	sessionStore *session.Store
-	emailer      *util.Emailer
+	emailer      *Emailer
 	storage      fiber.Storage
 }
 
@@ -38,7 +37,7 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 		CookieHTTPOnly: true,
 	})
 
-	r.emailer, err = util.NewEmailer()
+	r.emailer, err = NewEmailer()
 	if err != nil {
 		return nil, err
 	}

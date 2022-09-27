@@ -4,7 +4,7 @@
 Hi {{ $.name }},
 ****************
 
-You recently created a {{ $.prefix }} account. Use the link below to verify it. This link is only valid for the next 24 hours.
+You recently created an account at {{ $.prefix }}. Use the link below to verify it. This link is only valid for the next 24 hours.
 
 Verify your account: {{ $.link }}
 

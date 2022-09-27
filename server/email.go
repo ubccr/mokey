@@ -2,13 +2,12 @@
 // Use of this source code is governed by a BSD style
 // license that can be found in the LICENSE file.
 
-package util
+package server
 
 import (
 	"bytes"
 	"crypto"
 	"crypto/tls"
-	"embed"
 	"fmt"
 	"mime/multipart"
 	"mime/quotedprintable"
@@ -31,9 +30,6 @@ import (
 
 const crlf = "\r\n"
 
-//go:embed templates
-var templateFiles embed.FS
-
 type Emailer struct {
 	templates *template.Template
 }
@@ -50,12 +46,12 @@ func init() {
 
 func NewEmailer() (*Emailer, error) {
 	tmpl := template.New("")
-	tmpl, err := tmpl.ParseFS(templateFiles, "templates/email-*.*")
+	tmpl, err := tmpl.ParseFS(templateFiles, "templates/email/email-*.*")
 	if err != nil {
 		return nil, err
 	}
 
-	localTemplatePath := filepath.Join(viper.GetString("email_templates_dir"), "email-*.*")
+	localTemplatePath := filepath.Join(viper.GetString("templates_dir"), "email/email-*.*")
 	localTemplates, err := filepath.Glob(localTemplatePath)
 	if err != nil {
 		return nil, err
