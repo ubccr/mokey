@@ -16,6 +16,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/mileusna/useragent v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/pquerna/otp v1.3.0

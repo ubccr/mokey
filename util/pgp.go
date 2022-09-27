@@ -20,12 +20,16 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/mileusna/useragent"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/model"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
+
+const crlf = "\r\n"
 
 //go:embed templates
 var templateFiles embed.FS
@@ -46,12 +50,12 @@ func init() {
 
 func NewEmailer() (*Emailer, error) {
 	tmpl := template.New("")
-	tmpl, err := tmpl.ParseFS(templateFiles, "templates/*.txt")
+	tmpl, err := tmpl.ParseFS(templateFiles, "templates/email-*.*")
 	if err != nil {
 		return nil, err
 	}
 
-	localTemplatePath := filepath.Join(viper.GetString("email_templates_dir"), "*.txt")
+	localTemplatePath := filepath.Join(viper.GetString("email_templates_dir"), "email-*.*")
 	localTemplates, err := filepath.Glob(localTemplatePath)
 	if err != nil {
 		return nil, err
@@ -68,7 +72,7 @@ func NewEmailer() (*Emailer, error) {
 }
 
 func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
-	token, err := model.NewToken(uid, email, viper.GetUint32("reset_max_age"))
+	token, err := model.NewToken(uid, email, viper.GetUint32("token_max_age"))
 	if err != nil {
 		return err
 	}
@@ -85,18 +89,22 @@ func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
 	return nil
 }
 
-func (e *Emailer) SendVerifyAccountEmail(uid, email string) error {
-	token, err := model.NewToken(uid, email, viper.GetUint32("setup_max_age"))
+func (e *Emailer) SendVerifyAccountEmail(user *ipa.User, userAgent string) error {
+	token, err := model.NewToken(user.Username, user.Email, viper.GetUint32("token_max_age"))
 	if err != nil {
 		return err
 	}
 
+	ua := useragent.Parse(userAgent)
+
 	vars := map[string]interface{}{
-		"uid":  uid,
-		"link": fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), token),
+		"name":    user.First,
+		"os":      ua.OS,
+		"browser": ua.Name,
+		"link":    fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), token),
 	}
 
-	err = e.sendEmail(email, fmt.Sprintf("[%s] Verify your email", viper.GetString("email_prefix")), "setup-account.txt", vars)
+	err = e.sendEmail(user.Email, fmt.Sprintf("[%s] Verify your email", viper.GetString("email_prefix")), "email-setup-account", vars)
 	if err != nil {
 		return err
 	}
@@ -174,14 +182,27 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 	data["date"] = time.Now()
 	data["contact"] = viper.GetString("email_from")
 	data["sig"] = viper.GetString("email_sig")
+	data["prefix"] = viper.GetString("email_prefix")
+	data["email_link_base"] = viper.GetString("email_link_base")
 
 	var text bytes.Buffer
-	err := e.templates.ExecuteTemplate(&text, tmpl, data)
+	err := e.templates.ExecuteTemplate(&text, tmpl+".txt", data)
 	if err != nil {
 		return err
 	}
 
-	qtext, err := e.quotedBody(text.Bytes())
+	txtBody, err := e.quotedBody(text.Bytes())
+	if err != nil {
+		return err
+	}
+
+	var html bytes.Buffer
+	err = e.templates.ExecuteTemplate(&html, tmpl+".html", data)
+	if err != nil {
+		return err
+	}
+
+	htmlBody, err := e.quotedBody(html.Bytes())
 	if err != nil {
 		return err
 	}
@@ -192,54 +213,42 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 	header.Set("To", email)
 	header.Set("Subject", subject)
 	header.Set("From", viper.GetString("email_from"))
-	header.Set("Content-Type", "text/plain; charset=UTF-8")
-	header.Set("Content-Transfer-Encoding", "quoted-printable")
 
-	body := qtext
+	var multipartBody bytes.Buffer
+	mp := multipart.NewWriter(&multipartBody)
+	header.Set("Content-Type", fmt.Sprintf("multipart/alternative;%s boundary=%s", crlf, mp.Boundary()))
 
-	if viper.GetBool("pgp_sign") {
-		header.Del("Content-Transfer-Encoding")
+	txtPart, err := mp.CreatePart(textproto.MIMEHeader(
+		map[string][]string{
+			"Content-Type":              []string{"text/plain; charset=utf-8"},
+			"Content-Transfer-Encoding": []string{"quoted-printable"},
+		}))
+	if err != nil {
+		return err
+	}
 
-		mhead := make(textproto.MIMEHeader)
-		mhead.Add("Content-Type", "text/plain; charset=UTF-8")
-		mhead.Add("Content-Transfer-Encoding", "quoted-printable")
-		sig, err := e.sign(qtext, mhead)
-		if err != nil {
-			return err
-		}
+	_, err = txtPart.Write(txtBody)
+	if err != nil {
+		return err
+	}
 
-		var multipartBody bytes.Buffer
-		mp := multipart.NewWriter(&multipartBody)
-		boundary := mp.Boundary()
-		mw, err := mp.CreatePart(mhead)
-		if err != nil {
-			return err
-		}
-		_, err = mw.Write(qtext)
-		if err != nil {
-			return err
-		}
+	htmlPart, err := mp.CreatePart(textproto.MIMEHeader(
+		map[string][]string{
+			"Content-Type":              []string{"text/html; charset=utf-8"},
+			"Content-Transfer-Encoding": []string{"quoted-printable"},
+		}))
+	if err != nil {
+		return err
+	}
 
-		mw, err = mp.CreatePart(textproto.MIMEHeader(
-			map[string][]string{
-				"Content-Type": []string{"application/pgp-signature; name=signature.asc;"},
-			}))
-		if err != nil {
-			return err
-		}
+	_, err = htmlPart.Write(htmlBody)
+	if err != nil {
+		return err
+	}
 
-		_, err = mw.Write(sig)
-		if err != nil {
-			return err
-		}
-
-		err = mp.Close()
-		if err != nil {
-			return err
-		}
-
-		header.Set("Content-Type", fmt.Sprintf(`multipart/signed; boundary="%s"; protocol="application/pgp-signature"; micalg="pgp-sha256"`, boundary))
-		body = multipartBody.Bytes()
+	err = mp.Close()
+	if err != nil {
+		return err
 	}
 
 	smtpHostPort := fmt.Sprintf("%s:%d", viper.GetString("smtp_host"), viper.GetInt("smtp_port"))
@@ -311,7 +320,7 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 	if _, err = buf.WriteTo(wc); err != nil {
 		return err
 	}
-	if _, err = wc.Write(body); err != nil {
+	if _, err = wc.Write(multipartBody.Bytes()); err != nil {
 		return err
 	}
 

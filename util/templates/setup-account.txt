@@ -1,9 +1,0 @@
-Your account "{{ .uid }}" has been created, please use the following link to finalize the setup:
-
-{{ .link }}
-
-Any questions email: {{ .contact }}
-
-Thank you,
-
-{{ .sig }}

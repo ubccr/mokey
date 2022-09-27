@@ -85,6 +85,21 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
+	// Send user an email to verify their account
+	err = r.emailer.SendVerifyAccountEmail(user, c.Get("User-Agent"))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to send new account email")
+	} else {
+		log.WithFields(log.Fields{
+			"username": user.Username,
+			"email":    user.Email,
+		}).Warn("New user account email sent successfully")
+	}
+
 	return c.Render("signup-success.html", fiber.Map{})
 }
 
@@ -200,23 +215,6 @@ func (r *Router) accountCreate(user *ipa.User, pass, pass2, captchaID, captchaSo
 		}).Error("Failed to disable user")
 
 		// TODO: should we tell user about this? probably not?
-	}
-
-	// Send user an email to verify their account
-	err = r.emailer.SendVerifyAccountEmail(user.Username, user.Email)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err":      err,
-			"username": user.Username,
-			"email":    user.Email,
-		}).Error("Failed to send new account email")
-
-		// TODO: should we tell user about this?
-	} else {
-		log.WithFields(log.Fields{
-			"username": user.Username,
-			"email":    user.Email,
-		}).Warn("New user account email sent successfully")
 	}
 
 	return nil
