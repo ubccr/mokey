@@ -1,6 +1,8 @@
 package server
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
@@ -60,7 +62,8 @@ func (r *Router) RequireLogin(c *fiber.Ctx) error {
 
 	user := sess.Get(SessionKeyUser)
 	sid := sess.Get(SessionKeySID)
-	if sid == nil || user == nil {
+	authenticated := sess.Get(SessionKeyAuthenticated)
+	if sid == nil || user == nil || authenticated == nil {
 		return r.redirectLogin(c)
 	}
 
@@ -71,6 +74,10 @@ func (r *Router) RequireLogin(c *fiber.Ctx) error {
 
 	if _, ok := sid.(string); !ok {
 		log.Error("Invalid sid in session")
+		return r.redirectLogin(c)
+	}
+
+	if isAuthed, ok := authenticated.(bool); !ok || !isAuthed {
 		return r.redirectLogin(c)
 	}
 
@@ -156,11 +163,35 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	client := ipa.NewDefaultClient()
 	err := client.RemoteLogin(username, password+otp)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"username":         username,
-			"ipa_client_error": err,
-		}).Error("Failed login attempt")
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+		switch {
+		case errors.Is(err, ipa.ErrExpiredPassword):
+			log.WithFields(log.Fields{
+				"username":         username,
+				"ipa_client_error": err,
+			}).Info("Password expired, forcing change")
+
+			sess, err := r.session(c)
+			if err != nil {
+				return err
+			}
+			sess.Set(SessionKeyAuthenticated, false)
+			sess.Set(SessionKeyUser, username)
+
+			if err := r.sessionSave(c, sess); err != nil {
+				return err
+			}
+
+			vars := fiber.Map{
+				"username": username,
+			}
+			return c.Render("login-password-expired.html", vars)
+		default:
+			log.WithFields(log.Fields{
+				"username":         username,
+				"ipa_client_error": err,
+			}).Error("Failed login attempt")
+			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+		}
 	}
 
 	_, err = client.Ping()

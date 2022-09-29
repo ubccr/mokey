@@ -91,6 +91,7 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Get("/auth/logout", r.Logout)
 	app.Post("/auth/login", r.CheckUser)
 	app.Post("/auth/authenticate", r.Authenticate)
+	app.Post("/auth/expiredpw", r.PasswordExpired)
 	app.Get("/auth/captcha/:id.png", r.Captcha)
 	app.Get("/auth/verify/:token", r.AccountVerify)
 	app.Post("/auth/verify/:token", r.AccountVerify)

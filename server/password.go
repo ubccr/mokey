@@ -298,3 +298,89 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }
+
+func (r *Router) PasswordExpired(c *fiber.Ctx) error {
+	sess, err := r.session(c)
+	if err != nil {
+		log.Warn("Failed to get user session. Logging out")
+		return r.redirectLogin(c)
+	}
+
+	username := sess.Get(SessionKeyUser)
+	authenticated := sess.Get(SessionKeyAuthenticated)
+	if username == nil || authenticated == nil {
+		return r.redirectLogin(c)
+	}
+
+	if isAuthed, ok := authenticated.(bool); !ok || isAuthed {
+		return r.redirectLogin(c)
+	}
+
+	if _, ok := username.(string); !ok {
+		log.Error("Invalid user in session")
+		return r.redirectLogin(c)
+	}
+
+	user, err := r.adminClient.UserShow(username.(string))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username": username,
+			"err":      err,
+		}).Warn("Password expired attempt for unknown username")
+		return r.redirectLogin(c)
+	}
+
+	password := c.FormValue("password")
+	newpass := c.FormValue("newpassword")
+	newpass2 := c.FormValue("newpassword2")
+	otp := c.FormValue("otp")
+
+	if user.OTPOnly() && otp == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Please enter the 6-digit OTP code from your mobile app")
+	}
+
+	if err := validatePasswordChange(password, newpass, newpass2); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+
+	err = r.adminClient.SetPassword(user.Username, password, newpass, otp)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to change expired password for user")
+
+		return c.Status(fiber.StatusInternalServerError).SendString("")
+	}
+
+	client := ipa.NewDefaultClient()
+	err = client.RemoteLogin(user.Username, newpass+otp)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username":         user.Username,
+			"ipa_client_error": err,
+		}).Error("Failed to login after expired password change")
+		return c.Status(fiber.StatusUnauthorized).SendString("Login failed")
+	}
+
+	_, err = client.Ping()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username":         user.Username,
+			"ipa_client_error": err,
+		}).Error("Failed to ping FreeIPA after expired password change")
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+	}
+
+	sess.Set(SessionKeyAuthenticated, true)
+	sess.Set(SessionKeyUser, user.Username)
+	sess.Set(SessionKeySID, client.SessionID())
+
+	if err := r.sessionSave(c, sess); err != nil {
+		return err
+	}
+
+	c.Set("HX-Redirect", "/")
+	return c.Status(fiber.StatusNoContent).SendString("")
+}
