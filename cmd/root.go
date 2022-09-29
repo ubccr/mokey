@@ -16,6 +16,7 @@ import (
 var (
 	cfgFile     string
 	cfgFileUsed string
+	trace       bool
 	debug       bool
 	verbose     bool
 
@@ -38,6 +39,7 @@ func init() {
 
 	Root.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file")
 	Root.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug messages")
+	Root.PersistentFlags().BoolVar(&trace, "trace", false, "Enable trace messages")
 	Root.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable verbose messages")
 
 	Root.PersistentPreRunE = func(command *cobra.Command, args []string) error {
@@ -46,7 +48,9 @@ func init() {
 }
 
 func SetupLogging() error {
-	if debug {
+	if trace {
+		logrus.SetLevel(logrus.TraceLevel)
+	} else if debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	} else if verbose {
 		logrus.SetLevel(logrus.InfoLevel)

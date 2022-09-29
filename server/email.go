@@ -6,7 +6,6 @@ package server
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/tls"
 	"fmt"
 	"mime/multipart"
@@ -14,7 +13,6 @@ import (
 	"net"
 	"net/smtp"
 	"net/textproto"
-	"os"
 	"path/filepath"
 	"text/template"
 	"time"
@@ -24,8 +22,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/model"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/packet"
 )
 
 const crlf = "\r\n"
@@ -35,7 +31,6 @@ type Emailer struct {
 }
 
 func init() {
-	viper.SetDefault("pgp_sign", false)
 	viper.SetDefault("smtp_host", "localhost")
 	viper.SetDefault("smtp_port", 25)
 	viper.SetDefault("smtp_tls", "off")
@@ -46,29 +41,32 @@ func init() {
 
 func NewEmailer() (*Emailer, error) {
 	tmpl := template.New("")
-	tmpl, err := tmpl.ParseFS(templateFiles, "templates/email/email-*.*")
-	if err != nil {
-		return nil, err
-	}
 
-	localTemplatePath := filepath.Join(viper.GetString("templates_dir"), "email/email-*.*")
-	localTemplates, err := filepath.Glob(localTemplatePath)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(localTemplates) > 0 {
-		tmpl, err = tmpl.ParseGlob(localTemplatePath)
+	for _, ext := range []string{"txt", "html"} {
+		tmpl, err := tmpl.ParseFS(templateFiles, "templates/email/*."+ext)
 		if err != nil {
 			return nil, err
+		}
+
+		localTemplatePath := filepath.Join(viper.GetString("templates_dir"), "email/*."+ext)
+		localTemplates, err := filepath.Glob(localTemplatePath)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(localTemplates) > 0 {
+			tmpl, err = tmpl.ParseGlob(localTemplatePath)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	return &Emailer{templates: tmpl}, nil
 }
 
-func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
-	token, err := model.NewToken(uid, email, viper.GetUint32("token_max_age"))
+func (e *Emailer) SendPasswordResetEmail(user *ipa.User, userAgent string) error {
+	token, err := model.NewToken(user.Username, user.Email, viper.GetUint32("token_max_age"))
 	if err != nil {
 		return err
 	}
@@ -77,7 +75,7 @@ func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
 		"link": fmt.Sprintf("%s/auth/resetpw/%s", viper.GetString("email_link_base"), token),
 	}
 
-	err = e.sendEmail(email, fmt.Sprintf("[%s] Please reset your password", viper.GetString("email_prefix")), "reset-password.txt", vars)
+	err = e.sendEmail(user, userAgent, "Please reset your password", "password-reset", vars)
 	if err != nil {
 		return err
 	}
@@ -85,22 +83,17 @@ func (e *Emailer) SendResetPasswordEmail(uid, email string) error {
 	return nil
 }
 
-func (e *Emailer) SendVerifyAccountEmail(user *ipa.User, userAgent string) error {
+func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, userAgent string) error {
 	token, err := model.NewToken(user.Username, user.Email, viper.GetUint32("token_max_age"))
 	if err != nil {
 		return err
 	}
 
-	ua := useragent.Parse(userAgent)
-
 	vars := map[string]interface{}{
-		"name":    user.First,
-		"os":      ua.OS,
-		"browser": ua.Name,
-		"link":    fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), token),
+		"link": fmt.Sprintf("%s/auth/verify/%s", viper.GetString("email_link_base"), token),
 	}
 
-	err = e.sendEmail(user.Email, fmt.Sprintf("[%s] Verify your email", viper.GetString("email_prefix")), "email-setup-account", vars)
+	err = e.sendEmail(user, userAgent, "Verify your email", "account-verify", vars)
 	if err != nil {
 		return err
 	}
@@ -124,57 +117,21 @@ func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (e *Emailer) sign(qtext []byte, header textproto.MIMEHeader) ([]byte, error) {
-	var buf bytes.Buffer
-
-	for k, vv := range header {
-		for _, v := range vv {
-			fmt.Fprintf(&buf, "%s: %s\r\n", k, v)
-		}
-	}
-	fmt.Fprintf(&buf, "\r\n")
-	_, err := buf.Write(qtext)
-	if err != nil {
-		return nil, err
-	}
-
-	file, err := os.Open(viper.GetString("pgp_key"))
-	if err != nil {
-		return nil, err
-	}
-
-	keyring, err := openpgp.ReadArmoredKeyRing(file)
-	if err != nil {
-		return nil, err
-	}
-
-	signingKey := keyring[0]
-
-	if signingKey.PrivateKey.Encrypted {
-		err = signingKey.PrivateKey.Decrypt([]byte(viper.GetString("pgp_passphrase")))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var sig bytes.Buffer
-	err = openpgp.ArmoredDetachSign(&sig, signingKey, &buf, &packet.Config{DefaultHash: crypto.SHA256})
-	if err != nil {
-		return nil, err
-	}
-
-	return sig.Bytes(), nil
-}
-
-func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interface{}) error {
+func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, data map[string]interface{}) error {
 	log.WithFields(log.Fields{
-		"email": email,
+		"email":    user.Email,
+		"username": user.Username,
 	}).Info("Sending email to user")
 
 	if data == nil {
 		data = make(map[string]interface{})
 	}
 
+	ua := useragent.Parse(userAgent)
+
+	data["os"] = ua.OS
+	data["browser"] = ua.Name
+	data["name"] = user.First
 	data["date"] = time.Now()
 	data["contact"] = viper.GetString("email_from")
 	data["sig"] = viper.GetString("email_sig")
@@ -206,8 +163,8 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 	header := make(textproto.MIMEHeader)
 	header.Set("Mime-Version", "1.0")
 	header.Set("Date", time.Now().Format(time.RFC1123Z))
-	header.Set("To", email)
-	header.Set("Subject", subject)
+	header.Set("To", user.Email)
+	header.Set("Subject", fmt.Sprintf("[%s] %s", viper.GetString("email_prefix"), subject))
 	header.Set("From", viper.GetString("email_from"))
 
 	var multipartBody bytes.Buffer
@@ -294,7 +251,7 @@ func (e *Emailer) sendEmail(email, subject, tmpl string, data map[string]interfa
 		log.Error(err)
 		return err
 	}
-	if err = c.Rcpt(email); err != nil {
+	if err = c.Rcpt(user.Email); err != nil {
 		log.Error(err)
 		return err
 	}

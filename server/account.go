@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 	"github.com/ubccr/mokey/model"
-	"github.com/ubccr/mokey/util"
 )
 
 func (r *Router) AccountSettings(c *fiber.Ctx) error {
@@ -74,19 +73,19 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 	user.Email = c.FormValue("email")
 	user.First = c.FormValue("first")
 	user.Last = c.FormValue("last")
-	pass := c.FormValue("password")
-	pass2 := c.FormValue("password2")
+	password := c.FormValue("password")
+	passwordConfirm := c.FormValue("password2")
 	captchaID := c.FormValue("captcha_id")
 	captchaSol := c.FormValue("captcha_sol")
 
-	err := r.accountCreate(user, pass, pass2, captchaID, captchaSol)
+	err := r.accountCreate(user, password, passwordConfirm, captchaID, captchaSol)
 	if err != nil {
 		c.Append("HX-Trigger", "{\"reloadCaptcha\":\""+captcha.New()+"\"}")
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
 	// Send user an email to verify their account
-	err = r.emailer.SendVerifyAccountEmail(user, c.Get("User-Agent"))
+	err = r.emailer.SendAccountVerifyEmail(user, c.Get("User-Agent"))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":      err,
@@ -97,14 +96,14 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": user.Username,
 			"email":    user.Email,
-		}).Warn("New user account email sent successfully")
+		}).Info("New user account email sent successfully")
 	}
 
 	return c.Render("signup-success.html", fiber.Map{})
 }
 
 // accountCreate does the work of validation and creating the account in FreeIPA
-func (r *Router) accountCreate(user *ipa.User, pass, pass2, captchaID, captchaSol string) error {
+func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captchaID, captchaSol string) error {
 	if !valid.IsEmail(user.Email) {
 		return errors.New("Please provide a valid email address")
 	}
@@ -129,31 +128,12 @@ func (r *Router) accountCreate(user *ipa.User, pass, pass2, captchaID, captchaSo
 		return errors.New("Please provide your last name")
 	}
 
-	if pass == "" {
-		return errors.New("Please enter a new password")
-	}
-
-	if pass2 == "" {
-		return errors.New("Please confirm your new password")
-	}
-
-	if pass != pass2 {
-		return errors.New("Password do not match. Please confirm your password.")
-	}
-
-	if err := util.CheckPassword(pass, viper.GetInt("min_passwd_len"), viper.GetInt("min_passwd_classes")); err != nil {
+	if err := validatePassword(password, passwordConfirm); err != nil {
 		return err
 	}
 
-	if len(captchaID) == 0 {
-		return errors.New("Invalid captcha provided")
-	}
-	if len(captchaSol) == 0 {
-		return errors.New("Please type in the numbers you see in the picture")
-	}
-
-	if !captcha.VerifyString(captchaID, captchaSol) {
-		return errors.New("The numbers you typed in do not match the image")
+	if err := r.verifyCaptcha(captchaID, captchaSol); err != nil {
+		return err
 	}
 
 	homedir := filepath.Join(viper.GetString("default_homedir"), user.Username)
@@ -190,7 +170,7 @@ func (r *Router) accountCreate(user *ipa.User, pass, pass2, captchaID, captchaSo
 	}).Warn("New user account created")
 
 	// Set password
-	err = r.adminClient.SetPassword(user.Username, userRec.RandomPassword, pass, "")
+	err = r.adminClient.SetPassword(user.Username, userRec.RandomPassword, password, "")
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":      err,

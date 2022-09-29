@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"errors"
 
 	"github.com/dchest/captcha"
 	"github.com/gofiber/fiber/v2"
@@ -34,4 +35,21 @@ func (r *Router) Captcha(c *fiber.Ctx) error {
 	}
 
 	return c.SendStream(bytes.NewReader(content.Bytes()))
+}
+
+// Checks and verifies captcha
+
+func (r *Router) verifyCaptcha(id, sol string) error {
+	if len(id) == 0 {
+		return errors.New("Invalid captcha provided")
+	}
+	if len(sol) == 0 {
+		return errors.New("Please type in the numbers you see in the picture")
+	}
+
+	if !captcha.VerifyString(id, sol) {
+		return errors.New("The numbers you typed in do not match the image")
+	}
+
+	return nil
 }
