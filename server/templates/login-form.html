@@ -16,6 +16,7 @@
             </div>
             {{ end }}
             <div class="mb-3 d-grid gap-2">
+              <input type="hidden" name="challenge" value="{{ $.challenge }}" />
               <input type="hidden" name="username" value="{{ $.user.Username }}" />
               <button hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-target-error="login-failed" hx-post="/auth/authenticate" hx-target="#login" hx-swap="innerHTML" class="btn btn-primary btn-lg" type="submit">
               <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 

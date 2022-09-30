@@ -206,14 +206,14 @@ func (s *Server) Serve() error {
 	if s.CertFile != "" && s.KeyFile != "" {
 		s.Scheme = "https"
 		log.Infof("Listening on %s://%s", s.Scheme, s.ListenAddress)
-		if err := s.app.ListenTLS(":8080", s.CertFile, s.KeyFile); err != nil {
+		if err := s.app.ListenTLS(s.ListenAddress, s.CertFile, s.KeyFile); err != nil {
 			return err
 		}
 	}
 
 	s.Scheme = "http"
 	log.Infof("Listening on %s://%s", s.Scheme, s.ListenAddress)
-	if err := s.app.Listen(":8080"); err != nil {
+	if err := s.app.Listen(s.ListenAddress); err != nil {
 		return err
 	}
 

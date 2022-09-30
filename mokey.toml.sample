@@ -100,3 +100,11 @@ driver = "memory"
 [storage.redis]
 # Redis URL
 # url = "redis://<user>:<pass>@127.0.0.1:6379/<db>"
+
+#------------------------------------------------------------------------------
+# Hydra
+#------------------------------------------------------------------------------
+[hydra]
+# admin_url: "http://locahost:4445"
+# login_timeout: 3600
+# fake_tls_termination: true

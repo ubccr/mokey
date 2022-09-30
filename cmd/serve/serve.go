@@ -46,7 +46,6 @@ func init() {
 	serveCmd.Flags().String("email-from", "", "from email address")
 	viper.BindPFlag("email_from", serveCmd.Flags().Lookup("email-from"))
 
-	serveCmd.MarkFlagRequired("keytab")
 	cmd.Root.AddCommand(serveCmd)
 }
 

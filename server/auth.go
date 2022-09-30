@@ -5,11 +5,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 )
 
 func (r *Router) Login(c *fiber.Ctx) error {
-	return c.Render("login.html", fiber.Map{})
+	vars := fiber.Map{}
+	return c.Render("login.html", vars)
 }
 
 func (r *Router) Logout(c *fiber.Ctx) error {
@@ -140,7 +142,8 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 	}).Info("Login user attempt")
 
 	vars := fiber.Map{
-		"user": userRec,
+		"user":      userRec,
+		"challenge": c.FormValue("challenge"),
 	}
 
 	return c.Render("login-form.html", vars)
@@ -150,6 +153,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	c.Locals("NoErrorTemplate", "true")
 	username := c.FormValue("username")
 	password := c.FormValue("password")
+	challenge := c.FormValue("challenge")
 	otp := c.FormValue("otp")
 
 	if username == "" {
@@ -213,6 +217,10 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 
 	if err := r.sessionSave(c, sess); err != nil {
 		return err
+	}
+
+	if viper.IsSet("hydra.admin_url") && challenge != "" {
+		return r.LoginOAuthPost(username, challenge, c)
 	}
 
 	c.Set("HX-Redirect", "/")

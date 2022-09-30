@@ -1,10 +1,13 @@
 package server
 
 import (
+	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	hydra "github.com/ory/hydra-client-go/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
@@ -15,6 +18,10 @@ type Router struct {
 	sessionStore *session.Store
 	emailer      *Emailer
 	storage      fiber.Storage
+
+	// Hydra consent app support
+	hydraClient          *hydra.OryHydra
+	hydraAdminHTTPClient *http.Client
 }
 
 func NewRouter(storage fiber.Storage) (*Router, error) {
@@ -41,6 +48,29 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 	r.emailer, err = NewEmailer(storage)
 	if err != nil {
 		return nil, err
+	}
+
+	if viper.IsSet("hydra.admin_url") {
+		adminURL, err := url.Parse(viper.GetString("hydra.admin_url"))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		r.hydraClient = hydra.NewHTTPClientWithConfig(
+			nil,
+			&hydra.TransportConfig{
+				Schemes:  []string{adminURL.Scheme},
+				Host:     adminURL.Host,
+				BasePath: adminURL.Path,
+			})
+
+		if viper.GetBool("hydra.fake_tls_termination") {
+			r.hydraAdminHTTPClient = &http.Client{
+				Transport: &FakeTLSTransport{T: http.DefaultTransport},
+			}
+		} else {
+			r.hydraAdminHTTPClient = http.DefaultClient
+		}
 	}
 
 	return r, nil
@@ -130,6 +160,12 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/otptoken/remove", r.RequireLogin, r.RequireHTMX, r.OTPTokenRemove)
 	app.Post("/otptoken/enable", r.RequireLogin, r.RequireHTMX, r.OTPTokenEnable)
 	app.Post("/otptoken/disable", r.RequireLogin, r.RequireHTMX, r.OTPTokenDisable)
+
+	if viper.IsSet("hydra.admin_url") {
+		app.Get("/oauth/consent", r.ConsentGet)
+		app.Get("/oauth/login", r.LoginOAuthGet)
+		app.Get("/oauth/error", r.HydraError)
+	}
 }
 
 func (r *Router) userClient(c *fiber.Ctx) *ipa.Client {
