@@ -52,7 +52,7 @@ func NewServer(address string) (*Server, error) {
 func getAssetsFS() http.FileSystem {
 	staticLocalPath := viper.GetString("static_assets_dir")
 	if staticLocalPath != "" {
-		log.Debug("Using local static assets dir: %s", staticLocalPath)
+		log.Debugf("Using local static assets dir: %s", staticLocalPath)
 		return http.FS(os.DirFS(staticLocalPath))
 	}
 

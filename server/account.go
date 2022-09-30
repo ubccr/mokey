@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
-	"github.com/ubccr/mokey/model"
 )
 
 func (r *Router) AccountSettings(c *fiber.Ctx) error {
@@ -136,62 +135,42 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 		return err
 	}
 
-	homedir := filepath.Join(viper.GetString("default_homedir"), user.Username)
+	user.HomeDir = filepath.Join(viper.GetString("default_homedir"), user.Username)
+	user.Shell = viper.GetString("default_shell")
+	user.Category = UserCategoryUnverified
 
-	userRec, err := r.adminClient.UserAdd(user.Username, user.Email, user.First, user.Last, homedir, viper.GetString("default_shell"), true)
+	userRec, err := r.adminClient.UserAddWithPassword(user, password)
 	if err != nil {
-		if ierr, ok := err.(*ipa.IpaError); ok {
-			if ierr.Code == 4002 {
-				return fmt.Errorf("Username already exists: %s", user.Username)
-			} else {
-				log.WithFields(log.Fields{
-					"code": ierr.Code,
-				}).Error("Failed to create account. Please contact system administrator")
-			}
+		switch {
+		case errors.Is(err, ipa.ErrUserExists):
+			return fmt.Errorf("Username already exists: %s", user.Username)
+		default:
+			log.WithFields(log.Fields{
+				"err":      err,
+				"username": user.Username,
+				"email":    user.Email,
+				"first":    user.First,
+				"last":     user.Last,
+				"homedir":  user.HomeDir,
+			}).Error("Failed to create user account")
+			return errors.New("Failed to create account. Please contact system administrator")
 		}
-
-		log.WithFields(log.Fields{
-			"err":      err,
-			"username": user.Username,
-			"email":    user.Email,
-			"first":    user.First,
-			"last":     user.Last,
-			"homedir":  homedir,
-		}).Error("Failed to create user account")
-		return errors.New("Failed to create account. Please contact system administrator")
 	}
 
 	log.WithFields(log.Fields{
-		"username": user.Username,
-		"email":    user.Email,
-		"first":    user.First,
-		"last":     user.Last,
-		"homedir":  homedir,
+		"username": userRec.Username,
+		"email":    userRec.Email,
+		"first":    userRec.First,
+		"last":     userRec.Last,
+		"homedir":  userRec.HomeDir,
 	}).Warn("New user account created")
 
-	// Set password
-	err = r.adminClient.SetPassword(user.Username, userRec.RandomPassword, password, "")
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err":      err,
-			"username": user.Username,
-			"email":    user.Email,
-		}).Error("Failed to set password for user")
-
-		// TODO: need to handle this case better
-		return errors.New("There was a problem creating your account. Please contact the administrator")
-	}
-
-	log.WithFields(log.Fields{
-		"username": user.Username,
-	}).Warn("User password set successfully")
-
 	// Disable new users until they have verified their email address
-	err = r.adminClient.UserDisable(user.Username)
+	err = r.adminClient.UserDisable(userRec.Username)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":      err,
-			"username": user.Username,
+			"username": userRec.Username,
 		}).Error("Failed to disable user")
 
 		// TODO: should we tell user about this? probably not?
@@ -203,18 +182,8 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 func (r *Router) AccountVerify(c *fiber.Ctx) error {
 	token := c.Params("token")
 
-	claims, err := model.ParseToken(token, viper.GetUint32("token_max_age"))
+	claims, err := ParseToken(token, r.storage)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).SendString("")
-	}
-
-	tokenUsed, err := r.storage.Get(token)
-	if tokenUsed != nil {
-		// Token already used
-		log.WithFields(log.Fields{
-			"username": claims.UserName,
-			"email":    claims.Email,
-		}).Warn("Attempt to re-use account verification token")
 		return c.Status(fiber.StatusNotFound).SendString("")
 	}
 
@@ -226,10 +195,10 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 		return c.Render("verify-account.html", vars)
 	}
 
-	user, err := r.adminClient.UserShow(claims.UserName)
+	user, err := r.adminClient.UserShow(claims.Username)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"username": claims.UserName,
+			"username": claims.Username,
 			"email":    claims.Email,
 			"err":      err,
 		}).Error("Verifying account failed while fetching user from FreeIPA")
@@ -237,10 +206,10 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 	}
 
 	if user.Locked {
-		err := r.adminClient.UserEnable(claims.UserName)
+		err := r.adminClient.UserEnable(claims.Username)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"username": claims.UserName,
+				"username": claims.Username,
 				"email":    claims.Email,
 				"error":    err,
 			}).Error("Verify account failed to enable user in FreeIPA")
@@ -248,7 +217,80 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(token, []byte("true"), time.Until(time.Now().Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	// User is now verified so unset category
+	if user.Category == UserCategoryUnverified {
+		user.Category = ""
+
+		_, err = r.adminClient.UserMod(user)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"username": claims.Username,
+				"email":    claims.Email,
+				"error":    err,
+			}).Error("Verify account failed to modify user category in FreeIPA")
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
+		}
+	}
+
+	r.storage.Set(TokenUsedPrefix+claims.Username, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
 
 	return c.Render("verify-success.html", vars)
+}
+
+func (r *Router) AccountVerifyResend(c *fiber.Ctx) error {
+	if c.Method() == fiber.MethodGet {
+		vars := fiber.Map{
+			"captchaID": captcha.New(),
+		}
+
+		return c.Render("account-verify-forgot.html", vars)
+	}
+
+	err := r.verifyCaptcha(c.FormValue("captcha_id"), c.FormValue("captcha_sol"))
+	if err != nil {
+		c.Append("HX-Trigger", "{\"reloadCaptcha\":\""+captcha.New()+"\"}")
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+
+	username := c.FormValue("username")
+
+	user, err := r.adminClient.UserShow(username)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username": username,
+			"err":      err,
+		}).Warn("Account verify attempt for unknown username")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
+	}
+
+	if !user.Locked {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("Account verify resend attempt for active user")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
+	}
+
+	if user.Category != UserCategoryUnverified {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warnf("Refusing to send account verify email. Invalid user category")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
+	}
+
+	// Resend user an email to verify their account
+	err = r.emailer.SendAccountVerifyEmail(user, c.Get("User-Agent"))
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to re-send verify account email")
+	} else {
+		log.WithFields(log.Fields{
+			"username": user.Username,
+			"email":    user.Email,
+		}).Info("Verify user account email sent successfully")
+	}
+
+	return c.Render("account-verify-forgot-success.html", fiber.Map{})
 }

@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
-	"github.com/ubccr/mokey/model"
 )
 
 var (
@@ -213,25 +212,15 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 func (r *Router) PasswordReset(c *fiber.Ctx) error {
 	token := c.Params("token")
 
-	claims, err := model.ParseToken(token, viper.GetUint32("token_max_age"))
+	claims, err := ParseToken(token, r.storage)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).SendString("")
 	}
 
-	tokenUsed, err := r.storage.Get(token)
-	if tokenUsed != nil {
-		// Token already used
-		log.WithFields(log.Fields{
-			"username": claims.UserName,
-			"email":    claims.Email,
-		}).Warn("Attempt to re-use reset password token")
-		return c.Status(fiber.StatusNotFound).SendString("")
-	}
-
-	user, err := r.adminClient.UserShow(claims.UserName)
+	user, err := r.adminClient.UserShow(claims.Username)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"username": claims.UserName,
+			"username": claims.Username,
 			"email":    claims.Email,
 		}).Warn("Attempt to reset password for non-existent username")
 		return c.Status(fiber.StatusNotFound).SendString("")
@@ -239,7 +228,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 
 	if user.Locked {
 		log.WithFields(log.Fields{
-			"username": claims.UserName,
+			"username": claims.Username,
 			"email":    claims.Email,
 		}).Warn("Attempt to reset password for disabled/locked user")
 		return c.Status(fiber.StatusNotFound).SendString("")
@@ -294,7 +283,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(token, []byte("true"), time.Until(time.Now().Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	r.storage.Set(TokenUsedPrefix+claims.Username, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }

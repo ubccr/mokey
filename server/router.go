@@ -37,7 +37,7 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 		CookieHTTPOnly: true,
 	})
 
-	r.emailer, err = NewEmailer()
+	r.emailer, err = NewEmailer(storage)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +99,8 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/auth/forgotpw", r.PasswordForgot)
 	app.Get("/auth/resetpw/:token", r.PasswordReset)
 	app.Post("/auth/resetpw/:token", r.PasswordReset)
+	app.Get("/auth/verify", r.AccountVerifyResend)
+	app.Post("/auth/verify", r.AccountVerifyResend)
 
 	// Account Settings
 	app.Get("/account/settings", r.RequireLogin, r.RequireHTMX, r.AccountSettings)

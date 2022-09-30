@@ -17,17 +17,18 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/mileusna/useragent"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
-	"github.com/ubccr/mokey/model"
 )
 
 const crlf = "\r\n"
 
 type Emailer struct {
 	templates *template.Template
+	storage   fiber.Storage
 }
 
 func init() {
@@ -39,7 +40,7 @@ func init() {
 	viper.SetDefault("email_from", "helpdesk@example.com")
 }
 
-func NewEmailer() (*Emailer, error) {
+func NewEmailer(storage fiber.Storage) (*Emailer, error) {
 	tmpl := template.New("")
 
 	for _, ext := range []string{"txt", "html"} {
@@ -62,11 +63,11 @@ func NewEmailer() (*Emailer, error) {
 		}
 	}
 
-	return &Emailer{templates: tmpl}, nil
+	return &Emailer{storage: storage, templates: tmpl}, nil
 }
 
 func (e *Emailer) SendPasswordResetEmail(user *ipa.User, userAgent string) error {
-	token, err := model.NewToken(user.Username, user.Email, viper.GetUint32("token_max_age"))
+	token, err := NewToken(user.Username, user.Email, e.storage)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, userAgent string) error
 }
 
 func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, userAgent string) error {
-	token, err := model.NewToken(user.Username, user.Email, viper.GetUint32("token_max_age"))
+	token, err := NewToken(user.Username, user.Email, e.storage)
 	if err != nil {
 		return err
 	}

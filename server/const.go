@@ -11,4 +11,7 @@ const (
 	CookieKeyGlobusUsername = "globus_username"
 	ContextKeyUser          = "user"
 	ContextKeyIPAClient     = "ipa"
+	UserCategoryUnverified  = "mokey-user-unverified"
+	TokenUsedPrefix         = "used-"
+	TokenIssuedPrefix       = "issued-"
 )
