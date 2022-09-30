@@ -1,0 +1,99 @@
+#------------------------------------------------------------------------------
+# Sample Mokey Config
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# General
+#------------------------------------------------------------------------------
+
+# Name of your site
+site_name = "mokey"
+
+# Base URL of your site
+base_url = "https://localhost"
+
+# Address and port to listen
+listen = "0.0.0.0:8822"
+
+# Path to ssl certificate
+# ssl_cert = ""
+
+# Path to ssl key
+# ssl_key = ""
+
+# Path to local template override directory
+# templates_dir = "/usr/share/mokey/templates"
+
+# Path to local static assets override directory
+# This is used to override the css/javascript/images
+# static_assets_dir = "/usr/share/mokey/assets"
+
+# User account for the mokey service
+# ktuser = "mokeyapp"
+
+# Path to keytab file
+# keytab = "/srv/mokey/private/mokey.keytab"
+
+#------------------------------------------------------------------------------
+# User account defaults
+#------------------------------------------------------------------------------
+
+# Default home directory
+default_homedir = "/home"
+
+# Default login shell
+default_shell = "/bin/bash"
+
+# Minimum password length. Used for validating new passwords. Should match your
+# password policy set in FreeIPA
+min_passwd_len = 8
+
+# Minimum password classes. Classes are lowercase, uppercase, numbers, and
+# special characters.  Used for validating new passwords. Should match your
+# password policy set in FreeIPA
+min_passwd_classes = 2
+
+#------------------------------------------------------------------------------
+# Email
+#------------------------------------------------------------------------------
+
+# Max lifetime of branca tokens used for password resets and account verify
+token_max_age = 3600
+
+# Secret key for branca tokens. Must be 32 bytes. To generate run:
+#    openssl rand -hex 32 
+# token_secret = 
+
+# Hostname for smtp server
+smtp_host = "localhost"
+
+# Port for smtp server
+smtp_port = 25
+
+# Enable smtp tls
+# smtp_tls = "off"
+
+# smtp authentication
+# smtp_username = ""
+# smtp_password = ""
+
+# Email signature to append to end of all emails
+email_sig = ""
+
+# From email address
+email_from = "support@example.com"
+
+#------------------------------------------------------------------------------
+# Storage
+#------------------------------------------------------------------------------
+[storage]
+# Storage driver. Supported drivers: memory, sqlite3, and redis
+driver = "memory"
+
+[storage.sqlite3]
+# Path to sqlite3 database used for session storage
+# dbpath = "/srv/mokey/storage/mokey.db"
+
+[storage.redis]
+# Redis URL
+# url = "redis://<user>:<pass>@127.0.0.1:6379/<db>"

@@ -192,7 +192,7 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 	}
 
 	// Send user a reset password email
-	err = r.emailer.SendPasswordResetEmail(user, c.Get("User-Agent"))
+	err = r.emailer.SendPasswordResetEmail(user, c)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":      err,

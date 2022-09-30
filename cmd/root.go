@@ -69,6 +69,7 @@ func SetupLogging() error {
 }
 
 func initConfig() {
+	viper.SetConfigType("toml")
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
@@ -79,15 +80,19 @@ func initConfig() {
 
 		viper.AddConfigPath("/etc/mokey/")
 		viper.AddConfigPath(cwd)
-		viper.SetConfigName("mokey")
-		viper.SetConfigType("yaml")
+		viper.SetConfigName("mokey.toml")
 	}
 
+	server.SetDefaults()
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("mokey")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	if err := viper.ReadInConfig(); err == nil {
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			logrus.Fatalf("Failed parsing config file %s: %s", viper.ConfigFileUsed(), err)
+		}
+	} else {
 		cfgFileUsed = viper.ConfigFileUsed()
 	}
 

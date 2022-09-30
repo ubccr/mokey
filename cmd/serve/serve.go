@@ -25,15 +25,28 @@ var (
 )
 
 func init() {
-	serveCmd.Flags().String("listen", "0.0.0.0:80", "address to listen on")
+	serveCmd.Flags().String("keytab", "", "path to keytab file")
+	viper.BindPFlag("keytab", serveCmd.Flags().Lookup("keytab"))
+
+	serveCmd.Flags().String("listen", "0.0.0.0:8866", "address to listen on")
 	viper.BindPFlag("listen", serveCmd.Flags().Lookup("listen"))
 	serveCmd.Flags().String("cert", "", "path to ssl cert")
-	viper.BindPFlag("cert", serveCmd.Flags().Lookup("cert"))
+	viper.BindPFlag("ssl_cert", serveCmd.Flags().Lookup("cert"))
 	serveCmd.Flags().String("key", "", "path to ssl key")
-	viper.BindPFlag("key", serveCmd.Flags().Lookup("key"))
-	serveCmd.Flags().String("dbpath", "/var/mokey/mokey.db", "path to mokey database")
-	viper.BindPFlag("dbpath", serveCmd.Flags().Lookup("dbpath"))
+	viper.BindPFlag("ssl_key", serveCmd.Flags().Lookup("key"))
+	serveCmd.Flags().String("dbpath", "", "path to mokey database")
+	viper.BindPFlag("storage.sqlite3.dbpath", serveCmd.Flags().Lookup("dbpath"))
 
+	serveCmd.Flags().String("smtp-host", "localhost", "smtp host")
+	viper.BindPFlag("smtp_host", serveCmd.Flags().Lookup("smtp-host"))
+
+	serveCmd.Flags().Int("smtp-port", 25, "smtp port")
+	viper.BindPFlag("smtp_port", serveCmd.Flags().Lookup("smtp-port"))
+
+	serveCmd.Flags().String("email-from", "", "from email address")
+	viper.BindPFlag("email_from", serveCmd.Flags().Lookup("email-from"))
+
+	serveCmd.MarkFlagRequired("keytab")
 	cmd.Root.AddCommand(serveCmd)
 }
 
@@ -43,8 +56,8 @@ func serve() error {
 		return err
 	}
 
-	srv.KeyFile = viper.GetString("key")
-	srv.CertFile = viper.GetString("cert")
+	srv.KeyFile = viper.GetString("ssl_key")
+	srv.CertFile = viper.GetString("ssl_cert")
 
 	go func() {
 		quit := make(chan os.Signal, 1)

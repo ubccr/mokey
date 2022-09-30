@@ -15,6 +15,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	frecover "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/storage/memory"
+	"github.com/gofiber/storage/redis"
 	"github.com/gofiber/storage/sqlite3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -33,6 +35,31 @@ type Server struct {
 	KeyFile       string
 	CertFile      string
 	app           *fiber.App
+}
+
+func SetDefaults() {
+	viper.SetDefault("site_name", "mokey")
+	viper.SetDefault("listen", "0.0.0.0:8866")
+	viper.SetDefault("ktuser", "mokeyapp")
+	viper.SetDefault("default_homedir", "/home")
+	viper.SetDefault("default_shell", "/bin/bash")
+	viper.SetDefault("min_passwd_len", 8)
+	viper.SetDefault("min_passwd_classes", 2)
+	viper.SetDefault("token_max_age", 3600)
+	viper.SetDefault("smtp_host", "localhost")
+	viper.SetDefault("smtp_port", 25)
+	viper.SetDefault("smtp_tls", "off")
+	viper.SetDefault("email_from", "support@example.com")
+	viper.SetDefault("storage.driver", "memory")
+
+	if !viper.IsSet("token_secret") {
+		secret, err := GenerateSecret(32)
+		if err != nil {
+			panic(err)
+		}
+		viper.SetDefault("token_secret", secret)
+	}
+
 }
 
 func NewServer(address string) (*Server, error) {
@@ -66,16 +93,33 @@ func getAssetsFS() http.FileSystem {
 
 func recoverInvalidStorage() {
 	if r := recover(); r != nil {
-		log.Errorf("dbpath %s: %s", viper.GetString("dbpath"), r)
+		log.Errorf("Failed initialize storage driver %s: %s", viper.GetString("storage.driver"), r)
 	}
 }
 
 func newStorage() fiber.Storage {
+	var storage fiber.Storage
+
+	if viper.IsSet("storage.sqlite3.dbpath") && viper.GetString("storage.driver") == "memory" {
+		viper.Set("storage.driver", "sqlite3")
+	}
+
 	defer recoverInvalidStorage()
-	storage := sqlite3.New(sqlite3.Config{
-		Database: viper.GetString("dbpath"),
-		Table:    "mokey_data",
-	})
+	switch viper.GetString("storage.driver") {
+	case "sqlite3":
+		storage = sqlite3.New(sqlite3.Config{
+			Database: viper.GetString("storage.sqlite3.dbpath"),
+			Table:    "mokey_data",
+		})
+	case "redis":
+		storage = redis.New(redis.Config{
+			URL:   viper.GetString("storage.redis.url"),
+			Reset: false,
+		})
+
+	default:
+		storage = memory.New()
+	}
 
 	return storage
 }

@@ -84,7 +84,7 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 	}
 
 	// Send user an email to verify their account
-	err = r.emailer.SendAccountVerifyEmail(user, c.Get("User-Agent"))
+	err = r.emailer.SendAccountVerifyEmail(user, c)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":      err,
@@ -278,7 +278,7 @@ func (r *Router) AccountVerifyResend(c *fiber.Ctx) error {
 	}
 
 	// Resend user an email to verify their account
-	err = r.emailer.SendAccountVerifyEmail(user, c.Get("User-Agent"))
+	err = r.emailer.SendAccountVerifyEmail(user, c)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err":      err,

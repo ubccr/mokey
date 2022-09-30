@@ -1,4 +1,5 @@
 mokey.yaml
+mokey.toml
 mokey.db
 mokey
 .env

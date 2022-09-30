@@ -22,18 +22,6 @@ type Token struct {
 	Timestamp time.Time `json:"-"`
 }
 
-func init() {
-	viper.SetDefault("token_max_age", 3600)
-
-	if !viper.IsSet("token_secret") {
-		secret, err := GenerateSecret(32)
-		if err != nil {
-			panic(err)
-		}
-		viper.SetDefault("token_secret", secret)
-	}
-}
-
 func GenerateSecret(n int) (string, error) {
 	secret := make([]byte, n)
 	_, err := rand.Read(secret)
