@@ -17,9 +17,8 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/labstack/echo-contrib v0.6.0
-	github.com/labstack/echo/v4 v4.1.17
+	github.com/labstack/echo/v4 v4.9.0
 	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/ory/hydra-client-go v1.9.2
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
@@ -34,9 +33,8 @@ require (
 	github.com/ubccr/goipa v0.0.5
 	github.com/urfave/cli v1.22.1
 	github.com/urfave/negroni v1.0.0
-	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/sys v0.0.0-20201029080932-201ba4db2418 // indirect
 	google.golang.org/appengine v1.6.4 // indirect
 	gopkg.in/ini.v1 v1.38.2 // indirect
 	gopkg.in/jcmturner/goidentity.v3 v3.0.0 // indirect
