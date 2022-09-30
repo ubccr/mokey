@@ -32,8 +32,8 @@ func GenerateSecret(n int) (string, error) {
 	return hex.EncodeToString(secret), nil
 }
 
-func NewToken(username, email string, storage fiber.Storage) (string, error) {
-	tokenIssued, err := storage.Get(TokenIssuedPrefix + username)
+func NewToken(username, email, prefix string, storage fiber.Storage) (string, error) {
+	tokenIssued, err := storage.Get(prefix + TokenIssuedPrefix + username)
 	if tokenIssued != nil {
 		return "", errors.New("token already issued")
 	}
@@ -65,13 +65,13 @@ func NewToken(username, email string, storage fiber.Storage) (string, error) {
 		return "", err
 	}
 
-	storage.Set(TokenIssuedPrefix+username, []byte("true"), time.Until(time.Now().Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	storage.Set(prefix+TokenIssuedPrefix+username, []byte("true"), time.Until(time.Now().Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
 
 	return token, nil
 }
 
-func ParseToken(token string, storage fiber.Storage) (*Token, error) {
-	tokenUsed, err := storage.Get(TokenUsedPrefix + token)
+func ParseToken(token, prefix string, storage fiber.Storage) (*Token, error) {
+	tokenUsed, err := storage.Get(prefix + TokenUsedPrefix + token)
 	if tokenUsed != nil {
 		return nil, errors.New("token already used")
 	}

@@ -182,7 +182,7 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 func (r *Router) AccountVerify(c *fiber.Ctx) error {
 	token := c.Params("token")
 
-	claims, err := ParseToken(token, r.storage)
+	claims, err := ParseToken(token, TokenAccountVerify, r.storage)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"err": err,
@@ -235,7 +235,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	r.storage.Set(TokenAccountVerify+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
 
 	return c.Render("verify-success.html", vars)
 }

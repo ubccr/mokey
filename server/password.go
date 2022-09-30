@@ -212,7 +212,7 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 func (r *Router) PasswordReset(c *fiber.Ctx) error {
 	token := c.Params("token")
 
-	claims, err := ParseToken(token, r.storage)
+	claims, err := ParseToken(token, TokenPasswordReset, r.storage)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).SendString("")
 	}
@@ -237,6 +237,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 	if c.Method() == fiber.MethodGet {
 		vars := fiber.Map{
 			"claims": claims,
+			"user":   user,
 		}
 
 		return c.Render("password-reset.html", vars)
@@ -283,7 +284,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	r.storage.Set(TokenPasswordReset+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }

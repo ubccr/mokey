@@ -14,6 +14,8 @@ const (
 	ContextKeyUser          = "user"
 	ContextKeyIPAClient     = "ipa"
 	UserCategoryUnverified  = "mokey-user-unverified"
+	TokenAccountVerify      = "verify"
+	TokenPasswordReset      = "reset"
 	TokenUsedPrefix         = "used-"
 	TokenIssuedPrefix       = "issued-"
 )

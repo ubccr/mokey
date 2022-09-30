@@ -58,7 +58,7 @@ func NewEmailer(storage fiber.Storage) (*Emailer, error) {
 }
 
 func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
-	token, err := NewToken(user.Username, user.Email, e.storage)
+	token, err := NewToken(user.Username, user.Email, TokenPasswordReset, e.storage)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
 }
 
 func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
-	token, err := NewToken(user.Username, user.Email, e.storage)
+	token, err := NewToken(user.Username, user.Email, TokenAccountVerify, e.storage)
 	if err != nil {
 		return err
 	}
