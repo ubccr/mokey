@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/ubccr/mokey/model"
+	"github.com/ubccr/mokey/server"
 	"github.com/ubccr/mokey/util"
 )
 
@@ -93,7 +93,7 @@ func initConfig() {
 	}
 
 	if !viper.IsSet("secret") {
-		secret, err := model.GenerateSecret(32)
+		secret, err := server.GenerateSecret(32)
 		if err != nil {
 			logrus.Fatal(err)
 		}

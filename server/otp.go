@@ -8,7 +8,6 @@ import (
 	"github.com/pquerna/otp/totp"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
-	"github.com/ubccr/mokey/util"
 )
 
 func (r *Router) tokenList(c *fiber.Ctx, vars fiber.Map) error {
@@ -162,7 +161,7 @@ func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
 		return err
 	}
 
-	otpdata, err := util.QRCode(token, client.Realm())
+	otpdata, err := QRCode(token, client.Realm())
 	if err != nil {
 		return err
 	}
