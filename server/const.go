@@ -1,5 +1,7 @@
 package server
 
+var Version = "dev"
+
 const (
 	CookieKeySession        = "mokey-sessck"
 	CookieKeyState          = "state"

@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/ubccr/mokey/server"
-	"github.com/ubccr/mokey/util"
 )
 
 var (
@@ -22,7 +21,7 @@ var (
 
 	Root = &cobra.Command{
 		Use:     "mokey",
-		Version: util.Version,
+		Version: server.Version,
 		Short:   "FreeIPA self-service account management tool",
 		Long:    ``,
 	}
