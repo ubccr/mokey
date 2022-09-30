@@ -86,6 +86,8 @@ func ParseToken(token string, storage fiber.Storage) (*Token, error) {
 		return nil, err
 	}
 
+	b.SetTTL(viper.GetUint32("token_max_age"))
+
 	brancaToken, err := b.DecodeString(token)
 	if err != nil {
 		return nil, err

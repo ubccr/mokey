@@ -38,6 +38,7 @@ type Server struct {
 }
 
 func SetDefaults() {
+	viper.SetDefault("secure_cookies", true)
 	viper.SetDefault("site_name", "mokey")
 	viper.SetDefault("listen", "0.0.0.0:8866")
 	viper.SetDefault("ktuser", "mokeyapp")
@@ -152,14 +153,15 @@ func newFiber() (*fiber.App, error) {
 	app.Use(frecover.New())
 
 	app.Use(csrf.New(csrf.Config{
-		//KeyLookup: "form:csrf",
 		KeyLookup:      "header:X-CSRF-Token",
 		CookieName:     "csrf_",
+		CookieSecure:   viper.GetBool("secure_cookies"),
 		CookieSameSite: "Strict",
+		CookieHTTPOnly: true,
 		Expiration:     1 * time.Hour,
 		ContextKey:     "csrf",
 		ErrorHandler:   CSRFErrorHandler,
-		//Storage:        storage,
+		Storage:        storage,
 	}))
 
 	app.Use(SecureHeaders)

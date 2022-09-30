@@ -184,6 +184,9 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 
 	claims, err := ParseToken(token, r.storage)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Debug("Invalid account verify token")
 		return c.Status(fiber.StatusNotFound).SendString("")
 	}
 
@@ -232,7 +235,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(TokenUsedPrefix+claims.Username, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	r.storage.Set(TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
 
 	return c.Render("verify-success.html", vars)
 }

@@ -283,7 +283,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(TokenUsedPrefix+claims.Username, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	r.storage.Set(TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }

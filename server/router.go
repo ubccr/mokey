@@ -33,7 +33,8 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 
 	r.sessionStore = session.New(session.Config{
 		Storage:        storage,
-		CookieSecure:   !viper.GetBool("develop"),
+		CookieSameSite: "Strict",
+		CookieSecure:   viper.GetBool("secure_cookies"),
 		CookieHTTPOnly: true,
 	})
 
