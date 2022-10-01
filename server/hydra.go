@@ -179,7 +179,7 @@ func (r *Router) LoginOAuthPost(username, challenge string, c *fiber.Ctx) error 
 	}).Info("Login POST challenge signed successfully")
 
 	c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
-	return c.Redirect(*completedResponse.Payload.RedirectTo)
+	return c.Status(fiber.StatusNoContent).SendString("")
 }
 
 func (r *Router) HydraError(c *fiber.Ctx) error {
