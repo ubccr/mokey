@@ -29,11 +29,11 @@ func init() {
 	viper.BindPFlag("keytab", serveCmd.Flags().Lookup("keytab"))
 
 	serveCmd.Flags().String("listen", "0.0.0.0:8866", "address to listen on")
-	viper.BindPFlag("listen", serveCmd.Flags().Lookup("listen"))
+	viper.BindPFlag("server.listen", serveCmd.Flags().Lookup("listen"))
 	serveCmd.Flags().String("cert", "", "path to ssl cert")
-	viper.BindPFlag("ssl_cert", serveCmd.Flags().Lookup("cert"))
+	viper.BindPFlag("server.ssl_cert", serveCmd.Flags().Lookup("cert"))
 	serveCmd.Flags().String("key", "", "path to ssl key")
-	viper.BindPFlag("ssl_key", serveCmd.Flags().Lookup("key"))
+	viper.BindPFlag("server.ssl_key", serveCmd.Flags().Lookup("key"))
 	serveCmd.Flags().String("dbpath", "", "path to mokey database")
 	viper.BindPFlag("storage.sqlite3.dbpath", serveCmd.Flags().Lookup("dbpath"))
 
@@ -50,13 +50,13 @@ func init() {
 }
 
 func serve() error {
-	srv, err := server.NewServer(viper.GetString("listen"))
+	srv, err := server.NewServer(viper.GetString("server.listen"))
 	if err != nil {
 		return err
 	}
 
-	srv.KeyFile = viper.GetString("ssl_key")
-	srv.CertFile = viper.GetString("ssl_cert")
+	srv.KeyFile = viper.GetString("server.ssl_key")
+	srv.CertFile = viper.GetString("server.ssl_cert")
 
 	go func() {
 		quit := make(chan os.Signal, 1)

@@ -12,15 +12,6 @@ site_name = "mokey"
 # Base URL of your site
 base_url = "https://localhost"
 
-# Address and port to listen
-listen = "0.0.0.0:8822"
-
-# Path to ssl certificate
-# ssl_cert = ""
-
-# Path to ssl key
-# ssl_key = ""
-
 # Path to local template override directory
 # templates_dir = "/usr/share/mokey/templates"
 
@@ -33,9 +24,6 @@ listen = "0.0.0.0:8822"
 
 # Path to keytab file
 # keytab = "/srv/mokey/private/mokey.keytab"
-
-# Require secure cookies
-secure_cookies = true
 
 #------------------------------------------------------------------------------
 # User account defaults
@@ -85,6 +73,23 @@ email_sig = ""
 
 # From email address
 email_from = "support@example.com"
+
+#------------------------------------------------------------------------------
+# Server settings
+#------------------------------------------------------------------------------
+[server]
+# Address and port to listen
+listen = "0.0.0.0:8866"
+
+# Path to ssl certificate
+# ssl_cert = ""
+
+# Path to ssl key
+# ssl_key = ""
+
+# Require secure cookies
+secure_cookies = true
+
 
 #------------------------------------------------------------------------------
 # Storage

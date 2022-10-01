@@ -38,9 +38,7 @@ type Server struct {
 }
 
 func SetDefaults() {
-	viper.SetDefault("secure_cookies", true)
 	viper.SetDefault("site_name", "mokey")
-	viper.SetDefault("listen", "0.0.0.0:8866")
 	viper.SetDefault("ktuser", "mokeyapp")
 	viper.SetDefault("default_homedir", "/home")
 	viper.SetDefault("default_shell", "/bin/bash")
@@ -51,6 +49,8 @@ func SetDefaults() {
 	viper.SetDefault("smtp_port", 25)
 	viper.SetDefault("smtp_tls", "off")
 	viper.SetDefault("email_from", "support@example.com")
+	viper.SetDefault("server.secure_cookies", true)
+	viper.SetDefault("server.listen", "0.0.0.0:8866")
 	viper.SetDefault("storage.driver", "memory")
 
 	if !viper.IsSet("token_secret") {
@@ -155,7 +155,7 @@ func newFiber() (*fiber.App, error) {
 	app.Use(csrf.New(csrf.Config{
 		KeyLookup:      "header:X-CSRF-Token",
 		CookieName:     "csrf_",
-		CookieSecure:   viper.GetBool("secure_cookies"),
+		CookieSecure:   viper.GetBool("server.secure_cookies"),
 		CookieSameSite: "Strict",
 		CookieHTTPOnly: true,
 		Expiration:     1 * time.Hour,
