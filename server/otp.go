@@ -1,14 +1,28 @@
 package server
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/ubccr/goipa"
 )
+
+func getHashAlgorithm() otp.Algorithm {
+	algo := viper.GetString("otp_hash_algorithm")
+	switch algo {
+	case "sha256":
+		return otp.AlgorithmSHA256
+	case "sha512":
+		return otp.AlgorithmSHA512
+	default:
+		return otp.AlgorithmSHA1
+	}
+}
 
 func (r *Router) tokenList(c *fiber.Ctx, vars fiber.Map) error {
 	username := r.username(c)
@@ -122,7 +136,7 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 			Period:    30,
 			Skew:      1,
 			Digits:    otp.DigitsSix,
-			Algorithm: otp.AlgorithmSHA256,
+			Algorithm: getHashAlgorithm(),
 		},
 	)
 	if !valid {
@@ -144,7 +158,7 @@ func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
 
 	token := &ipa.OTPToken{
 		Type:        ipa.TokenTypeTOTP,
-		Algorithm:   ipa.AlgorithmSHA256,
+		Algorithm:   strings.ToLower(getHashAlgorithm().String()),
 		Description: desc,
 		NotBefore:   time.Now(),
 	}
@@ -152,7 +166,7 @@ func (r *Router) OTPTokenAdd(c *fiber.Ctx) error {
 	token, err := client.AddOTPToken(
 		&ipa.OTPToken{
 			Type:        ipa.TokenTypeTOTP,
-			Algorithm:   ipa.AlgorithmSHA256,
+			Algorithm:   strings.ToLower(getHashAlgorithm().String()),
 			Description: desc,
 			NotBefore:   time.Now(),
 		})

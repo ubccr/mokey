@@ -104,4 +104,18 @@ func initConfig() {
 
 		viper.Set("secret", secret)
 	}
+	if viper.IsSet("otp_hash_algorithm") {
+		algo := viper.GetString("otp_hash_algorithm")
+		validAlgo := false
+		for _, a := range []string{"sha1", "sha256", "sha512"} {
+			if algo == a {
+				validAlgo = true
+				break
+			}
+		}
+
+		if !validAlgo {
+			logrus.Fatalf("Invalid otp hash algorithm: %s", algo)
+		}
+	}
 }

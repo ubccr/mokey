@@ -49,6 +49,7 @@ func SetDefaults() {
 	viper.SetDefault("smtp_port", 25)
 	viper.SetDefault("smtp_tls", "off")
 	viper.SetDefault("email_from", "support@example.com")
+	viper.SetDefault("otp_hash_algorithm", "sha256")
 	viper.SetDefault("server.secure_cookies", true)
 	viper.SetDefault("server.listen", "0.0.0.0:8866")
 	viper.SetDefault("server.read_timeout", 5)

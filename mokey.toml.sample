@@ -44,6 +44,12 @@ min_passwd_len = 8
 # password policy set in FreeIPA
 min_passwd_classes = 2
 
+# Hash algorithm for generating OTP tokens: sha1, sha256, or sha512
+# otp_hash_algorithm = "sha256"
+
+# Custom issuer name for OTP tokens. This creates a nice name for importing into authenticator apps 
+# otp_issuer = "MYORG"
+
 # Block list of user accounts from logging in
 # block_users = ["username1", "username2", "username3"]
 
