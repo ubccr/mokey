@@ -51,6 +51,9 @@ func SetDefaults() {
 	viper.SetDefault("email_from", "support@example.com")
 	viper.SetDefault("server.secure_cookies", true)
 	viper.SetDefault("server.listen", "0.0.0.0:8866")
+	viper.SetDefault("server.read_timeout", 5)
+	viper.SetDefault("server.write_timeout", 5)
+	viper.SetDefault("server.idle_timeout", 120)
 	viper.SetDefault("storage.driver", "memory")
 
 	if !viper.IsSet("token_secret") {
@@ -140,9 +143,9 @@ func newFiber() (*fiber.App, error) {
 		Prefork:               false,
 		CaseSensitive:         true,
 		StrictRouting:         true,
-		ReadTimeout:           5 * time.Second,
-		WriteTimeout:          5 * time.Second,
-		IdleTimeout:           120 * time.Second,
+		ReadTimeout:           time.Duration(viper.GetInt("server.read_timeout")) * time.Second,
+		WriteTimeout:          time.Duration(viper.GetInt("server.write_timeout")) * time.Second,
+		IdleTimeout:           time.Duration(viper.GetInt("server.idle_timeout")) * time.Second,
 		AppName:               "mokey",
 		DisableStartupMessage: false,
 		PassLocalsToViews:     true,

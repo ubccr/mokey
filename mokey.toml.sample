@@ -90,6 +90,10 @@ listen = "0.0.0.0:8866"
 # Require secure cookies
 secure_cookies = true
 
+# Timeouts
+read_timeout = 5
+write_timeout = 5
+idle_timeout = 120
 
 #------------------------------------------------------------------------------
 # Storage
