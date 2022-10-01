@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -18,6 +19,43 @@ func isBlocked(username string) bool {
 	}
 
 	return false
+}
+
+func (r *Router) isLoggedIn(c *fiber.Ctx) (bool, error) {
+	sess, err := r.session(c)
+	if err != nil {
+		return false, errors.New("Failed to get session")
+	}
+
+	user := sess.Get(SessionKeyUser)
+	sid := sess.Get(SessionKeySID)
+	authenticated := sess.Get(SessionKeyAuthenticated)
+	if sid == nil || user == nil || authenticated == nil {
+		return false, errors.New("Invalid session")
+	}
+
+	if _, ok := user.(string); !ok {
+		return false, errors.New("Invalid user in session")
+	}
+
+	if _, ok := sid.(string); !ok {
+		return false, errors.New("Invalid sid in session")
+	}
+
+	if isAuthed, ok := authenticated.(bool); !ok || !isAuthed {
+		return false, errors.New("User is not authenticated in session")
+	}
+
+	client := ipa.NewDefaultClientWithSession(sid.(string))
+	_, err = client.Ping()
+	if err != nil {
+		return false, fmt.Errorf("Failed to refresh FreeIPA user session: %w", err)
+	}
+
+	c.Locals(ContextKeyUser, user)
+	c.Locals(ContextKeyIPAClient, client)
+
+	return true, nil
 }
 
 func (r *Router) Login(c *fiber.Ctx) error {
@@ -66,54 +104,33 @@ func (r *Router) redirectLogin(c *fiber.Ctx) error {
 	return c.Redirect("/auth/login")
 }
 
+func (r *Router) RequireNoLogin(c *fiber.Ctx) error {
+	if ok, _ := r.isLoggedIn(c); ok {
+		if c.Get("HX-Request", "false") == "true" {
+			c.Set("HX-Redirect", "/")
+			return c.Status(fiber.StatusNoContent).SendString("")
+		}
+
+		return c.Redirect("/")
+	}
+
+	return c.Next()
+}
+
 func (r *Router) RequireLogin(c *fiber.Ctx) error {
-	sess, err := r.session(c)
-	if err != nil {
-		log.Warn("Failed to get user session. Logging out")
-		return r.redirectLogin(c)
-	}
-
-	user := sess.Get(SessionKeyUser)
-	sid := sess.Get(SessionKeySID)
-	authenticated := sess.Get(SessionKeyAuthenticated)
-	if sid == nil || user == nil || authenticated == nil {
-		return r.redirectLogin(c)
-	}
-
-	if _, ok := user.(string); !ok {
-		log.Error("Invalid user in session")
-		return r.redirectLogin(c)
-	}
-
-	if _, ok := sid.(string); !ok {
-		log.Error("Invalid sid in session")
-		return r.redirectLogin(c)
-	}
-
-	if isAuthed, ok := authenticated.(bool); !ok || !isAuthed {
-		return r.redirectLogin(c)
-	}
-
-	client := ipa.NewDefaultClientWithSession(sid.(string))
-	_, err = client.Ping()
-	if err != nil {
+	if ok, err := r.isLoggedIn(c); !ok {
 		log.WithFields(log.Fields{
-			"username":         user,
-			"path":             c.Path(),
-			"ip":               c.IP(),
-			"ipa_client_error": err,
-		}).Error("Failed to ping FreeIPA")
+			"path":  c.Path(),
+			"ip":    c.IP(),
+			"error": err,
+		}).Info("Login required and no authenticated session found.")
 		return r.redirectLogin(c)
 	}
-
-	c.Locals(ContextKeyUser, user)
-	c.Locals(ContextKeyIPAClient, client)
 
 	return c.Next()
 }
 
 func (r *Router) CheckUser(c *fiber.Ctx) error {
-	c.Locals("NoErrorTemplate", "true")
 	username := c.FormValue("username")
 
 	if username == "" {
@@ -167,7 +184,6 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 }
 
 func (r *Router) Authenticate(c *fiber.Ctx) error {
-	c.Locals("NoErrorTemplate", "true")
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 	challenge := c.FormValue("challenge")

@@ -114,24 +114,24 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Get("/otp", r.RequireLogin, r.Index)
 
 	// Account Create
-	app.Get("/signup", r.AccountCreate)
-	app.Post("/signup", r.AccountCreate)
+	app.Get("/signup", r.RequireNoLogin, r.AccountCreate)
+	app.Post("/signup", r.RequireNoLogin, r.AccountCreate)
 
 	// Auth
-	app.Get("/auth/login", r.Login)
-	app.Get("/auth/logout", r.Logout)
-	app.Post("/auth/login", r.CheckUser)
-	app.Post("/auth/authenticate", r.Authenticate)
-	app.Post("/auth/expiredpw", r.PasswordExpired)
-	app.Get("/auth/captcha/:id.png", r.Captcha)
-	app.Get("/auth/verify/:token", r.AccountVerify)
-	app.Post("/auth/verify/:token", r.AccountVerify)
-	app.Get("/auth/forgotpw", r.PasswordForgot)
-	app.Post("/auth/forgotpw", r.PasswordForgot)
+	app.Get("/auth/login", r.RequireNoLogin, r.Login)
+	app.Post("/auth/login", r.RequireNoLogin, r.CheckUser)
+	app.Post("/auth/authenticate", r.RequireNoLogin, r.Authenticate)
+	app.Post("/auth/expiredpw", r.RequireNoLogin, r.PasswordExpired)
+	app.Get("/auth/forgotpw", r.RequireNoLogin, r.PasswordForgot)
+	app.Post("/auth/forgotpw", r.RequireNoLogin, r.PasswordForgot)
+	app.Get("/auth/verify", r.RequireNoLogin, r.AccountVerifyResend)
+	app.Post("/auth/verify", r.RequireNoLogin, r.AccountVerifyResend)
 	app.Get("/auth/resetpw/:token", r.PasswordReset)
 	app.Post("/auth/resetpw/:token", r.PasswordReset)
-	app.Get("/auth/verify", r.AccountVerifyResend)
-	app.Post("/auth/verify", r.AccountVerifyResend)
+	app.Get("/auth/verify/:token", r.AccountVerify)
+	app.Post("/auth/verify/:token", r.AccountVerify)
+	app.Get("/auth/logout", r.Logout)
+	app.Get("/auth/captcha/:id.png", r.Captcha)
 
 	// Account Settings
 	app.Get("/account/settings", r.RequireLogin, r.RequireHTMX, r.AccountSettings)
