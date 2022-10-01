@@ -195,3 +195,19 @@ func (r *Router) HydraError(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusInternalServerError).SendString("OAuth2 Error")
 }
+
+func (r *Router) revokeHydraAuthenticationSession(username string, c *fiber.Ctx) error {
+	params := admin.NewRevokeAuthenticationSessionParams()
+	params.SetSubject(username)
+	params.SetHTTPClient(r.hydraAdminHTTPClient)
+	_, err := r.hydraClient.Admin.RevokeAuthenticationSession(params)
+	if err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"user": username,
+	}).Info("Successfully revoked hydra authentication session")
+
+	return nil
+}

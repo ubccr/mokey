@@ -89,7 +89,18 @@ func (r *Router) logout(c *fiber.Ctx) {
 			"ip":       c.IP(),
 			"path":     c.Path(),
 			"err":      err,
-		}).Error("Failed to destroy session")
+		}).Error("Logout failed to destroy session")
+	}
+
+	if viper.IsSet("hydra.admin_url") {
+		if _, ok := username.(string); ok {
+			err := r.revokeHydraAuthenticationSession(username.(string), c)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("Logout failed to revoke hydra authentication session")
+			}
+		}
 	}
 }
 
