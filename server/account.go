@@ -257,12 +257,19 @@ func (r *Router) AccountVerifyResend(c *fiber.Ctx) error {
 
 	username := c.FormValue("username")
 
+	if isBlocked(username) {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("Account verify resend attempt for blocked user")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
+	}
+
 	user, err := r.adminClient.UserShow(username)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"username": username,
 			"err":      err,
-		}).Warn("Account verify attempt for unknown username")
+		}).Warn("Account verify resend attempt for unknown username")
 		return c.Render("account-verify-forgot-success.html", fiber.Map{})
 	}
 

@@ -175,6 +175,13 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 
 	username := c.FormValue("username")
 
+	if isBlocked(username) {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("Forgot password attempt for blocked username")
+		return c.Render("password-forgot-success.html", fiber.Map{})
+	}
+
 	user, err := r.adminClient.UserShow(username)
 	if err != nil {
 		log.WithFields(log.Fields{
