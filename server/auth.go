@@ -9,6 +9,17 @@ import (
 	"github.com/ubccr/goipa"
 )
 
+func isBlocked(username string) bool {
+	blockUsers := viper.GetStringSlice("block_users")
+	for _, u := range blockUsers {
+		if username == u {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (r *Router) Login(c *fiber.Ctx) error {
 	vars := fiber.Map{}
 	return c.Render("login.html", vars)
@@ -109,6 +120,13 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Please provide a username")
 	}
 
+	if isBlocked(username) {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("User account is blocked from logging in")
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+	}
+
 	userRec, err := r.adminClient.UserShow(username)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4001 {
@@ -133,7 +151,6 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 			"username": username,
 		}).Warn("User account is locked in FreeIPA")
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
-
 	}
 
 	log.WithFields(log.Fields{
@@ -162,6 +179,13 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 
 	if password == "" {
 		return c.Status(fiber.StatusBadRequest).SendString("Please provide a password")
+	}
+
+	if isBlocked(username) {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("User account is blocked from logging in")
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
 
 	client := ipa.NewDefaultClient()

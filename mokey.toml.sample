@@ -26,7 +26,7 @@ base_url = "https://localhost"
 # keytab = "/srv/mokey/private/mokey.keytab"
 
 #------------------------------------------------------------------------------
-# User account defaults
+# User account settings
 #------------------------------------------------------------------------------
 
 # Default home directory
@@ -44,6 +44,9 @@ min_passwd_len = 8
 # password policy set in FreeIPA
 min_passwd_classes = 2
 
+# Block list of user accounts from logging in
+# block_users = ["username1", "username2", "username3"]
+
 #------------------------------------------------------------------------------
 # Email
 #------------------------------------------------------------------------------
@@ -53,7 +56,7 @@ token_max_age = 3600
 
 # Secret key for branca tokens. Must be 32 bytes. To generate run:
 #    openssl rand -hex 32 
-# token_secret = 
+# token_secret = ""
 
 # Hostname for smtp server
 smtp_host = "localhost"
