@@ -161,7 +161,7 @@ func (r *Router) LoginOAuthPost(username, challenge string, c *fiber.Ctx) error 
 	acceptparams.SetBody(&models.AcceptLoginRequest{
 		Subject:     &username,
 		Remember:    true, // TODO: make this configurable
-		RememberFor: viper.GetInt64("hydra_login_timeout"),
+		RememberFor: viper.GetInt64("hydra.login_timeout"),
 	})
 
 	completedResponse, err := r.hydraClient.Admin.AcceptLoginRequest(acceptparams)
