@@ -25,32 +25,32 @@ func TestToken(t *testing.T) {
 
 	storage := memory.New()
 
-	token, err := NewToken(uid, email, storage)
+	token, err := NewToken(uid, email, TokenPasswordReset, storage)
 	if assert.NoError(err) {
 		assert.Greater(len(token), 0)
 	}
 
-	claims, err := ParseToken(token, storage)
+	claims, err := ParseToken(token, TokenPasswordReset, storage)
 	if assert.NoError(err) {
 		assert.Equal(claims.Username, uid)
 		assert.Equal(claims.Email, email)
 	}
 
 	// Should error token already issued
-	_, err = NewToken(uid, email, storage)
+	_, err = NewToken(uid, email, TokenPasswordReset, storage)
 	assert.Error(err)
 
 	time.Sleep(time.Second * 4)
 
 	viper.Set("email.token_max_age", uint32(1))
 
-	expToken, err := NewToken(uid, email, storage)
+	expToken, err := NewToken(uid, email, TokenPasswordReset, storage)
 	if assert.NoError(err) {
 		assert.Greater(len(token), 0)
 	}
 
 	time.Sleep(time.Second * 3)
 
-	_, err = ParseToken(expToken, storage)
+	_, err = ParseToken(expToken, TokenPasswordReset, storage)
 	assert.Error(err)
 }
