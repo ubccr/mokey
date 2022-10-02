@@ -11,7 +11,7 @@ import (
 )
 
 func isBlocked(username string) bool {
-	blockUsers := viper.GetStringSlice("block_users")
+	blockUsers := viper.GetStringSlice("accounts.block_users")
 	for _, u := range blockUsers {
 		if username == u {
 			return true

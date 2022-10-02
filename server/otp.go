@@ -13,7 +13,7 @@ import (
 )
 
 func getHashAlgorithm() otp.Algorithm {
-	algo := viper.GetString("otp_hash_algorithm")
+	algo := viper.GetString("accounts.otp_hash_algorithm")
 	switch algo {
 	case "sha256":
 		return otp.AlgorithmSHA256

@@ -26,7 +26,7 @@ var (
 
 func init() {
 	serveCmd.Flags().String("keytab", "", "path to keytab file")
-	viper.BindPFlag("keytab", serveCmd.Flags().Lookup("keytab"))
+	viper.BindPFlag("site.keytab", serveCmd.Flags().Lookup("keytab"))
 
 	serveCmd.Flags().String("listen", "0.0.0.0:8866", "address to listen on")
 	viper.BindPFlag("server.listen", serveCmd.Flags().Lookup("listen"))
@@ -38,13 +38,13 @@ func init() {
 	viper.BindPFlag("storage.sqlite3.dbpath", serveCmd.Flags().Lookup("dbpath"))
 
 	serveCmd.Flags().String("smtp-host", "localhost", "smtp host")
-	viper.BindPFlag("smtp_host", serveCmd.Flags().Lookup("smtp-host"))
+	viper.BindPFlag("email.smtp_host", serveCmd.Flags().Lookup("smtp-host"))
 
 	serveCmd.Flags().Int("smtp-port", 25, "smtp port")
-	viper.BindPFlag("smtp_port", serveCmd.Flags().Lookup("smtp-port"))
+	viper.BindPFlag("email.smtp_port", serveCmd.Flags().Lookup("smtp-port"))
 
 	serveCmd.Flags().String("email-from", "", "from email address")
-	viper.BindPFlag("email_from", serveCmd.Flags().Lookup("email-from"))
+	viper.BindPFlag("email.from", serveCmd.Flags().Lookup("email-from"))
 
 	cmd.Root.AddCommand(serveCmd)
 }

@@ -135,8 +135,8 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 		return err
 	}
 
-	user.HomeDir = filepath.Join(viper.GetString("default_homedir"), user.Username)
-	user.Shell = viper.GetString("default_shell")
+	user.HomeDir = filepath.Join(viper.GetString("accounts.default_homedir"), user.Username)
+	user.Shell = viper.GetString("accounts.default_shell")
 	user.Category = UserCategoryUnverified
 
 	userRec, err := r.adminClient.UserAddWithPassword(user, password)
@@ -235,7 +235,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(TokenAccountVerify+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	r.storage.Set(TokenAccountVerify+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second)))
 
 	return c.Render("verify-success.html", vars)
 }

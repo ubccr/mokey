@@ -38,33 +38,24 @@ type Server struct {
 }
 
 func SetDefaults() {
-	viper.SetDefault("site_name", "mokey")
-	viper.SetDefault("ktuser", "mokeyapp")
-	viper.SetDefault("default_homedir", "/home")
-	viper.SetDefault("default_shell", "/bin/bash")
-	viper.SetDefault("min_passwd_len", 8)
-	viper.SetDefault("min_passwd_classes", 2)
-	viper.SetDefault("token_max_age", 3600)
-	viper.SetDefault("smtp_host", "localhost")
-	viper.SetDefault("smtp_port", 25)
-	viper.SetDefault("smtp_tls", "off")
-	viper.SetDefault("email_from", "support@example.com")
-	viper.SetDefault("otp_hash_algorithm", "sha256")
+	viper.SetDefault("site.name", "mokey")
+	viper.SetDefault("site.ktuser", "mokeyapp")
+	viper.SetDefault("accounts.default_homedir", "/home")
+	viper.SetDefault("accounts.default_shell", "/bin/bash")
+	viper.SetDefault("accounts.min_passwd_len", 8)
+	viper.SetDefault("accounts.min_passwd_classes", 2)
+	viper.SetDefault("accounts.otp_hash_algorithm", "sha256")
+	viper.SetDefault("email.token_max_age", 3600)
+	viper.SetDefault("email.smtp_host", "localhost")
+	viper.SetDefault("email.smtp_port", 25)
+	viper.SetDefault("email.smtp_tls", "off")
+	viper.SetDefault("email.from", "support@example.com")
 	viper.SetDefault("server.secure_cookies", true)
 	viper.SetDefault("server.listen", "0.0.0.0:8866")
 	viper.SetDefault("server.read_timeout", 5)
 	viper.SetDefault("server.write_timeout", 5)
 	viper.SetDefault("server.idle_timeout", 120)
 	viper.SetDefault("storage.driver", "memory")
-
-	if !viper.IsSet("token_secret") {
-		secret, err := GenerateSecret(32)
-		if err != nil {
-			panic(err)
-		}
-		viper.SetDefault("token_secret", secret)
-	}
-
 }
 
 func NewServer(address string) (*Server, error) {
@@ -82,7 +73,7 @@ func NewServer(address string) (*Server, error) {
 }
 
 func getAssetsFS() http.FileSystem {
-	staticLocalPath := viper.GetString("static_assets_dir")
+	staticLocalPath := viper.GetString("site.static_assets_dir")
 	if staticLocalPath != "" {
 		log.Debugf("Using local static assets dir: %s", staticLocalPath)
 		return http.FS(os.DirFS(staticLocalPath))

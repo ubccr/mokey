@@ -34,7 +34,7 @@ func NewTemplateRenderer() (*TemplateRenderer, error) {
 		return nil, err
 	}
 
-	localTemplatePath := filepath.Join(viper.GetString("templates_dir"), "*.html")
+	localTemplatePath := filepath.Join(viper.GetString("site.templates_dir"), "*.html")
 	localTemplates, err := filepath.Glob(localTemplatePath)
 	if err != nil {
 		return nil, err

@@ -22,8 +22,8 @@ var (
 
 // Simple password checker to validate passwords before creating an account
 func checkPassword(pass string) error {
-	minLength := viper.GetInt("min_passwd_len")
-	minClasses := viper.GetInt("min_passwd_classes")
+	minLength := viper.GetInt("accounts.min_passwd_len")
+	minClasses := viper.GetInt("accounts.min_passwd_classes")
 
 	l := len([]rune(pass))
 	if l < minLength {
@@ -291,7 +291,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		}
 	}
 
-	r.storage.Set(TokenPasswordReset+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	r.storage.Set(TokenPasswordReset+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second)))
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }

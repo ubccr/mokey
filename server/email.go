@@ -40,7 +40,7 @@ func NewEmailer(storage fiber.Storage) (*Emailer, error) {
 			return nil, err
 		}
 
-		localTemplatePath := filepath.Join(viper.GetString("templates_dir"), "email/*."+ext)
+		localTemplatePath := filepath.Join(viper.GetString("site.templates_dir"), "email/*."+ext)
 		localTemplates, err := filepath.Glob(localTemplatePath)
 		if err != nil {
 			return nil, err
@@ -63,7 +63,7 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		return err
 	}
 
-	baseURL := viper.GetString("base_url")
+	baseURL := viper.GetString("site.base_url")
 	if baseURL == "" {
 		baseURL = ctx.BaseURL()
 	}
@@ -87,7 +87,7 @@ func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		return err
 	}
 
-	baseURL := viper.GetString("base_url")
+	baseURL := viper.GetString("site.base_url")
 	if baseURL == "" {
 		baseURL = ctx.BaseURL()
 	}
@@ -137,9 +137,9 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 	data["browser"] = ua.Name
 	data["name"] = user.First
 	data["date"] = time.Now()
-	data["contact"] = viper.GetString("email_from")
-	data["sig"] = viper.GetString("email_sig")
-	data["site_name"] = viper.GetString("site_name")
+	data["contact"] = viper.GetString("email.from")
+	data["sig"] = viper.GetString("email.signature")
+	data["site_name"] = viper.GetString("site.name")
 
 	var text bytes.Buffer
 	err := e.templates.ExecuteTemplate(&text, tmpl+".txt", data)
@@ -167,8 +167,8 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 	header.Set("Mime-Version", "1.0")
 	header.Set("Date", time.Now().Format(time.RFC1123Z))
 	header.Set("To", user.Email)
-	header.Set("Subject", fmt.Sprintf("[%s] %s", viper.GetString("site_name"), subject))
-	header.Set("From", viper.GetString("email_from"))
+	header.Set("Subject", fmt.Sprintf("[%s] %s", viper.GetString("site.name"), subject))
+	header.Set("From", viper.GetString("email.from"))
 
 	var multipartBody bytes.Buffer
 	mp := multipart.NewWriter(&multipartBody)
@@ -207,15 +207,15 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 		return err
 	}
 
-	smtpHostPort := fmt.Sprintf("%s:%d", viper.GetString("smtp_host"), viper.GetInt("smtp_port"))
+	smtpHostPort := fmt.Sprintf("%s:%d", viper.GetString("email.smtp_host"), viper.GetInt("email.smtp_port"))
 	var conn net.Conn
-	tlsMode := viper.GetString("smtp_tls")
+	tlsMode := viper.GetString("email.smtp_tls")
 
 	switch tlsMode {
 	case "on":
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: false,
-			ServerName:         viper.GetString("smtp_host"),
+			ServerName:         viper.GetString("email.smtp_host"),
 		}
 		conn, err = tls.Dial("tcp", smtpHostPort, tlsConfig)
 	case "off", "starttls":
@@ -228,7 +228,7 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 		return err
 	}
 
-	c, err := smtp.NewClient(conn, viper.GetString("smtp_host"))
+	c, err := smtp.NewClient(conn, viper.GetString("email.smtp_host"))
 	if err != nil {
 		return err
 	}
@@ -236,21 +236,21 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 
 	if tlsMode == "starttls" {
 		err := c.StartTLS(&tls.Config{
-			ServerName: viper.GetString("smtp_host"),
+			ServerName: viper.GetString("email.smtp_host"),
 		})
 		if err != nil {
 			return err
 		}
 	}
 
-	if viper.IsSet("smtp_username") && viper.IsSet("smtp_password") {
-		auth := smtp.PlainAuth("", viper.GetString("smtp_username"), viper.GetString("smtp_password"), viper.GetString("smtp_host"))
+	if viper.IsSet("email.smtp_username") && viper.IsSet("email.smtp_password") {
+		auth := smtp.PlainAuth("", viper.GetString("email.smtp_username"), viper.GetString("email.smtp_password"), viper.GetString("email.smtp_host"))
 		if err = c.Auth(auth); err != nil {
 			log.Error(err)
 			return err
 		}
 	}
-	if err = c.Mail(viper.GetString("email_from")); err != nil {
+	if err = c.Mail(viper.GetString("email.from")); err != nil {
 		log.Error(err)
 		return err
 	}

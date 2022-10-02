@@ -18,7 +18,7 @@ func QRCode(otptoken *ipa.OTPToken, realm string) (string, error) {
 	}
 
 	uri := otptoken.URI
-	customIssuer := viper.GetString("otp_issuer")
+	customIssuer := viper.GetString("accounts.otp_issuer")
 	if customIssuer != "" {
 		ipaUrl, err := url.Parse(otptoken.URI)
 		if err != nil {

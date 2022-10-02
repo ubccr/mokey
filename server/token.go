@@ -48,7 +48,7 @@ func NewToken(username, email, prefix string, storage fiber.Storage) (string, er
 		return "", err
 	}
 
-	key, err := hex.DecodeString(viper.GetString("token_secret"))
+	key, err := hex.DecodeString(viper.GetString("email.token_secret"))
 	if err != nil {
 		return "", err
 	}
@@ -58,14 +58,14 @@ func NewToken(username, email, prefix string, storage fiber.Storage) (string, er
 		return "", err
 	}
 
-	b.SetTTL(viper.GetUint32("token_max_age"))
+	b.SetTTL(viper.GetUint32("email.token_max_age"))
 
 	token, err := b.EncodeToString(jsonBytes)
 	if err != nil {
 		return "", err
 	}
 
-	storage.Set(prefix+TokenIssuedPrefix+username, []byte("true"), time.Until(time.Now().Add(time.Duration(viper.GetInt("token_max_age"))*time.Second)))
+	storage.Set(prefix+TokenIssuedPrefix+username, []byte("true"), time.Until(time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second)))
 
 	return token, nil
 }
@@ -76,7 +76,7 @@ func ParseToken(token, prefix string, storage fiber.Storage) (*Token, error) {
 		return nil, errors.New("token already used")
 	}
 
-	key, err := hex.DecodeString(viper.GetString("token_secret"))
+	key, err := hex.DecodeString(viper.GetString("email.token_secret"))
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func ParseToken(token, prefix string, storage fiber.Storage) (*Token, error) {
 		return nil, err
 	}
 
-	b.SetTTL(viper.GetUint32("token_max_age"))
+	b.SetTTL(viper.GetUint32("email.token_max_age"))
 
 	brancaToken, err := b.DecodeString(token)
 	if err != nil {

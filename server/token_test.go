@@ -15,8 +15,8 @@ import (
 
 func TestToken(t *testing.T) {
 	secret, _ := GenerateSecret(32)
-	viper.Set("token_secret", secret)
-	viper.Set("token_max_age", uint32(3))
+	viper.Set("email.token_secret", secret)
+	viper.Set("email.token_max_age", uint32(3))
 
 	assert := assert.New(t)
 
@@ -42,7 +42,7 @@ func TestToken(t *testing.T) {
 
 	time.Sleep(time.Second * 4)
 
-	viper.Set("token_max_age", uint32(1))
+	viper.Set("email.token_max_age", uint32(1))
 
 	expToken, err := NewToken(uid, email, storage)
 	if assert.NoError(err) {
