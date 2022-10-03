@@ -227,17 +227,23 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 
 			sess, err := r.session(c)
 			if err != nil {
-				return err
+				return c.Status(fiber.StatusInternalServerError).SendString("")
 			}
 			sess.Set(SessionKeyAuthenticated, false)
 			sess.Set(SessionKeyUser, username)
 
 			if err := r.sessionSave(c, sess); err != nil {
-				return err
+				return c.Status(fiber.StatusInternalServerError).SendString("")
+			}
+
+			userRec, err := r.adminClient.UserShow(username)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("")
 			}
 
 			vars := fiber.Map{
 				"username": username,
+				"user":     userRec,
 			}
 			return c.Render("login-password-expired.html", vars)
 		default:
