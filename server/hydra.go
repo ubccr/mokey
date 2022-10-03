@@ -140,8 +140,7 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 
 		log.WithFields(log.Fields{
 			"username": login.Subject,
-			"redirect": *completedResponse.Payload.RedirectTo,
-		}).Info("Login GET challenge signed successfully")
+		}).Info("Hydra OAuth login GET challenge signed successfully")
 
 		c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
 		return c.Redirect(*completedResponse.Payload.RedirectTo)
@@ -175,8 +174,7 @@ func (r *Router) LoginOAuthPost(username, challenge string, c *fiber.Ctx) error 
 
 	log.WithFields(log.Fields{
 		"username": username,
-		"redirect": *completedResponse.Payload.RedirectTo,
-	}).Info("Login POST challenge signed successfully")
+	}).Info("Hydra OAuth2 login POST challenge signed successfully")
 
 	c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
 	return c.Status(fiber.StatusNoContent).SendString("")
