@@ -11,3 +11,6 @@ mokey includes software developed by:
 
 - sweetalert2 (https://sweetalert2.github.io/) Copyright 2014 Tristan Edwards &
   Limon Monte released under the MIT License.
+
+- Email templates adopted from postmark-templates (https://github.com/ActiveCampaign/postmark-templates)
+  Copyright 2015 Wildbit released under the MIT License (MIT)
