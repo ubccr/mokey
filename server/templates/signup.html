@@ -13,6 +13,11 @@
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input type="text" class="form-control form-control-lg" name="email" value="{{ $.user.Email }}" autofocus="autofocus" placeholder="">
+                            {{ with AllowedDomains }}
+                            <div id="emailHelpBlock" class="form-text">
+                            Allowed domains: {{ . }}
+                            </div>
+                            {{ end }}
                         </div>
                         {{ if not $.usernameFromEmail }}
                         <div class="mb-3">

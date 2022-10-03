@@ -21,6 +21,7 @@ var funcMap = template.FuncMap{
 	"TimeAgo":           TimeAgo,
 	"ConfigValueString": ConfigValueString,
 	"ConfigValueBool":   ConfigValueBool,
+	"AllowedDomains":    AllowedDomains,
 }
 
 type TemplateRenderer struct {
@@ -64,6 +65,19 @@ func (t *TemplateRenderer) Load() error {
 
 func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, layouts ...string) error {
 	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+func AllowedDomains() string {
+	allowedDomains := viper.GetStringMapString("accounts.allowed_domains")
+
+	i := 0
+	domains := make([]string, len(allowedDomains))
+	for d := range allowedDomains {
+		domains[i] = d
+		i++
+	}
+
+	return strings.Join(domains, ", ")
 }
 
 func ConfigValueString(key string) string {
