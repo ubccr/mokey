@@ -57,6 +57,8 @@ func SetDefaults() {
 	viper.SetDefault("server.read_timeout", 5)
 	viper.SetDefault("server.write_timeout", 5)
 	viper.SetDefault("server.idle_timeout", 120)
+	viper.SetDefault("server.rate_limit_expiration", 60)
+	viper.SetDefault("server.rate_limit_max", 25)
 	viper.SetDefault("storage.driver", "memory")
 }
 
@@ -164,8 +166,8 @@ func newFiber() (*fiber.App, error) {
 	app.Use(SecureHeaders)
 
 	app.Use(limiter.New(limiter.Config{
-		Max:                    15,
-		Expiration:             1 * time.Minute,
+		Max:                    viper.GetInt("server.rate_limit_max"),
+		Expiration:             time.Duration(viper.GetInt("server.rate_limit_expiration")) * time.Second,
 		SkipSuccessfulRequests: false,
 		Storage:                storage,
 		LimitReached:           LimitReachedHandler,

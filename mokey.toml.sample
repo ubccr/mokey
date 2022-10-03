@@ -138,6 +138,12 @@ read_timeout = 5
 write_timeout = 5
 idle_timeout = 120
 
+# Rate limiter
+# Expiration time in seconds on how long to keep records of requests
+rate_limit_expiration = 60
+# Max number of recent connections during rate_limit_expiration seconds before sending a 429 response
+rate_limit_max = 25
+
 #------------------------------------------------------------------------------
 # Storage
 #------------------------------------------------------------------------------
