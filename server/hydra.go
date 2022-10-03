@@ -110,7 +110,7 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 
 	if *login.Skip {
 		log.WithFields(log.Fields{
-			"user": login.Subject,
+			"user": *login.Subject,
 		}).Info("Hydra requested we skip login")
 
 		// Check to make sure we have a valid user id
@@ -118,7 +118,7 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error":    err,
-				"username": login.Subject,
+				"username": *login.Subject,
 			}).Warn("Failed to find User record for login")
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to validate login")
 		}
@@ -139,7 +139,7 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 		}
 
 		log.WithFields(log.Fields{
-			"username": login.Subject,
+			"username": *login.Subject,
 		}).Info("Hydra OAuth login GET challenge signed successfully")
 
 		c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
