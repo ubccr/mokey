@@ -141,6 +141,23 @@ func (r *Router) RequireLogin(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+func (r *Router) RequireMFA(c *fiber.Ctx) error {
+	if !viper.GetBool("accounts.require_mfa") {
+		return c.Next()
+	}
+
+	user, err := r.user(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).SendString("")
+	}
+
+	if !user.OTPOnly() {
+		return c.Status(fiber.StatusUnauthorized).SendString("You must enable Two-Factor Authentication first!")
+	}
+
+	return c.Next()
+}
+
 func (r *Router) CheckUser(c *fiber.Ctx) error {
 	username := c.FormValue("username")
 

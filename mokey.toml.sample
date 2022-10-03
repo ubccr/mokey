@@ -77,6 +77,11 @@ username_from_email = false
 #               Example: John.Doe@example.com = jdoe
 # allowed_domains = {"example.edu" = "default", "example.com" = "flast"}
 
+# Require Two-Factor authentication on all accounts. This prevents users from
+# uploading ssh keys and displays a warning message reminding users to enable
+# Two-Factor authentication.
+require_mfa = false
+
 #------------------------------------------------------------------------------
 # Email
 #------------------------------------------------------------------------------

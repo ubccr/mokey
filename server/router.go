@@ -158,8 +158,8 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	// SSH Keys
 	app.Get("/sshkey/list", r.RequireLogin, r.RequireHTMX, r.SSHKeyList)
 	app.Get("/sshkey/modal", r.RequireLogin, r.RequireHTMX, r.SSHKeyModal)
-	app.Post("/sshkey/add", r.RequireLogin, r.RequireHTMX, r.SSHKeyAdd)
-	app.Post("/sshkey/remove", r.RequireLogin, r.RequireHTMX, r.SSHKeyRemove)
+	app.Post("/sshkey/add", r.RequireLogin, r.RequireMFA, r.RequireHTMX, r.SSHKeyAdd)
+	app.Post("/sshkey/remove", r.RequireLogin, r.RequireMFA, r.RequireHTMX, r.SSHKeyRemove)
 
 	// OTP Tokens
 	app.Get("/otptoken/list", r.RequireLogin, r.RequireHTMX, r.OTPTokenList)

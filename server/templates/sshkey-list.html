@@ -1,3 +1,8 @@
+{{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
+<div class="alert alert-warning mx-auto fade show" role="alert">
+   You must enable Two-Factor authentication before adding SSH Keys!
+</div>
+{{ end }}
 {{  with $.message }}
 <div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
   {{ . }}
