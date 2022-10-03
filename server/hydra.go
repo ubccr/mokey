@@ -52,6 +52,10 @@ func (r *Router) ConsentGet(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to validate consent")
 	}
 
+	if viper.GetBool("accounts.require_mfa") && !user.OTPOnly() {
+		return c.Status(fiber.StatusUnauthorized).SendString("Access denied.")
+	}
+
 	params := admin.NewAcceptConsentRequestParams()
 	params.SetConsentChallenge(challenge)
 	params.SetHTTPClient(r.hydraAdminHTTPClient)
@@ -114,13 +118,17 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 		}).Info("Hydra requested we skip login")
 
 		// Check to make sure we have a valid user id
-		_, err = r.adminClient.UserShow(*login.Subject)
+		user, err := r.adminClient.UserShow(*login.Subject)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error":    err,
 				"username": *login.Subject,
 			}).Warn("Failed to find User record for login")
 			return c.Status(fiber.StatusInternalServerError).SendString("Failed to validate login")
+		}
+
+		if viper.GetBool("accounts.require_mfa") && !user.OTPOnly() {
+			return c.Status(fiber.StatusUnauthorized).SendString("Access denied.")
 		}
 
 		acceptparams := admin.NewAcceptLoginRequestParams()
