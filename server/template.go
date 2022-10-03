@@ -17,8 +17,10 @@ var templateFiles embed.FS
 
 // Template functions
 var funcMap = template.FuncMap{
-	"SplitSSHFP": SplitSSHFP,
-	"TimeAgo":    TimeAgo,
+	"SplitSSHFP":        SplitSSHFP,
+	"TimeAgo":           TimeAgo,
+	"ConfigValueString": ConfigValueString,
+	"ConfigValueBool":   ConfigValueBool,
 }
 
 type TemplateRenderer struct {
@@ -64,15 +66,13 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, la
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-/*
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	if viewContext, isMap := data.(map[string]interface{}); isMap {
-		viewContext["reverse"] = c.Echo().Reverse
-	}
-
-	return t.templates.ExecuteTemplate(w, name, data)
+func ConfigValueString(key string) string {
+	return viper.GetString(key)
 }
-*/
+
+func ConfigValueBool(key string) bool {
+	return viper.GetBool(key)
+}
 
 func TimeAgo(t time.Time) string {
 	return humanize.Time(t)

@@ -63,7 +63,7 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		return err
 	}
 
-	baseURL := viper.GetString("site.base_url")
+	baseURL := viper.GetString("email.base_url")
 	if baseURL == "" {
 		baseURL = ctx.BaseURL()
 	}
@@ -88,7 +88,7 @@ func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		return err
 	}
 
-	baseURL := viper.GetString("site.base_url")
+	baseURL := viper.GetString("email.base_url")
 	if baseURL == "" {
 		baseURL = ctx.BaseURL()
 	}

@@ -170,6 +170,14 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/otptoken/enable", r.RequireLogin, r.RequireHTMX, r.OTPTokenEnable)
 	app.Post("/otptoken/disable", r.RequireLogin, r.RequireHTMX, r.OTPTokenDisable)
 
+	if viper.IsSet("site.logo") {
+		app.Get("/images/logo", r.Logo)
+	}
+
+	if viper.IsSet("site.css") {
+		app.Get("/css/styles", r.Styles)
+	}
+
 	if viper.IsSet("hydra.admin_url") {
 		app.Get("/oauth/consent", r.ConsentGet)
 		app.Get("/oauth/login", r.LoginOAuthGet)
@@ -223,4 +231,20 @@ func (r *Router) Index(c *fiber.Ctx) error {
 	}
 
 	return c.Render("index.html", vars)
+}
+
+func (r *Router) Logo(c *fiber.Ctx) error {
+	if viper.IsSet("site.logo") {
+		return c.SendFile(viper.GetString("site.logo"))
+	}
+
+	return c.Status(fiber.StatusNotFound).SendString("")
+}
+
+func (r *Router) Styles(c *fiber.Ctx) error {
+	if viper.IsSet("site.css") {
+		return c.SendFile(viper.GetString("site.css"))
+	}
+
+	return c.Status(fiber.StatusNotFound).SendString("")
 }

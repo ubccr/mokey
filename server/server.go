@@ -38,7 +38,7 @@ type Server struct {
 }
 
 func SetDefaults() {
-	viper.SetDefault("site.name", "mokey")
+	viper.SetDefault("site.name", "Identity Management")
 	viper.SetDefault("site.ktuser", "mokeyapp")
 	viper.SetDefault("accounts.default_homedir", "/home")
 	viper.SetDefault("accounts.default_shell", "/bin/bash")
@@ -187,10 +187,16 @@ func newFiber() (*fiber.App, error) {
 		Browse: false,
 	}))
 
-	app.Use(favicon.New(favicon.Config{
-		File:       "images/favicon.ico",
-		FileSystem: assetsFS,
-	}))
+	if viper.IsSet("site.favicon") {
+		app.Use(favicon.New(favicon.Config{
+			File: viper.GetString("site.favicon"),
+		}))
+	} else {
+		app.Use(favicon.New(favicon.Config{
+			File:       "images/favicon.ico",
+			FileSystem: assetsFS,
+		}))
+	}
 
 	// This must be last
 	app.Use(NotFoundHandler)

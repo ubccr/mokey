@@ -1,11 +1,19 @@
 
 <div class="container">
   <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
-    <p class="col-md-4 mb-0 text-muted">Powered by <a href="https://github.com/ubccr/mokey"><i class="fa-brands fa-github" aria-hidden="true"></i> mokey</a></p>
+    <p class="col-md-4 mb-0 text-muted">
+        {{ with ConfigValueString "site.homepage" }}
+            <a href="{{ . }}">{{ ConfigValueString "site.name" }}</a>
+        {{ else }}
+            Powered by <a href="https://github.com/ubccr/mokey"><i class="fa-brands fa-github" aria-hidden="true"></i> mokey</a>
+        {{ end }}
+    </p>
 
+    {{ with ConfigValueString "site.help_url" }}
     <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
-      <li class="ms-3"><a class="text-muted" href="#"><i class="fa fa-circle-question fa-lg"></i></a></li>
+      <li class="ms-3"><a class="text-muted" href="{{ . }}"><i class="fa fa-circle-question fa-lg"></i></a></li>
     </ul>
+    {{ end }}
   </footer>
 </div>
 

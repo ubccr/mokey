@@ -2,21 +2,24 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Center for Computational Research</title>
+	<title>{{ ConfigValueString "site.name" }}</title>
 	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     <link rel="apple-touch-icon" href="/static/images/apple-touch-icon.png"/>
     <link rel="shortcut icon" href="/static/images/favicon.ico">
     <link href="/static/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 	<link rel="stylesheet" href="/static/css/fontawesome.all.min.css" integrity="sha384-3B6NwesSXE7YJlcLI9RpRqGf2p/EgVH8BgoKTaUrmKNDkHPStTQ3EyoYjCGXaOTS" crossorigin="anonymous">
 	<link rel="stylesheet" href="/static/css/sweetalert2.min.css" integrity="sha384-SUNIgQeCps0CoAVRrheRnQztaghCAffXsWBNCCUvia+XNEh7IZg6RvTKpovgqBrc" crossorigin="anonymous">
-	<link rel="stylesheet" type="text/css" href="/static/css/fonts.css">
-	<link rel="stylesheet" type="text/css" href="/static/css/style.css">
+	<link rel="stylesheet" type="text/css" href="/static/css/fonts.css" integrity="sha384-Jpsdvq5DEdKkd/HiMVlSqMMcQswi3Qs0n8RS8hxIhXwCm7rjfdp2SuqOhWG7RnZD" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="/static/css/style.css" integrity="sha384-rxG7TcLJ49tk1uHJgHsvprSZLo/3vOWqvMhKgmQBLxd5Z3TZ0MPMgOiSBXaHqaKn" crossorigin="anonymous">
+    {{ with ConfigValueString "site.css" }}
+	<link rel="stylesheet" type="text/css" href="/css/styles">
+    {{ end }}
 </head>
 <body>
     <nav class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
-          <a class="navbar-brand text-light" href="/">Identity Management Portal</a>
+          <a class="navbar-brand text-light" href="/">{{ with ConfigValueString "site.logo" }}<img id="site-logo" src="/images/logo" alt="{{ ConfigValueString "site.name" }}" />{{ else }}{{ ConfigValueString "site.name" }}{{ end }}</a>
         </div>
       </div>
     </nav>

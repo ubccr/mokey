@@ -7,16 +7,29 @@
 #------------------------------------------------------------------------------
 [site]
 # Name of your site
-name = "mokey"
+name = "Identity Management"
 
-# Base URL of your site
-base_url = "https://localhost"
+# Homepage of your organization
+homepage = ""
 
-# Path to local template override directory
+# Link to your sites help pages
+help_url = ""
+
+# Path to custom favicon.ico file
+favicon = ""
+
+# Path to logo
+logo = ""
+
+# Path to custom css styles file
+css = ""
+
+# Path to local template override directory. You can override one or more
+# of the templates using this directory
 # templates_dir = "/usr/share/mokey/templates"
 
-# Path to local static assets override directory
-# This is used to override the css/javascript/images
+# Path to local static assets directory This is used to host all
+# css/javascript/images assets locally. Only used for advanced customization.
 # static_assets_dir = "/usr/share/mokey/assets"
 
 # User account for the mokey service
@@ -68,6 +81,11 @@ username_from_email = false
 # Email
 #------------------------------------------------------------------------------
 [email]
+# Base URL used for email links. This should be the URL where mokey is being
+# hosted and defaults to the hostname used in the http request. Set this value
+# to hard code the base_url.
+base_url = "https://localhost"
+
 # Max lifetime of branca tokens used for password resets and account verify
 token_max_age = 3600
 
