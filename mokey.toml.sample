@@ -53,6 +53,17 @@ otp_issuer = "MYORG"
 # Block list of user accounts from logging in
 # block_users = ["username1", "username2", "username3"]
 
+# Extract username from email address
+username_from_email = false
+
+# Allowed domains. Format is {"domain": "username-generator"}, where
+# username-generator can be one of the following username generator algorithms:
+#   - default = takes username part from email
+#   - flast   = assumes emails are formated FirstName.LastName@example.com
+#               Generates usernames using the first letter firstname + last name.
+#               Example: John.Doe@example.com = jdoe
+# allowed_domains = {"example.edu" = "default", "example.com" = "flast"}
+
 #------------------------------------------------------------------------------
 # Email
 #------------------------------------------------------------------------------

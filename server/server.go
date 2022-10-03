@@ -45,6 +45,7 @@ func SetDefaults() {
 	viper.SetDefault("accounts.min_passwd_len", 8)
 	viper.SetDefault("accounts.min_passwd_classes", 2)
 	viper.SetDefault("accounts.otp_hash_algorithm", "sha256")
+	viper.SetDefault("accounts.username_from_email", false)
 	viper.SetDefault("email.token_max_age", 3600)
 	viper.SetDefault("email.smtp_host", "localhost")
 	viper.SetDefault("email.smtp_port", 25)

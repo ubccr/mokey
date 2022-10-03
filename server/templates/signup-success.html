@@ -6,6 +6,9 @@
         <div class="login-body-wrapper mx-auto">
             <div class="text-center">
             <p><span class="badge bg-success"><i class="fa-regular fa-circle-check"></i> Account created successfully</span></p>
+            {{ if $.usernameFromEmail }}
+            <p class="text-center">Your username is: <strong>{{ $.user.Username }}</strong></p>
+            {{ end }}
             <p class="text-center">You must verify your email address to activate your account. Check your email for further instructions.</p>
             </div>
         </div>

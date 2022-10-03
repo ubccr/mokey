@@ -14,10 +14,12 @@
                             <label for="email" class="form-label">Email</label>
                             <input type="text" class="form-control form-control-lg" name="email" value="{{ $.user.Email }}" autofocus="autofocus" placeholder="">
                         </div>
+                        {{ if not $.usernameFromEmail }}
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="username" class="form-control form-control-lg" name="username" value="{{ $.user.Username }}" placeholder="">
                         </div>
+                        {{ end }}
                         <div class="mb-3">
                             <label for="first" class="form-label">First Name</label>
                             <input type="text" class="form-control form-control-lg" name="first" value="{{ $.user.First }}" placeholder="">

@@ -71,6 +71,7 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
 	vars := map[string]interface{}{
 		"link":     fmt.Sprintf("%s/auth/resetpw/%s", baseURL, token),
 		"base_url": baseURL,
+		"user":     user,
 	}
 
 	err = e.sendEmail(user, ctx.Get(fiber.HeaderUserAgent), "Please reset your password", "password-reset", vars)
@@ -95,6 +96,7 @@ func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
 	vars := map[string]interface{}{
 		"link":     fmt.Sprintf("%s/auth/verify/%s", baseURL, token),
 		"base_url": baseURL,
+		"user":     user,
 	}
 
 	err = e.sendEmail(user, ctx.Get(fiber.HeaderUserAgent), "Verify your email", "account-verify", vars)

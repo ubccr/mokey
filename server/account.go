@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	valid "github.com/asaskevich/govalidator"
 	"github.com/dchest/captcha"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -61,7 +60,8 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 func (r *Router) AccountCreate(c *fiber.Ctx) error {
 	if c.Method() == fiber.MethodGet {
 		vars := fiber.Map{
-			"captchaID": captcha.New(),
+			"captchaID":         captcha.New(),
+			"usernameFromEmail": viper.GetBool("accounts.username_from_email"),
 		}
 
 		return c.Render("signup.html", vars)
@@ -98,25 +98,17 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 		}).Info("New user account email sent successfully")
 	}
 
-	return c.Render("signup-success.html", fiber.Map{})
+	vars := fiber.Map{
+		"user":              user,
+		"usernameFromEmail": viper.GetBool("accounts.username_from_email"),
+	}
+	return c.Render("signup-success.html", vars)
 }
 
 // accountCreate does the work of validation and creating the account in FreeIPA
 func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captchaID, captchaSol string) error {
-	if !valid.IsEmail(user.Email) {
-		return errors.New("Please provide a valid email address")
-	}
-
-	if len(user.Username) <= 1 || len(user.Username) > 50 {
-		return errors.New("Please provide a username")
-	}
-
-	if valid.IsNumeric(user.Username) {
-		return errors.New("Username must include at least one letter")
-	}
-
-	if !valid.IsAlphanumeric(user.Username) {
-		return errors.New("Username must be alpha numeric")
+	if err := validateUsername(user); err != nil {
+		return err
 	}
 
 	if user.First == "" || len(user.First) > 150 {
