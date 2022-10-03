@@ -76,13 +76,22 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 	return r, nil
 }
 
+func RemoteIP(c *fiber.Ctx) string {
+	ips := c.IPs()
+	if len(ips) > 0 {
+		return strings.Join(ips, ",")
+	}
+
+	return c.IP()
+}
+
 func (r *Router) session(c *fiber.Ctx) (*session.Session, error) {
 	sess, err := r.sessionStore.Get(c)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"path": c.Path(),
 			"err":  err,
-			"ip":   c.IP(),
+			"ip":   RemoteIP(c),
 		}).Error("Failed to fetch session from storage")
 
 		return nil, err
@@ -96,7 +105,7 @@ func (r *Router) sessionSave(c *fiber.Ctx, sess *session.Session) error {
 		log.WithFields(log.Fields{
 			"path": c.Path(),
 			"err":  err,
-			"ip":   c.IP(),
+			"ip":   RemoteIP(c),
 		}).Error("Failed to save session to storage")
 
 		return err

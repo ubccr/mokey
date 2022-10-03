@@ -78,7 +78,7 @@ func (r *Router) logout(c *fiber.Ctx) {
 	if username != nil {
 		log.WithFields(log.Fields{
 			"username": username,
-			"ip":       c.IP(),
+			"ip":       RemoteIP(c),
 			"path":     c.Path(),
 		}).Info("User logging out")
 	}
@@ -86,7 +86,7 @@ func (r *Router) logout(c *fiber.Ctx) {
 	if err := sess.Destroy(); err != nil {
 		log.WithFields(log.Fields{
 			"username": username,
-			"ip":       c.IP(),
+			"ip":       RemoteIP(c),
 			"path":     c.Path(),
 			"err":      err,
 		}).Error("Logout failed to destroy session")
@@ -132,7 +132,7 @@ func (r *Router) RequireLogin(c *fiber.Ctx) error {
 	if ok, err := r.isLoggedIn(c); !ok {
 		log.WithFields(log.Fields{
 			"path":  c.Path(),
-			"ip":    c.IP(),
+			"ip":    RemoteIP(c),
 			"error": err,
 		}).Info("Login required and no authenticated session found.")
 		return r.redirectLogin(c)
@@ -183,7 +183,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 
 	log.WithFields(log.Fields{
 		"username": username,
-		"ip":       c.IP(),
+		"ip":       RemoteIP(c),
 	}).Info("Login user attempt")
 
 	vars := fiber.Map{
@@ -243,6 +243,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 		default:
 			log.WithFields(log.Fields{
 				"username":         username,
+				"ip":               RemoteIP(c),
 				"ipa_client_error": err,
 			}).Error("Failed login attempt")
 			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")

@@ -24,7 +24,7 @@ func SecureHeaders(c *fiber.Ctx) error {
 func NotFoundHandler(c *fiber.Ctx) error {
 	log.WithFields(log.Fields{
 		"path": c.Path(),
-		"ip":   c.IP(),
+		"ip":   RemoteIP(c),
 	}).Info("Requested path not found")
 
 	if c.Get("HX-Request", "false") == "true" {
@@ -45,7 +45,7 @@ func CSRFErrorHandler(c *fiber.Ctx, err error) error {
 	log.WithFields(log.Fields{
 		"path": c.Path(),
 		"err":  err,
-		"ip":   c.IP(),
+		"ip":   RemoteIP(c),
 	}).Error("Invalid CSRF token in POST request")
 
 	return fiber.ErrForbidden
@@ -64,7 +64,7 @@ func HTTPErrorHandler(c *fiber.Ctx, err error) error {
 		"code":     code,
 		"username": username,
 		"path":     path,
-		"ip":       c.IP(),
+		"ip":       RemoteIP(c),
 	}).Error(err)
 
 	if c.Locals("NoErrorTemplate") == "true" {
@@ -97,7 +97,7 @@ func HTTPErrorHandler(c *fiber.Ctx, err error) error {
 
 func LimitReachedHandler(c *fiber.Ctx) error {
 	log.WithFields(log.Fields{
-		"ip": c.IP(),
+		"ip": RemoteIP(c),
 	}).Warn("Limit reached")
 	return c.Status(fiber.StatusForbidden).SendString("Too many requests")
 }

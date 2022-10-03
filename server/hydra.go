@@ -25,7 +25,7 @@ func (r *Router) ConsentGet(c *fiber.Ctx) error {
 	challenge := c.Query("consent_challenge")
 	if challenge == "" {
 		log.WithFields(log.Fields{
-			"ip": c.IP(),
+			"ip": RemoteIP(c),
 		}).Error("Consent endpoint was called without a consent challenge")
 		return c.Status(fiber.StatusBadRequest).SendString("consent without challenge")
 	}
@@ -90,7 +90,7 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 	challenge := c.Query("login_challenge")
 	if challenge == "" {
 		log.WithFields(log.Fields{
-			"ip": c.IP(),
+			"ip": RemoteIP(c),
 		}).Error("Login OAuth endpoint was called without a challenge")
 		return c.Status(fiber.StatusBadRequest).SendString("login without challenge")
 	}
