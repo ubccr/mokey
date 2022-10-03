@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -76,6 +77,8 @@ func AllowedDomains() string {
 		domains[i] = d
 		i++
 	}
+
+	sort.Strings(domains)
 
 	return strings.Join(domains, ", ")
 }
