@@ -60,11 +60,7 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 		return err
 	}
 
-	vars := fiber.Map{
-		"keys": user.SSHAuthKeys,
-	}
-
-	return c.Render("sshkey-list.html", vars)
+	return r.SSHKeyList(c)
 }
 
 func (r *Router) SSHKeyRemove(c *fiber.Ctx) error {
@@ -84,9 +80,5 @@ func (r *Router) SSHKeyRemove(c *fiber.Ctx) error {
 		return err
 	}
 
-	vars := fiber.Map{
-		"keys": user.SSHAuthKeys,
-	}
-
-	return c.Render("sshkey-list.html", vars)
+	return r.SSHKeyList(c)
 }
