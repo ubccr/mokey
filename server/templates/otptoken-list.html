@@ -47,7 +47,7 @@
                                 html: '<code>{{ $tok.DisplayName }}</code>',
                                 focusCancel: true,
                                 confirmButtonText: 'Disable',
-                                reverseButtons: true,
+                                reverseButtons: false,
                                 showCancelButton: true,
                                 icon: 'question'})
                             if result.isConfirmed trigger tokendisable">
@@ -65,7 +65,7 @@
                                 backdrop: true,
                                 html: '<code>{{ $tok.DisplayName }}</code>',
                                 focusCancel: true,
-                                reverseButtons: true,
+                                reverseButtons: false,
                                 confirmButtonColor: '#157347',
                                 confirmButtonText: 'Enable',
                                 showCancelButton: true,
@@ -86,7 +86,7 @@
                                 backdrop: true,
                                 html: '<code>{{ $tok.DisplayName }}</code><br/><br/>This action <strong>CANNOT</strong> be undone. This will permanently delete the token and you will not be able to use it again in the future',
                                 focusCancel: true,
-                                reverseButtons: true,
+                                reverseButtons: false,
                                 confirmButtonColor: '#dc3545',
                                 confirmButtonText: 'Delete',
                                 showCancelButton: true,

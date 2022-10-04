@@ -27,7 +27,6 @@
           <div id="add-indicator" class="htmx-indicator spinner-border text-primary" role="status">
               <span class="visually-hidden">Adding token...</span>
           </div>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('otptoken-modal')">Cancel</button>
           <button 
             hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
             hx-target-error="add-token-failed"
@@ -39,6 +38,7 @@
             type="submit">
           Next
           </button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('otptoken-modal')">Cancel</button>
         </div>
 
         </form>

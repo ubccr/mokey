@@ -23,7 +23,6 @@
           <div id="add-indicator" class="htmx-indicator spinner-border text-primary" role="status">
               <span class="visually-hidden">Adding ssh key...</span>
           </div>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('sshkey-modal')">Cancel</button>
           <button 
             hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
             hx-post="/sshkey/add"
@@ -35,6 +34,7 @@
             type="submit">
           Add
           </button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('sshkey-modal')">Cancel</button>
         </div>
 
         </form>

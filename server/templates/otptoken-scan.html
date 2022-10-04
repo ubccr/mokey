@@ -35,6 +35,18 @@
         type="submit">
       Verify
       </button>
+      <button 
+        hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+        hx-target-error="verify-token-failed"
+        hx-post="/otptoken/verify"
+        hx-vals='{"action": "cancel"}'
+        hx-target="#otp"
+        hx-indicator="#verify-indicator"
+        hx-swap="innerHTML"
+        class="btn btn-secondary"
+        type="submit">
+      Cancel
+      </button>
     </div>
     </form>
   </div>
