@@ -9,7 +9,7 @@
 					<div class="img-circle text-center mb-3">
 						<img src="/static/images/user-circle.png" alt="Gravatar" class="shadow">
 					</div>
-					<h4 class="text-center">{{ .user.First }} {{ .user.Last }}</h4>
+					<h4 class="text-center">{{ .user.Username }}</h4>
 				</div>
 				<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
 					<a class="nav-link{{ if eq $.path "account" }} active{{end}}" id="account-tab" href="/account" role="tab">
