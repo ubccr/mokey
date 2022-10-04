@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -54,6 +55,11 @@ func (r *Router) isLoggedIn(c *fiber.Ctx) (bool, error) {
 
 	c.Locals(ContextKeyUser, user)
 	c.Locals(ContextKeyIPAClient, client)
+
+	// Update session expiry time
+	sess.SetExpiry(time.Duration(viper.GetInt("server.session_idle_timeout")) * time.Second)
+
+	sess.Save()
 
 	return true, nil
 }

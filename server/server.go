@@ -53,6 +53,7 @@ func SetDefaults() {
 	viper.SetDefault("email.smtp_tls", "off")
 	viper.SetDefault("email.from", "support@example.com")
 	viper.SetDefault("server.secure_cookies", true)
+	viper.SetDefault("server.session_idle_timeout", 900)
 	viper.SetDefault("server.listen", "0.0.0.0:8866")
 	viper.SetDefault("server.read_timeout", 5)
 	viper.SetDefault("server.write_timeout", 5)

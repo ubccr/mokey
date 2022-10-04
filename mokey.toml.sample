@@ -124,6 +124,9 @@ from = "support@example.com"
 # Address and port to listen
 listen = "0.0.0.0:8866"
 
+# Times out the session after inactivity (in seconds)
+session_idle_timeout = 900
+
 # Path to ssl certificate
 # ssl_cert = ""
 
