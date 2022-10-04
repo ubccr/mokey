@@ -44,7 +44,7 @@ func SetDefaults() {
 	viper.SetDefault("accounts.default_shell", "/bin/bash")
 	viper.SetDefault("accounts.min_passwd_len", 8)
 	viper.SetDefault("accounts.min_passwd_classes", 2)
-	viper.SetDefault("accounts.otp_hash_algorithm", "sha256")
+	viper.SetDefault("accounts.otp_hash_algorithm", "sha1")
 	viper.SetDefault("accounts.username_from_email", false)
 	viper.SetDefault("accounts.require_mfa", false)
 	viper.SetDefault("email.token_max_age", 3600)
