@@ -17,6 +17,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gofiber/fiber/v2"
 	"github.com/mileusna/useragent"
 	log "github.com/sirupsen/logrus"
@@ -33,6 +34,7 @@ type Emailer struct {
 
 func NewEmailer(storage fiber.Storage) (*Emailer, error) {
 	tmpl := template.New("")
+	tmpl.Funcs(funcMap)
 
 	for _, ext := range []string{"txt", "html"} {
 		tmpl, err := tmpl.ParseFS(templateFiles, "templates/email/*."+ext)
@@ -69,8 +71,9 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
 	}
 
 	vars := map[string]interface{}{
-		"link":     fmt.Sprintf("%s/auth/resetpw/%s", baseURL, token),
-		"base_url": baseURL,
+		"link":         fmt.Sprintf("%s/auth/resetpw/%s", baseURL, token),
+		"link_expires": humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", ""),
+		"base_url":     baseURL,
 	}
 
 	err = e.sendEmail(user, ctx.Get(fiber.HeaderUserAgent), "Please reset your password", "password-reset", vars)
@@ -93,8 +96,9 @@ func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
 	}
 
 	vars := map[string]interface{}{
-		"link":     fmt.Sprintf("%s/auth/verify/%s", baseURL, token),
-		"base_url": baseURL,
+		"link":         fmt.Sprintf("%s/auth/verify/%s", baseURL, token),
+		"link_expires": humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", ""),
+		"base_url":     baseURL,
 	}
 
 	err = e.sendEmail(user, ctx.Get(fiber.HeaderUserAgent), "Verify your email", "account-verify", vars)
@@ -141,6 +145,7 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 	data["sig"] = viper.GetString("email.signature")
 	data["site_name"] = viper.GetString("site.name")
 	data["help_url"] = viper.GetString("site.help_url")
+	data["homepage"] = viper.GetString("site.homepage")
 
 	var text bytes.Buffer
 	err := e.templates.ExecuteTemplate(&text, tmpl+".txt", data)

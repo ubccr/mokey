@@ -23,6 +23,7 @@ var funcMap = template.FuncMap{
 	"ConfigValueString": ConfigValueString,
 	"ConfigValueBool":   ConfigValueBool,
 	"AllowedDomains":    AllowedDomains,
+	"BreakNewlines":     BreakNewlines,
 }
 
 type TemplateRenderer struct {
@@ -112,4 +113,8 @@ func SplitSSHFP(fp string) []string {
 	parts[2] = strings.TrimLeft(parts[2], "(")
 	parts[2] = strings.TrimRight(parts[2], ")")
 	return parts
+}
+
+func BreakNewlines(s string) template.HTML {
+	return template.HTML(strings.Replace(template.HTMLEscapeString(s), "\n", "<br />", -1))
 }
