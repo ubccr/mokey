@@ -13,7 +13,7 @@ func (r *Router) SSHKeyList(c *fiber.Ctx) error {
 	}
 
 	vars := fiber.Map{
-		"keys": user.SSHAuthKeys,
+		"user": user,
 	}
 	return c.Render("sshkey-list.html", vars)
 }

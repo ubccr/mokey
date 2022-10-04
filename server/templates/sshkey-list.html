@@ -24,7 +24,7 @@
       <i class="fa fa-plus"></i> New SSH Key
     </button>
 </div>
-{{ range $i, $key := $.keys }}
+{{ range $i, $key := $.user.SSHAuthKeys }}
 <div class="row">
     <div class="d-flex flex-items-center">
         <div class="text-center d-flex flex-column">
