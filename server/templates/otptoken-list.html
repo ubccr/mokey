@@ -1,6 +1,10 @@
-{{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
+{{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") (not $.otptokens) }}
 <div class="alert alert-warning mx-auto fade show" role="alert">
    Please add an OTP token using your authenticator app to enable Two-Factor authentication on your account.
+</div>
+{{ else if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
+<div class="alert alert-warning mx-auto fade show" role="alert">
+   You must enable Two-Factor authentication on your account.
 </div>
 {{ end }}
 {{  with $.message }}
