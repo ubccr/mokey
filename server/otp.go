@@ -25,15 +25,20 @@ func getHashAlgorithm() otp.Algorithm {
 }
 
 func (r *Router) tokenList(c *fiber.Ctx, vars fiber.Map) error {
-	username := r.username(c)
 	client := r.userClient(c)
 
-	tokens, err := client.FetchOTPTokens(username)
+	user, err := r.user(c)
+	if err != nil {
+		return err
+	}
+
+	tokens, err := client.FetchOTPTokens(user.Username)
 	if err != nil {
 		return err
 	}
 
 	vars["otptokens"] = tokens
+	vars["user"] = user
 	return c.Render("otptoken-list.html", vars)
 }
 
@@ -146,6 +151,23 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 			"username": username,
 		}).Error("Failed to verify OTP token")
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid 6-digit code. Please try again.")
+	}
+
+	if viper.GetBool("accounts.require_mfa") {
+		tokens, _ := client.FetchOTPTokens(username)
+		user, err := client.UserShow(username)
+
+		// If user added first token enable Two-Factor auth automatically if
+		// not enabled already
+		if err == nil && !user.OTPOnly() && len(tokens) == 1 {
+			err = r.adminClient.SetAuthTypes(username, []string{"otp"})
+			if err != nil {
+				log.WithFields(log.Fields{
+					"username": username,
+					"err":      err,
+				}).Error("Failed to automatically enable Two-Factor auth")
+			}
+		}
 	}
 
 	return r.tokenList(c, vars)
