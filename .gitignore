@@ -3,3 +3,7 @@ mokey.toml
 mokey.db
 mokey
 .env
+dist/
+key.gpg
+mokey-*.tar.gz
+*.swp

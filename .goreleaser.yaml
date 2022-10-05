@@ -1,0 +1,76 @@
+# Mokey goreleaser configs
+# See here: https://goreleaser.com
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goarch:
+      - amd64
+    goos:
+      - linux
+    ldflags:
+      - -s -w -X github.com/ubccr/mokey/server.Version={{.Version}}
+archives:
+  - replacements:
+      linux: linux
+      amd64: x86_64
+    wrap_in_directory: true
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    files:
+      - LICENSE
+      - NOTICE
+      - README.md
+      - ChangeLog.md
+      - mokey.toml.sample
+nfpms:
+  - vendor: University at Buffalo
+    homepage: https://github.com/ubccr/mokey
+    maintainer: Andrew E. Bruno <aebruno2@buffalo.edu>
+    license: MIT
+    description: |-
+      FreeIPA self-service account management tool
+    formats:
+      - deb
+      - rpm
+    overrides:
+      deb:
+        file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"
+        scripts:
+          postinstall: ./scripts/nfpm/postinstall.sh
+      rpm:
+        file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
+        scripts:
+          postinstall: ./scripts/nfpm/postinstall.sh
+    rpm:
+      signature:
+        key_file: key.gpg
+    deb:
+      signature:
+        key_file: key.gpg
+    contents:
+      - src: ./scripts/nfpm/mokey.toml.default
+        dst: /etc/mokey/mokey.toml
+        type: "config|noreplace"
+      - src: ./scripts/nfpm/mokey.service
+        dst: /usr/lib/systemd/system/mokey.service
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-SNAPSHOT-{{.ShortCommit}}"
+changelog:
+  sort: desc
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Other
+      order: 999
+  filters:
+    exclude:
+      - '^docs:'
+      - 'typo'
