@@ -6,6 +6,13 @@
         <div class="login-body-wrapper mx-auto">
             <form>
             <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="username" class="form-control form-control-lg" value="{{ $.user.Username }}" disabled="disabled">
+                <div id="usernameHelpBlock" class="form-text">
+                 Not you? <a href="/auth/login">Switch account</a>
+                </div>
+            </div>
+            <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control form-control-lg" name="password" id="password" autofocus="autofocus" placeholder="">
             </div>
