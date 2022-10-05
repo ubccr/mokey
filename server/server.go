@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -58,8 +59,8 @@ func SetDefaults() {
 	viper.SetDefault("server.read_timeout", 5)
 	viper.SetDefault("server.write_timeout", 5)
 	viper.SetDefault("server.idle_timeout", 120)
-	viper.SetDefault("server.rate_limit_expiration", 60)
-	viper.SetDefault("server.rate_limit_max", 25)
+	viper.SetDefault("server.rate_limit_expiration", 3600)
+	viper.SetDefault("server.rate_limit_max", 10)
 	viper.SetDefault("storage.driver", "memory")
 }
 
@@ -169,12 +170,31 @@ func newFiber() (*fiber.App, error) {
 	app.Use(limiter.New(limiter.Config{
 		Max:                    viper.GetInt("server.rate_limit_max"),
 		Expiration:             time.Duration(viper.GetInt("server.rate_limit_expiration")) * time.Second,
-		SkipSuccessfulRequests: false,
+		SkipSuccessfulRequests: true,
 		Storage:                storage,
 		LimitReached:           LimitReachedHandler,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			ips := c.IPs()
+			if len(ips) > 0 {
+				return ips[0]
+			}
+
+			return c.IP()
+		},
 		Next: func(c *fiber.Ctx) bool {
-			// Only limit POST requests
-			return c.Method() != fiber.MethodPost
+			if c.Method() != fiber.MethodPost {
+				return true
+			}
+
+			if c.Path() == "/signup" {
+				return false
+			}
+
+			if strings.HasPrefix(c.Path(), "/auth") {
+				return false
+			}
+
+			return true
 		},
 	}))
 

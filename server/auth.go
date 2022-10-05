@@ -179,17 +179,15 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4001 {
 			log.WithFields(log.Fields{
-				"error":            err,
-				"username":         username,
-				"ipa_client_error": err,
+				"error":    ierr,
+				"username": username,
 			}).Warn("Username not found in FreeIPA")
 			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 		}
 
 		log.WithFields(log.Fields{
-			"error":            err,
-			"username":         username,
-			"ipa_client_error": err,
+			"error":    err,
+			"username": username,
 		}).Error("Failed to fetch user info from FreeIPA")
 		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
 	}
