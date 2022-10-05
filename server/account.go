@@ -78,6 +78,11 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
+	log.WithFields(log.Fields{
+		"username": user.Username,
+		"email":    user.Email,
+	}).Info("AUDIT user account created successfully")
+
 	// Send user an email to verify their account
 	err = r.emailer.SendAccountVerifyEmail(user, c)
 	if err != nil {
@@ -94,8 +99,7 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 	}
 
 	vars := fiber.Map{
-		"user":              user,
-		"usernameFromEmail": viper.GetBool("accounts.username_from_email"),
+		"user": user,
 	}
 	return c.Render("signup-success.html", vars)
 }
