@@ -51,6 +51,13 @@
                             <p><img id="captcha" src="/auth/captcha/{{ . }}.png" alt="Captcha image"></p>
                         </div>
                         {{ end }}
+                        {{ with ConfigValueString "site.tos_url" }}
+                        <div class="mb-3">
+                            <div id="tosHelpBlock" class="form-text">
+                            By clicking "Create Account" you agree to our: <a href="{{ . }}" target="_blank">Terms of Service</a>
+                            </div>
+                        </div>
+                        {{ end }}
                         <div class="mb-3 d-grid gap-2">
                           <button hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-target-error="login-failed" hx-post="/signup" hx-target="#login" hx-swap="innerHTML" class="btn btn-primary btn-lg" type="submit">
                           <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 

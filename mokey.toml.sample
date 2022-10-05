@@ -18,6 +18,9 @@ help_url = ""
 # Link to your getting started guide
 getting_started_url = ""
 
+# Link to your terms of service
+tos_url = ""
+
 # Path to custom favicon.ico file
 favicon = ""
 
