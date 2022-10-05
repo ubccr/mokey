@@ -93,6 +93,10 @@ func validateUsername(user *ipa.User) error {
 		return errors.New("Username must include at least one letter")
 	}
 
+	if isBlocked(user.Username) {
+		return errors.New("Username not allowed. Please try different username or contact the administrator")
+	}
+
 	user.Username = strings.ToLower(user.Username)
 
 	return nil
