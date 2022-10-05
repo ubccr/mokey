@@ -1,6 +1,6 @@
 Thanks for creating an account at [{{ $.site_name }}]. We've pulled together some information and resources to help you get started.
 
-[{{ $.site_name }}] ( $.homepage )
+[{{ $.site_name }}] ( {{$.homepage}} )
 
 ******************
 Welcome, {{$.user.First}}!
