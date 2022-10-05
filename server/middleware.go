@@ -48,16 +48,12 @@ func CSRFErrorHandler(c *fiber.Ctx, err error) error {
 		"ip":   RemoteIP(c),
 	}).Error("Invalid CSRF token in POST request")
 
-	return fiber.ErrForbidden
-	/*
+	if c.Get("HX-Request", "false") == "true" {
+		c.Set("HX-Redirect", "/auth/logout")
+		return c.Status(fiber.StatusNoContent).SendString("")
+	}
 
-		if c.Get("HX-Request", "false") == "true" {
-			c.Set("HX-Redirect", "/auth/logout")
-			return c.Status(fiber.StatusNoContent).SendString("")
-		}
-
-		return c.Redirect("/auth/logout")
-	*/
+	return c.Redirect("/auth/logout")
 }
 
 func HTTPErrorHandler(c *fiber.Ctx, err error) error {
