@@ -14,7 +14,7 @@
                 <input type="text" class="form-control" name="desc" id="desc" value="" aria-describedby="tokenHelpBlock">
                 <div id="tokenHelpBlock" class="form-text">
                     Enter description of token (for example what device this will
-                    be used with) then click Next button below to verify new TOTP
+                    be used with) then click Add button below to verify new TOTP
                     token. The QR code will appear on the next screen. Make sure you scan
                     using your authenticator app and enter the 6-digit code to verify.
                 </div>
@@ -36,7 +36,7 @@
             hx-swap="innerHTML"
             class="btn btn-primary"
             type="submit">
-          Next
+          Add
           </button>
           <button type="button" class="btn btn-secondary" onclick="closeModal('otptoken-modal')">Cancel</button>
         </div>
