@@ -6,12 +6,7 @@ import (
 )
 
 func (r *Router) securityList(c *fiber.Ctx, vars fiber.Map) error {
-	user, err := r.user(c)
-	if err != nil {
-		return err
-	}
-
-	vars["user"] = user
+	vars["user"] = r.user(c)
 	return c.Render("security.html", vars)
 }
 
@@ -20,16 +15,27 @@ func (r *Router) SecurityList(c *fiber.Ctx) error {
 }
 
 func (r *Router) TwoFactorDisable(c *fiber.Ctx) error {
-	username := r.username(c)
 	vars := fiber.Map{}
+	user := r.user(c)
 
-	err := r.adminClient.SetAuthTypes(username, nil)
+	err := r.adminClient.SetAuthTypes(user.Username, nil)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"username": username,
+			"username": user.Username,
 			"err":      err,
 		}).Error("Failed to disable Two-Factor auth")
 		vars["message"] = "Failed to disable Two-Factor authentication"
+	}
+
+	user.AuthTypes = nil
+	c.Locals(ContextKeyUser, user)
+
+	err = r.emailer.SendMFAChangedEmail(false, user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+		}).Error("Failed to send mfa disabled email")
 	}
 
 	return r.securityList(c, vars)
@@ -37,13 +43,13 @@ func (r *Router) TwoFactorDisable(c *fiber.Ctx) error {
 
 func (r *Router) TwoFactorEnable(c *fiber.Ctx) error {
 	client := r.userClient(c)
-	username := r.username(c)
 	vars := fiber.Map{}
+	user := r.user(c)
 
-	tokens, err := client.FetchOTPTokens(username)
+	tokens, err := client.FetchOTPTokens(user.Username)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"username": username,
+			"username": user.Username,
 			"err":      err,
 		}).Error("Failed to check otp tokens")
 		vars["message"] = "Failed to enable Two-Factor authentication"
@@ -55,13 +61,25 @@ func (r *Router) TwoFactorEnable(c *fiber.Ctx) error {
 		return r.securityList(c, vars)
 	}
 
-	err = r.adminClient.SetAuthTypes(username, []string{"otp"})
+	otpOnly := []string{"otp"}
+	err = r.adminClient.SetAuthTypes(user.Username, otpOnly)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"username": username,
+			"username": user.Username,
 			"err":      err,
 		}).Error("Failed to enable Two-Factor auth")
 		vars["message"] = "Failed to enable Two-Factor authentication"
+	}
+
+	user.AuthTypes = otpOnly
+	c.Locals(ContextKeyUser, user)
+
+	err = r.emailer.SendMFAChangedEmail(true, user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+		}).Error("Failed to send mfa enabled email")
 	}
 
 	return r.securityList(c, vars)

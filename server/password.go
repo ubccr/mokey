@@ -65,7 +65,7 @@ func checkPassword(pass string) error {
 	}
 
 	if numCategories < minClasses {
-		return fmt.Errorf("Password does not conform to policy. Min character classes required: %d", minClasses)
+		return fmt.Errorf("Password does not conform to policy. Try including both upper/lower case, numbers, and other characters")
 	}
 
 	return nil
@@ -104,13 +104,8 @@ func validatePasswordChange(passwordCurrent, password, passwordConfirm string) e
 }
 
 func (r *Router) PasswordChange(c *fiber.Ctx) error {
-	username := r.username(c)
+	user := r.user(c)
 	client := r.userClient(c)
-
-	user, err := client.UserShow(username)
-	if err != nil {
-		return err
-	}
 
 	vars := fiber.Map{
 		"user": user,
@@ -135,23 +130,32 @@ func (r *Router) PasswordChange(c *fiber.Ctx) error {
 		return c.Render("password.html", vars)
 	}
 
-	err = client.ChangePassword(username, password, newpass, otp)
+	err := client.ChangePassword(user.Username, password, newpass, otp)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
-				"username": username,
+				"username": user.Username,
 				"message":  ierr.Message,
 				"code":     ierr.Code,
 			}).Error("Failed to change password")
 			vars["message"] = ierr.Message
 		} else {
 			log.WithFields(log.Fields{
-				"username": username,
+				"username": user.Username,
 				"error":    err.Error(),
 			}).Error("Failed to change password")
 			vars["message"] = "Fatal system error"
 		}
 	} else {
+		err = r.emailer.SendPasswordChangedEmail(user, c)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err":      err,
+				"username": user.Username,
+				"email":    user.Email,
+			}).Error("Failed to send password changed email")
+		}
+
 		vars["success"] = true
 	}
 
@@ -293,6 +297,15 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 
 	r.storage.Set(TokenPasswordReset+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second)))
 
+	err = r.emailer.SendPasswordChangedEmail(user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to send password changed email")
+	}
+
 	return c.Render("password-reset-success.html", fiber.Map{})
 }
 
@@ -303,7 +316,7 @@ func (r *Router) PasswordExpired(c *fiber.Ctx) error {
 		return r.redirectLogin(c)
 	}
 
-	username := sess.Get(SessionKeyUser)
+	username := sess.Get(SessionKeyUsername)
 	authenticated := sess.Get(SessionKeyAuthenticated)
 	if username == nil || authenticated == nil {
 		return r.redirectLogin(c)
@@ -351,6 +364,15 @@ func (r *Router) PasswordExpired(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("")
 	}
 
+	err = r.emailer.SendPasswordChangedEmail(user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to send password changed email")
+	}
+
 	client := ipa.NewDefaultClient()
 	err = client.RemoteLogin(user.Username, newpass+otp)
 	if err != nil {
@@ -371,7 +393,7 @@ func (r *Router) PasswordExpired(c *fiber.Ctx) error {
 	}
 
 	sess.Set(SessionKeyAuthenticated, true)
-	sess.Set(SessionKeyUser, user.Username)
+	sess.Set(SessionKeyUsername, user.Username)
 	sess.Set(SessionKeySID, client.SessionID())
 
 	if err := r.sessionSave(c, sess); err != nil {

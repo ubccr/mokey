@@ -28,14 +28,14 @@ func (r *Router) isLoggedIn(c *fiber.Ctx) (bool, error) {
 		return false, errors.New("Failed to get session")
 	}
 
-	user := sess.Get(SessionKeyUser)
+	username := sess.Get(SessionKeyUsername)
 	sid := sess.Get(SessionKeySID)
 	authenticated := sess.Get(SessionKeyAuthenticated)
-	if sid == nil || user == nil || authenticated == nil {
+	if sid == nil || username == nil || authenticated == nil {
 		return false, errors.New("Invalid session")
 	}
 
-	if _, ok := user.(string); !ok {
+	if _, ok := username.(string); !ok {
 		return false, errors.New("Invalid user in session")
 	}
 
@@ -48,11 +48,12 @@ func (r *Router) isLoggedIn(c *fiber.Ctx) (bool, error) {
 	}
 
 	client := ipa.NewDefaultClientWithSession(sid.(string))
-	_, err = client.Ping()
+	user, err := client.UserShow(username.(string))
 	if err != nil {
 		return false, fmt.Errorf("Failed to refresh FreeIPA user session: %w", err)
 	}
 
+	c.Locals(ContextKeyUsername, username)
 	c.Locals(ContextKeyUser, user)
 	c.Locals(ContextKeyIPAClient, client)
 
@@ -80,7 +81,7 @@ func (r *Router) logout(c *fiber.Ctx) {
 		return
 	}
 
-	username := sess.Get(SessionKeyUser)
+	username := sess.Get(SessionKeyUsername)
 	if username != nil {
 		log.WithFields(log.Fields{
 			"username": username,
@@ -152,11 +153,7 @@ func (r *Router) RequireMFA(c *fiber.Ctx) error {
 		return c.Next()
 	}
 
-	user, err := r.user(c)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).SendString("")
-	}
-
+	user := r.user(c)
 	if !user.OTPOnly() {
 		return c.Status(fiber.StatusUnauthorized).SendString("You must enable Two-Factor Authentication first!")
 	}
@@ -253,7 +250,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 				return c.Status(fiber.StatusInternalServerError).SendString("")
 			}
 			sess.Set(SessionKeyAuthenticated, false)
-			sess.Set(SessionKeyUser, username)
+			sess.Set(SessionKeyUsername, username)
 
 			if err := r.sessionSave(c, sess); err != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("")
@@ -293,7 +290,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 		return err
 	}
 	sess.Set(SessionKeyAuthenticated, true)
-	sess.Set(SessionKeyUser, username)
+	sess.Set(SessionKeyUsername, username)
 	sess.Set(SessionKeySID, client.SessionID())
 
 	if err := r.sessionSave(c, sess); err != nil {

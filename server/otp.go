@@ -26,11 +26,7 @@ func getHashAlgorithm() otp.Algorithm {
 
 func (r *Router) tokenList(c *fiber.Ctx, vars fiber.Map) error {
 	client := r.userClient(c)
-
-	user, err := r.user(c)
-	if err != nil {
-		return err
-	}
+	user := r.user(c)
 
 	tokens, err := client.FetchOTPTokens(user.Username)
 	if err != nil {
@@ -54,14 +50,14 @@ func (r *Router) OTPTokenModal(c *fiber.Ctx) error {
 func (r *Router) OTPTokenRemove(c *fiber.Ctx) error {
 	uuid := c.FormValue("uuid")
 	client := r.userClient(c)
-	username := r.username(c)
+	user := r.user(c)
 	vars := fiber.Map{}
 
 	err := client.RemoveOTPToken(uuid)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"uuid":     uuid,
-			"username": username,
+			"username": user.Username,
 			"err":      err,
 		}).Error("Failed to remove OTP token")
 
@@ -69,6 +65,14 @@ func (r *Router) OTPTokenRemove(c *fiber.Ctx) error {
 			vars["message"] = "You can't remove your last active token while Two-Factor auth is enabled"
 		} else {
 			vars["message"] = "Failed to remove token"
+		}
+	} else {
+		err = r.emailer.SendOTPTokenUpdatedEmail(false, user, c)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err":      err,
+				"username": user.Username,
+			}).Error("Failed to send otp token removed email")
 		}
 	}
 
@@ -124,7 +128,7 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 	uuid := c.FormValue("uuid")
 	action := c.FormValue("action")
 	client := r.userClient(c)
-	username := r.username(c)
+	user := r.user(c)
 	vars := fiber.Map{}
 
 	key, err := otp.NewKeyFromURL(uri)
@@ -148,25 +152,46 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 	if !valid {
 		log.WithFields(log.Fields{
 			"uuid":     uuid,
-			"username": username,
+			"username": user.Username,
 		}).Error("Failed to verify OTP token")
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid 6-digit code. Please try again.")
 	}
 
+	autoMFA := false
 	if viper.GetBool("accounts.require_mfa") {
-		tokens, _ := client.FetchOTPTokens(username)
-		user, err := client.UserShow(username)
-
-		// If user added first token enable Two-Factor auth automatically if
-		// not enabled already
-		if err == nil && !user.OTPOnly() && len(tokens) == 1 {
-			err = r.adminClient.SetAuthTypes(username, []string{"otp"})
+		tokens, _ := client.FetchOTPTokens(user.Username)
+		// Enable Two-Factor auth automatically if user only has single token
+		if !user.OTPOnly() && len(tokens) == 1 {
+			otpOnly := []string{"otp"}
+			err = r.adminClient.SetAuthTypes(user.Username, otpOnly)
 			if err != nil {
 				log.WithFields(log.Fields{
-					"username": username,
+					"username": user.Username,
 					"err":      err,
 				}).Error("Failed to automatically enable Two-Factor auth")
+			} else {
+				autoMFA = true
+				user.AuthTypes = otpOnly
+				c.Locals(ContextKeyUser, user)
+
+				err = r.emailer.SendMFAChangedEmail(true, user, c)
+				if err != nil {
+					log.WithFields(log.Fields{
+						"err":      err,
+						"username": user.Username,
+					}).Error("Failed to send mfa automatically enabled email")
+				}
 			}
+		}
+	}
+
+	if !autoMFA {
+		err = r.emailer.SendOTPTokenUpdatedEmail(true, user, c)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"err":      err,
+				"username": user.Username,
+			}).Error("Failed to send otp token added email")
 		}
 	}
 

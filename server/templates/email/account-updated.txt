@@ -1,0 +1,16 @@
+[{{ $.site_name }}] ( {{ $.homepage }} )
+
+****************
+Hi {{ $.user.First }},
+****************
+
+You recently updated your {{ $.site_name }} account. For reference, here's what changed:
+
+{{ $.event }}
+
+For security, this change was made from a {{ $.os }} device using {{ $.browser }}. If you did not make this change, please immediately contact support ( {{ $.contact }} ) or check out our help documentation ( {{ $.help_url }} ) if you have questions.
+
+Thanks,
+The [{{ $.site_name }}] team
+
+{{ $.sig }}

@@ -7,11 +7,7 @@ import (
 )
 
 func (r *Router) SSHKeyList(c *fiber.Ctx) error {
-	user, err := r.user(c)
-	if err != nil {
-		return err
-	}
-
+	user := r.user(c)
 	vars := fiber.Map{
 		"user": user,
 	}
@@ -24,7 +20,7 @@ func (r *Router) SSHKeyModal(c *fiber.Ctx) error {
 }
 
 func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
-	username := r.username(c)
+	user := r.user(c)
 	client := r.userClient(c)
 
 	title := c.FormValue("title")
@@ -37,7 +33,7 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 	authKey, err := ipa.NewSSHAuthorizedKey(key)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"username": username,
+			"username": user.Username,
 			"err":      err,
 		}).Error("Failed to add new ssh key")
 		return c.Status(fiber.StatusBadRequest).SendString("Invalid ssh key")
@@ -48,16 +44,21 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 		authKey.Comment = title
 	}
 
-	user, err := client.UserShow(username)
-	if err != nil {
-		return err
-	}
-
 	user.AddSSHAuthorizedKey(authKey)
 
 	user, err = client.UserMod(user)
 	if err != nil {
 		return err
+	}
+
+	c.Locals(ContextKeyUser, user)
+
+	err = r.emailer.SendSSHKeyUpdatedEmail(true, user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+		}).Error("Failed to send sshkey added email")
 	}
 
 	return r.SSHKeyList(c)
@@ -66,18 +67,24 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 func (r *Router) SSHKeyRemove(c *fiber.Ctx) error {
 	fp := c.FormValue("fp")
 	client := r.userClient(c)
-	username := r.username(c)
+	user := r.user(c)
 
-	user, err := client.UserShow(username)
+	user.RemoveSSHAuthorizedKey(fp)
+
+	var err error
+	user, err = client.UserMod(user)
 	if err != nil {
 		return err
 	}
 
-	user.RemoveSSHAuthorizedKey(fp)
+	c.Locals(ContextKeyUser, user)
 
-	user, err = client.UserMod(user)
+	err = r.emailer.SendSSHKeyUpdatedEmail(false, user, c)
 	if err != nil {
-		return err
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+		}).Error("Failed to send sshkey removed email")
 	}
 
 	return r.SSHKeyList(c)

@@ -3,15 +3,11 @@ package server
 var Version = "dev"
 
 const (
-	CookieKeySession        = "mokey-sessck"
-	CookieKeyState          = "state"
 	SessionKeyAuthenticated = "authenticated"
 	SessionKeySID           = "sid"
-	SessionKeyUser          = "user"
-	CookieKeyWYAF           = "wyaf"
-	CookieKeyGlobus         = "globus"
-	CookieKeyGlobusUsername = "globus_username"
+	SessionKeyUsername      = "user"
 	ContextKeyUser          = "user"
+	ContextKeyUsername      = "username"
 	ContextKeyIPAClient     = "ipa"
 	UserCategoryUnverified  = "mokey-user-unverified"
 	TokenAccountVerify      = "verify"

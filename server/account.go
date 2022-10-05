@@ -14,13 +14,8 @@ import (
 )
 
 func (r *Router) AccountSettings(c *fiber.Ctx) error {
-	username := r.username(c)
+	user := r.user(c)
 	client := r.userClient(c)
-
-	user, err := client.UserShow(username)
-	if err != nil {
-		return err
-	}
 
 	vars := fiber.Map{
 		"user": user,
@@ -38,14 +33,14 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
-				"username": username,
+				"username": user.Username,
 				"message":  ierr.Message,
 				"code":     ierr.Code,
 			}).Error("Failed to update account settings")
 			vars["message"] = ierr.Message
 		} else {
 			log.WithFields(log.Fields{
-				"username": username,
+				"username": user.Username,
 				"error":    err.Error(),
 			}).Error("Failed to update account settings")
 			vars["message"] = "Fatal system error"

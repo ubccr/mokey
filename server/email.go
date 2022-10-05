@@ -14,6 +14,7 @@ import (
 	"net/smtp"
 	"net/textproto"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -30,6 +31,15 @@ const crlf = "\r\n"
 type Emailer struct {
 	templates *template.Template
 	storage   fiber.Storage
+}
+
+func BaseURL(ctx *fiber.Ctx) string {
+	baseURL := viper.GetString("email.base_url")
+	if baseURL == "" {
+		baseURL = ctx.BaseURL()
+	}
+
+	return baseURL
 }
 
 func NewEmailer(storage fiber.Storage) (*Emailer, error) {
@@ -65,23 +75,12 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		return err
 	}
 
-	baseURL := viper.GetString("email.base_url")
-	if baseURL == "" {
-		baseURL = ctx.BaseURL()
-	}
-
 	vars := map[string]interface{}{
-		"link":         fmt.Sprintf("%s/auth/resetpw/%s", baseURL, token),
-		"link_expires": humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", ""),
-		"base_url":     baseURL,
+		"link":         fmt.Sprintf("%s/auth/resetpw/%s", BaseURL(ctx), token),
+		"link_expires": strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", "")),
 	}
 
-	err = e.sendEmail(user, ctx.Get(fiber.HeaderUserAgent), "Please reset your password", "password-reset", vars)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return e.sendEmail(user, ctx, "Please reset your password", "password-reset", vars)
 }
 
 func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
@@ -90,23 +89,62 @@ func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		return err
 	}
 
-	baseURL := viper.GetString("email.base_url")
-	if baseURL == "" {
-		baseURL = ctx.BaseURL()
+	vars := map[string]interface{}{
+		"link":         fmt.Sprintf("%s/auth/verify/%s", BaseURL(ctx), token),
+		"link_expires": strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", "")),
 	}
+
+	return e.sendEmail(user, ctx, "Verify your email", "account-verify", vars)
+}
+
+func (e *Emailer) SendMFAChangedEmail(enabled bool, user *ipa.User, ctx *fiber.Ctx) error {
+	verb := "Disabled"
+	if enabled {
+		verb = "Enabled"
+	}
+	event := "Two-Factor Authentication " + verb
 
 	vars := map[string]interface{}{
-		"link":         fmt.Sprintf("%s/auth/verify/%s", baseURL, token),
-		"link_expires": humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", ""),
-		"base_url":     baseURL,
+		"event": event,
 	}
 
-	err = e.sendEmail(user, ctx.Get(fiber.HeaderUserAgent), "Verify your email", "account-verify", vars)
-	if err != nil {
-		return err
+	return e.sendEmail(user, ctx, event, "account-updated", vars)
+}
+
+func (e *Emailer) SendSSHKeyUpdatedEmail(added bool, user *ipa.User, ctx *fiber.Ctx) error {
+	verb := "removed"
+	if added {
+		verb = "added"
+	}
+	event := "SSH key " + verb
+
+	vars := map[string]interface{}{
+		"event": event,
 	}
 
-	return nil
+	return e.sendEmail(user, ctx, event, "account-updated", vars)
+}
+
+func (e *Emailer) SendOTPTokenUpdatedEmail(added bool, user *ipa.User, ctx *fiber.Ctx) error {
+	verb := "removed"
+	if added {
+		verb = "added"
+	}
+	event := "OTP token " + verb
+
+	vars := map[string]interface{}{
+		"event": event,
+	}
+
+	return e.sendEmail(user, ctx, event, "account-updated", vars)
+}
+
+func (e *Emailer) SendPasswordChangedEmail(user *ipa.User, ctx *fiber.Ctx) error {
+	vars := map[string]interface{}{
+		"event": "Password changed",
+	}
+
+	return e.sendEmail(user, ctx, "Your password has been changed", "account-updated", vars)
 }
 
 func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
@@ -125,7 +163,7 @@ func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, data map[string]interface{}) error {
+func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string, data map[string]interface{}) error {
 	log.WithFields(log.Fields{
 		"email":    user.Email,
 		"username": user.Username,
@@ -135,7 +173,7 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 		data = make(map[string]interface{})
 	}
 
-	ua := useragent.Parse(userAgent)
+	ua := useragent.Parse(ctx.Get(fiber.HeaderUserAgent))
 
 	data["os"] = ua.OS
 	data["browser"] = ua.Name
@@ -146,6 +184,7 @@ func (e *Emailer) sendEmail(user *ipa.User, userAgent, subject, tmpl string, dat
 	data["site_name"] = viper.GetString("site.name")
 	data["help_url"] = viper.GetString("site.help_url")
 	data["homepage"] = viper.GetString("site.homepage")
+	data["base_url"] = BaseURL(ctx)
 
 	var text bytes.Buffer
 	err := e.templates.ExecuteTemplate(&text, tmpl+".txt", data)

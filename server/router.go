@@ -190,21 +190,15 @@ func (r *Router) userClient(c *fiber.Ctx) *ipa.Client {
 }
 
 func (r *Router) username(c *fiber.Ctx) string {
-	return c.Locals(ContextKeyUser).(string)
+	return c.Locals(ContextKeyUsername).(string)
 }
 
-func (r *Router) user(c *fiber.Ctx) (*ipa.User, error) {
-	username := c.Locals(ContextKeyUser).(string)
-	client := c.Locals(ContextKeyIPAClient).(*ipa.Client)
-
-	return client.UserShow(username)
+func (r *Router) user(c *fiber.Ctx) *ipa.User {
+	return c.Locals(ContextKeyUser).(*ipa.User)
 }
 
 func (r *Router) Index(c *fiber.Ctx) error {
-	user, err := r.user(c)
-	if err != nil {
-		return err
-	}
+	user := r.user(c)
 
 	path := strings.TrimPrefix(c.Path(), "/")
 	if path == "" {
