@@ -15,6 +15,9 @@ homepage = ""
 # Link to your sites help pages
 help_url = ""
 
+# Link to your getting started guide
+getting_started_url = ""
+
 # Path to custom favicon.ico file
 favicon = ""
 

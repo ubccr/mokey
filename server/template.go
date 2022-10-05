@@ -39,16 +39,18 @@ func NewTemplateRenderer() (*TemplateRenderer, error) {
 		return nil, err
 	}
 
-	localTemplatePath := filepath.Join(viper.GetString("site.templates_dir"), "*.html")
-	localTemplates, err := filepath.Glob(localTemplatePath)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(localTemplates) > 0 {
-		tmpl, err = tmpl.ParseGlob(localTemplatePath)
+	if viper.IsSet("site.templates_dir") {
+		localTemplatePath := filepath.Join(viper.GetString("site.templates_dir"), "*.html")
+		localTemplates, err := filepath.Glob(localTemplatePath)
 		if err != nil {
 			return nil, err
+		}
+
+		if len(localTemplates) > 0 {
+			tmpl, err = tmpl.ParseGlob(localTemplatePath)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

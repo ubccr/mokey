@@ -228,6 +228,15 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 
 	r.storage.Set(TokenAccountVerify+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second)))
 
+	err = r.emailer.SendWelcomeEmail(user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to send welcome email")
+	}
+
 	return c.Render("verify-success.html", vars)
 }
 

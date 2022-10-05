@@ -97,6 +97,16 @@ func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
 	return e.sendEmail(user, ctx, "Verify your email", "account-verify", vars)
 }
 
+func (e *Emailer) SendWelcomeEmail(user *ipa.User, ctx *fiber.Ctx) error {
+	vars := map[string]interface{}{
+		"getting_started_url": viper.GetString("site.getting_started_url"),
+	}
+
+	subject := "Welcome to " + viper.GetString("site.name")
+
+	return e.sendEmail(user, ctx, subject, "welcome", vars)
+}
+
 func (e *Emailer) SendMFAChangedEmail(enabled bool, user *ipa.User, ctx *fiber.Ctx) error {
 	verb := "Disabled"
 	if enabled {
