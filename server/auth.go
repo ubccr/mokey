@@ -172,7 +172,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": username,
 		}).Warn("User account is blocked from logging in")
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
 	}
 
 	userRec, err := r.adminClient.UserShow(username)
@@ -182,7 +182,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 				"error":    ierr,
 				"username": username,
 			}).Warn("Username not found in FreeIPA")
-			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+			return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
 		}
 
 		log.WithFields(log.Fields{
@@ -196,7 +196,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": username,
 		}).Warn("User account is locked in FreeIPA")
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+		return c.Status(fiber.StatusUnauthorized).SendString("User account is locked")
 	}
 
 	log.WithFields(log.Fields{
