@@ -162,7 +162,6 @@ func newFiber() (*fiber.App, error) {
 		Expiration:     1 * time.Hour,
 		ContextKey:     "csrf",
 		ErrorHandler:   CSRFErrorHandler,
-		Storage:        storage,
 	}))
 
 	app.Use(SecureHeaders)
