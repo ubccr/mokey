@@ -12,8 +12,8 @@ cleanInstall() {
     chown mokey:mokey /var/lib/mokey 
     chmod 755 /var/lib/mokey
 
-    if [ -f "/etc/mokey/mokey" ]; then
-        chmod 660 /etc/mokey/mokey
+    if [ -f "/etc/mokey/mokey.toml" ]; then
+        chmod 640 /etc/mokey/mokey.toml
         chown mokey:mokey /etc/mokey/mokey.toml
     fi
 

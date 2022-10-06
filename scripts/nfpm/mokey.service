@@ -9,8 +9,8 @@ Group=mokey
 WorkingDirectory=/var/lib/mokey
 ExecStart=/usr/bin/mokey serve --debug -c /etc/mokey/mokey.toml
 Restart=on-abort
-StateDirectory=grendel
-ConfigurationDirectory=grendel
+StateDirectory=mokey
+ConfigurationDirectory=mokey
 
 [Install]
 WantedBy=multi-user.target
