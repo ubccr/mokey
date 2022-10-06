@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
+	ipa "github.com/ubccr/goipa"
 )
 
 var (
@@ -182,7 +182,7 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 	if isBlocked(username) {
 		log.WithFields(log.Fields{
 			"username": username,
-		}).Warn("Forgot password attempt for blocked username")
+		}).Warn("AUDIT Forgot password attempt for blocked username")
 		return c.Render("password-forgot-success.html", fiber.Map{})
 	}
 
@@ -191,14 +191,14 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": username,
 			"err":      err,
-		}).Warn("Forgot password attempt for unknown username")
+		}).Warn("AUDIT Forgot password attempt for unknown username")
 		return c.Render("password-forgot-success.html", fiber.Map{})
 	}
 
 	if user.Locked {
 		log.WithFields(log.Fields{
 			"username": username,
-		}).Warn("Forgot password attempt for disabled/locked user")
+		}).Warn("AUDIT Forgot password attempt for disabled/locked user")
 		return c.Render("password-forgot-success.html", fiber.Map{})
 	}
 
@@ -241,7 +241,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": claims.Username,
 			"email":    claims.Email,
-		}).Warn("Attempt to reset password for disabled/locked user")
+		}).Warn("AUDIT Attempt to reset password for disabled/locked user")
 		return c.Status(fiber.StatusNotFound).SendString("")
 	}
 
@@ -305,6 +305,10 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 			"email":    user.Email,
 		}).Error("Failed to send password changed email")
 	}
+
+	log.WithFields(log.Fields{
+		"username": user.Username,
+	}).Info("AUDIT User password changed successfully")
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }
@@ -399,6 +403,10 @@ func (r *Router) PasswordExpired(c *fiber.Ctx) error {
 	if err := r.sessionSave(c, sess); err != nil {
 		return err
 	}
+
+	log.WithFields(log.Fields{
+		"username": user.Username,
+	}).Info("AUDIT User logged in and changed expired password successfully")
 
 	c.Set("HX-Redirect", "/")
 	return c.Status(fiber.StatusNoContent).SendString("")

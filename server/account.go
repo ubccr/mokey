@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
+	ipa "github.com/ubccr/goipa"
 )
 
 func (r *Router) AccountSettings(c *fiber.Ctx) error {
@@ -236,6 +236,11 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 			"email":    user.Email,
 		}).Error("Failed to send welcome email")
 	}
+
+	log.WithFields(log.Fields{
+		"username": user.Username,
+		"email":    user.Email,
+	}).Info("AUDIT user account verified successfully")
 
 	return c.Render("verify-success.html", vars)
 }

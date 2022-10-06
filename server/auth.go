@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
+	ipa "github.com/ubccr/goipa"
 )
 
 func isBlocked(username string) bool {
@@ -171,7 +171,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 	if isBlocked(username) {
 		log.WithFields(log.Fields{
 			"username": username,
-		}).Warn("User account is blocked from logging in")
+		}).Warn("AUDIT User account is blocked from logging in")
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
 	}
 
@@ -195,7 +195,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 	if userRec.Locked {
 		log.WithFields(log.Fields{
 			"username": username,
-		}).Warn("User account is locked in FreeIPA")
+		}).Warn("AUDIT User account is locked in FreeIPA")
 		return c.Status(fiber.StatusUnauthorized).SendString("User account is locked")
 	}
 
@@ -229,7 +229,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	if isBlocked(username) {
 		log.WithFields(log.Fields{
 			"username": username,
-		}).Warn("User account is blocked from logging in")
+		}).Warn("AUDIT User account is blocked from logging in")
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
 
@@ -239,8 +239,8 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 		switch {
 		case errors.Is(err, ipa.ErrExpiredPassword):
 			log.WithFields(log.Fields{
-				"username":         username,
-				"ipa_client_error": err,
+				"username": username,
+				"err":      err,
 			}).Info("Password expired, forcing change")
 
 			sess, err := r.session(c)
@@ -266,10 +266,10 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 			return c.Render("login-password-expired.html", vars)
 		default:
 			log.WithFields(log.Fields{
-				"username":         username,
-				"ip":               RemoteIP(c),
-				"ipa_client_error": err,
-			}).Error("Failed login attempt")
+				"username": username,
+				"ip":       RemoteIP(c),
+				"err":      err,
+			}).Error("AUDIT Failed login attempt")
 			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 		}
 	}
@@ -277,8 +277,8 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	_, err = client.Ping()
 	if err != nil {
 		log.WithFields(log.Fields{
-			"username":         username,
-			"ipa_client_error": err,
+			"username": username,
+			"err":      err,
 		}).Error("Failed to ping FreeIPA")
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
@@ -298,6 +298,11 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	if viper.IsSet("hydra.admin_url") && challenge != "" {
 		return r.LoginOAuthPost(username, challenge, c)
 	}
+
+	log.WithFields(log.Fields{
+		"username": username,
+		"ip":       RemoteIP(c),
+	}).Info("AUDIT User logged in successfully")
 
 	c.Set("HX-Redirect", "/")
 	return c.Status(fiber.StatusNoContent).SendString("")

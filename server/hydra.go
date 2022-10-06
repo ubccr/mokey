@@ -83,7 +83,7 @@ func (r *Router) ConsentGet(c *fiber.Ctx) error {
 
 	log.WithFields(log.Fields{
 		"username": consent.Subject,
-	}).Info("Consent challenge signed successfully")
+	}).Info("AUDIT User logged in via Hydra OAuth2 successfully")
 
 	c.Set("HX-Redirect", *response.Payload.RedirectTo)
 	return c.Redirect(*response.Payload.RedirectTo)
@@ -115,7 +115,7 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 	if *login.Skip {
 		log.WithFields(log.Fields{
 			"user": *login.Subject,
-		}).Info("Hydra requested we skip login")
+		}).Debug("Hydra requested we skip login")
 
 		// Check to make sure we have a valid user id
 		user, err := r.adminClient.UserShow(*login.Subject)
@@ -148,7 +148,7 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 
 		log.WithFields(log.Fields{
 			"username": *login.Subject,
-		}).Info("Hydra OAuth login GET challenge signed successfully")
+		}).Debug("Hydra OAuth login GET challenge signed successfully")
 
 		c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
 		return c.Redirect(*completedResponse.Payload.RedirectTo)
@@ -182,7 +182,7 @@ func (r *Router) LoginOAuthPost(username, challenge string, c *fiber.Ctx) error 
 
 	log.WithFields(log.Fields{
 		"username": username,
-	}).Info("Hydra OAuth2 login POST challenge signed successfully")
+	}).Debug("Hydra OAuth2 login POST challenge signed successfully")
 
 	c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
 	return c.Status(fiber.StatusNoContent).SendString("")
