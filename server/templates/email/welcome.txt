@@ -14,7 +14,7 @@ For reference, here's your login information:
 
 Login Page: {{$.base_url}}
 
-Username: {{$.user.First}}
+Username: {{$.user.Username}}
 
 If you have any questions, feel free to email support ( {{ $.contact }} ). Also check out our help documentation ( {{ $.help_url }} ) if you have questions.
 
