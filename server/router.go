@@ -10,7 +10,7 @@ import (
 	hydra "github.com/ory/hydra-client-go/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
+	ipa "github.com/ubccr/goipa"
 )
 
 type Router struct {
@@ -22,6 +22,9 @@ type Router struct {
 	// Hydra consent app support
 	hydraClient          *hydra.OryHydra
 	hydraAdminHTTPClient *http.Client
+
+	// Prometheus metrics
+	metrics *Metrics
 }
 
 func NewRouter(storage fiber.Storage) (*Router, error) {
@@ -72,6 +75,8 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 			r.hydraAdminHTTPClient = http.DefaultClient
 		}
 	}
+
+	r.metrics = NewMetrics()
 
 	return r, nil
 }
@@ -183,6 +188,11 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 		app.Get("/oauth/login", r.LoginOAuthGet)
 		app.Get("/oauth/error", r.HydraError)
 	}
+
+	// Prometheus metrics
+	if viper.GetBool("server.enable_metrics") {
+		app.Get("/metrics", r.Metrics)
+	}
 }
 
 func (r *Router) userClient(c *fiber.Ctx) *ipa.Client {
@@ -241,4 +251,8 @@ func (r *Router) Styles(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusNotFound).SendString("")
+}
+
+func (r *Router) Metrics(c *fiber.Ctx) error {
+	return r.metrics.Handler(c)
 }

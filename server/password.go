@@ -215,6 +215,7 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 			"username": user.Username,
 			"email":    user.Email,
 		}).Info("Password reset email sent successfully")
+		r.metrics.totalPasswordResetsSent.Inc()
 	}
 
 	return c.Render("password-forgot-success.html", fiber.Map{})
@@ -309,6 +310,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 	log.WithFields(log.Fields{
 		"username": user.Username,
 	}).Info("AUDIT User password changed successfully")
+	r.metrics.totalPasswordResets.Inc()
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }
@@ -407,6 +409,7 @@ func (r *Router) PasswordExpired(c *fiber.Ctx) error {
 	log.WithFields(log.Fields{
 		"username": user.Username,
 	}).Info("AUDIT User logged in and changed expired password successfully")
+	r.metrics.totalPasswordResets.Inc()
 
 	c.Set("HX-Redirect", "/")
 	return c.Status(fiber.StatusNoContent).SendString("")

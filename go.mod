@@ -19,6 +19,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/pquerna/otp v1.3.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cobra v1.5.0
@@ -26,6 +27,7 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/ubccr/goipa v0.0.6
 	github.com/urfave/negroni v1.0.0
+	github.com/valyala/fasthttp v1.40.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect

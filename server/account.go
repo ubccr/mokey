@@ -82,6 +82,7 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 		"username": user.Username,
 		"email":    user.Email,
 	}).Info("AUDIT user account created successfully")
+	r.metrics.totalSignups.Inc()
 
 	// Send user an email to verify their account
 	err = r.emailer.SendAccountVerifyEmail(user, c)
@@ -96,6 +97,7 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 			"username": user.Username,
 			"email":    user.Email,
 		}).Info("New user account email sent successfully")
+		r.metrics.totalAccountVerificationsSent.Inc()
 	}
 
 	vars := fiber.Map{
@@ -241,6 +243,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 		"username": user.Username,
 		"email":    user.Email,
 	}).Info("AUDIT user account verified successfully")
+	r.metrics.totalAccountVerifications.Inc()
 
 	return c.Render("verify-success.html", vars)
 }
@@ -305,6 +308,7 @@ func (r *Router) AccountVerifyResend(c *fiber.Ctx) error {
 			"username": user.Username,
 			"email":    user.Email,
 		}).Info("Verify user account email sent successfully")
+		r.metrics.totalAccountVerificationsSent.Inc()
 	}
 
 	return c.Render("account-verify-forgot-success.html", fiber.Map{})

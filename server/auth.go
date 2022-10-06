@@ -172,6 +172,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": username,
 		}).Warn("AUDIT User account is blocked from logging in")
+		r.metrics.totalFailedLogins.Inc()
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
 	}
 
@@ -182,6 +183,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 				"error":    ierr,
 				"username": username,
 			}).Warn("Username not found in FreeIPA")
+			r.metrics.totalFailedLogins.Inc()
 			return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
 		}
 
@@ -189,6 +191,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 			"error":    err,
 			"username": username,
 		}).Error("Failed to fetch user info from FreeIPA")
+		r.metrics.totalFailedLogins.Inc()
 		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
 	}
 
@@ -196,6 +199,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": username,
 		}).Warn("AUDIT User account is locked in FreeIPA")
+		r.metrics.totalFailedLogins.Inc()
 		return c.Status(fiber.StatusUnauthorized).SendString("User account is locked")
 	}
 
@@ -230,6 +234,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": username,
 		}).Warn("AUDIT User account is blocked from logging in")
+		r.metrics.totalFailedLogins.Inc()
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
 
@@ -270,6 +275,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 				"ip":       RemoteIP(c),
 				"err":      err,
 			}).Error("AUDIT Failed login attempt")
+			r.metrics.totalFailedLogins.Inc()
 			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 		}
 	}
@@ -280,6 +286,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 			"username": username,
 			"err":      err,
 		}).Error("Failed to ping FreeIPA")
+		r.metrics.totalFailedLogins.Inc()
 		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
 	}
 
@@ -303,6 +310,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 		"username": username,
 		"ip":       RemoteIP(c),
 	}).Info("AUDIT User logged in successfully")
+	r.metrics.totalLogins.Inc()
 
 	c.Set("HX-Redirect", "/")
 	return c.Status(fiber.StatusNoContent).SendString("")

@@ -153,6 +153,11 @@ rate_limit_expiration = 60
 # Max number of recent connections during rate_limit_expiration seconds before sending a 429 response
 rate_limit_max = 25
 
+# Enable prometheus metrics endpoint. WARNING: there is no authentication
+# required for this endpoint and it's recommended to proxy this behind
+# something like nginx and enable appropriate access controls.
+enable_metrics = false
+
 #------------------------------------------------------------------------------
 # Storage
 #------------------------------------------------------------------------------
