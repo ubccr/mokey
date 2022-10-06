@@ -8,6 +8,7 @@ cleanInstall() {
                 -c 'Mokey server' mokey
     fi
 
+    mkdir -p /var/lib/mokey
     chown mokey:mokey /var/lib/mokey 
     chmod 755 /var/lib/mokey
 
