@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -43,6 +44,7 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 
 	r.sessionStore = session.New(session.Config{
 		Storage:        storage,
+		Expiration:     time.Duration(viper.GetInt("server.session_idle_timeout")) * time.Second,
 		CookieSameSite: "Strict",
 		CookieSecure:   viper.GetBool("server.secure_cookies"),
 		CookieHTTPOnly: true,
@@ -90,36 +92,10 @@ func RemoteIP(c *fiber.Ctx) string {
 	return c.IP()
 }
 
-func (r *Router) session(c *fiber.Ctx) (*session.Session, error) {
-	sess, err := r.sessionStore.Get(c)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"path": c.Path(),
-			"err":  err,
-			"ip":   RemoteIP(c),
-		}).Error("Failed to fetch session from storage")
-
-		return nil, err
-	}
-
-	return sess, nil
-}
-
-func (r *Router) sessionSave(c *fiber.Ctx, sess *session.Session) error {
-	if err := sess.Save(); err != nil {
-		log.WithFields(log.Fields{
-			"path": c.Path(),
-			"err":  err,
-			"ip":   RemoteIP(c),
-		}).Error("Failed to save session to storage")
-
-		return err
-	}
-
-	return nil
-}
-
 func (r *Router) SetupRoutes(app *fiber.App) {
+	// CSRF tokens stored in sessions
+	app.Use(r.CSRF)
+
 	app.Get("/", r.RequireLogin, r.Index)
 	app.Get("/account", r.RequireLogin, r.Index)
 	app.Get("/password", r.RequireLogin, r.Index)

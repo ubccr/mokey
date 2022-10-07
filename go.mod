@@ -28,6 +28,7 @@ require (
 	github.com/ubccr/goipa v0.0.6
 	github.com/urfave/negroni v1.0.0
 	github.com/valyala/fasthttp v1.40.0
+	golang.org/x/net v0.0.0-20220927171203-f486391704dc
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect

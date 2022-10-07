@@ -6,6 +6,7 @@ const (
 	SessionKeyAuthenticated = "authenticated"
 	SessionKeySID           = "sid"
 	SessionKeyUsername      = "user"
+	SessionKeyCSRF          = "csrf"
 	ContextKeyUser          = "user"
 	ContextKeyUsername      = "username"
 	ContextKeyIPAClient     = "ipa"

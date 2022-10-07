@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
@@ -16,8 +17,11 @@ func SecureHeaders(c *fiber.Ctx) error {
 	c.Set(fiber.HeaderXContentTypeOptions, "nosniff")
 	c.Set(fiber.HeaderXFrameOptions, "DENY")
 	c.Set(fiber.HeaderContentSecurityPolicy, "default-src 'self' 'unsafe-inline'; img-src 'self' data:;script-src 'self' 'unsafe-inline'")
-	c.Set("Cache-Control", "no-store")
-	c.Set("Pragma", "no-cache")
+
+	if !strings.HasPrefix(c.Path(), "/static") {
+		c.Set("Cache-Control", "no-store")
+		c.Set("Pragma", "no-cache")
+	}
 	return c.Next()
 }
 
@@ -39,16 +43,6 @@ func NotFoundHandler(c *fiber.Ctx) error {
 	}
 
 	return c.Render("404.html", fiber.Map{})
-}
-
-func CSRFErrorHandler(c *fiber.Ctx, err error) error {
-	log.WithFields(log.Fields{
-		"path": c.Path(),
-		"err":  err,
-		"ip":   RemoteIP(c),
-	}).Error("Invalid CSRF token in POST request")
-
-	return c.Status(fiber.StatusBadRequest).SendString("Invalid request.")
 }
 
 func HTTPErrorHandler(c *fiber.Ctx, err error) error {

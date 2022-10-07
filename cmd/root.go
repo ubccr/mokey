@@ -105,6 +105,15 @@ func initConfig() {
 		viper.Set("email.token_secret", secret)
 	}
 
+	if !viper.IsSet("server.csrf_secret") {
+		secret, err := server.GenerateSecretString(16)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+
+		viper.Set("server.csrf_secret", secret)
+	}
+
 	if !viper.IsSet("site.keytab") {
 		logrus.Fatalf("Please provide path to keytab file")
 	}

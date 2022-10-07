@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
@@ -152,18 +151,6 @@ func newFiber() (*fiber.App, error) {
 	})
 
 	app.Use(frecover.New())
-
-	app.Use(csrf.New(csrf.Config{
-		KeyLookup:      "header:X-CSRF-Token",
-		CookieName:     "csrf_",
-		CookieSecure:   viper.GetBool("server.secure_cookies"),
-		CookieSameSite: "Strict",
-		CookieHTTPOnly: true,
-		Expiration:     1 * time.Hour,
-		ContextKey:     "csrf",
-		ErrorHandler:   CSRFErrorHandler,
-	}))
-
 	app.Use(SecureHeaders)
 
 	app.Use(limiter.New(limiter.Config{
@@ -208,6 +195,7 @@ func newFiber() (*fiber.App, error) {
 	app.Use("/static", filesystem.New(filesystem.Config{
 		Root:   assetsFS,
 		Browse: false,
+		MaxAge: 900,
 	}))
 
 	if viper.IsSet("site.favicon") {
