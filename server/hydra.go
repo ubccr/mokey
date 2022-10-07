@@ -111,9 +111,8 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 	}
 
 	login := response.Payload
-	isLoggedIn, _ := r.isLoggedIn(c)
 
-	if *login.Skip || isLoggedIn {
+	if *login.Skip {
 		log.WithFields(log.Fields{
 			"user": *login.Subject,
 		}).Debug("Hydra requested we skip login")
@@ -155,6 +154,10 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 		return c.Redirect(*completedResponse.Payload.RedirectTo)
 	}
 
+	if ok, _ := r.isLoggedIn(c); ok {
+		return r.LoginOAuthPost(r.username(c), challenge, c)
+	}
+
 	vars := fiber.Map{
 		"challenge": challenge,
 	}
@@ -185,8 +188,12 @@ func (r *Router) LoginOAuthPost(username, challenge string, c *fiber.Ctx) error 
 		"username": username,
 	}).Debug("Hydra OAuth2 login POST challenge signed successfully")
 
-	c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
-	return c.Status(fiber.StatusNoContent).SendString("")
+	if c.Get("HX-Request", "false") == "true" {
+		c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
+		return c.Status(fiber.StatusNoContent).SendString("")
+	}
+
+	return c.Redirect(*completedResponse.Payload.RedirectTo)
 }
 
 func (r *Router) HydraError(c *fiber.Ctx) error {
