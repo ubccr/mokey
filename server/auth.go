@@ -251,6 +251,12 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).SendString("")
 			}
+
+			err = sess.Regenerate()
+			if err != nil {
+				return err
+			}
+
 			sess.Set(SessionKeyAuthenticated, false)
 			sess.Set(SessionKeyUsername, username)
 
@@ -293,6 +299,12 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
+	err = sess.Regenerate()
+	if err != nil {
+		return err
+	}
+
 	sess.Set(SessionKeyAuthenticated, true)
 	sess.Set(SessionKeyUsername, username)
 	sess.Set(SessionKeySID, client.SessionID())
