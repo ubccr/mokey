@@ -111,8 +111,9 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 	}
 
 	login := response.Payload
+	isLoggedIn, _ := r.isLoggedIn(c)
 
-	if *login.Skip {
+	if *login.Skip || isLoggedIn {
 		log.WithFields(log.Fields{
 			"user": *login.Subject,
 		}).Debug("Hydra requested we skip login")
