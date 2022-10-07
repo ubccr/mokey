@@ -12,7 +12,7 @@
         </div>
         <div class="p-4 p-md-5">
             <label class="form-label">6-Digit Code</label>
-            <input type="text" class="form-control" name="otpcode" id="otpcode" value="" aria-describedby="tokenHelpBlock">
+            <input type="text" class="form-control" name="otpcode" id="otpcode" value="" autofocus="autofocus" aria-describedby="tokenHelpBlock">
             <input type="hidden" name="uuid" value="{{ $.otptoken.UUID }}" />
             <input type="hidden" name="uri" value="{{ $.otptoken.URI }}" />
             <div id="tokenHelpBlock" class="form-text">
