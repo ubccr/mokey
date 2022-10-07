@@ -120,7 +120,7 @@ func (r *Router) SetupRoutes(app *fiber.App) {
 	app.Post("/auth/resetpw/:token", r.PasswordReset)
 	app.Get("/auth/verify/:token", r.AccountVerify)
 	app.Post("/auth/verify/:token", r.AccountVerify)
-	app.Get("/auth/logout", r.Logout)
+	app.Post("/auth/logout", r.Logout)
 	app.Get("/auth/captcha/:id.png", r.Captcha)
 
 	// Account Settings

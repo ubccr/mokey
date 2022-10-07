@@ -71,8 +71,7 @@ func (r *Router) Login(c *fiber.Ctx) error {
 }
 
 func (r *Router) Logout(c *fiber.Ctx) error {
-	r.logout(c)
-	return c.Redirect("/auth/login")
+	return r.redirectLogin(c)
 }
 
 func (r *Router) logout(c *fiber.Ctx) {

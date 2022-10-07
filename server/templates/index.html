@@ -31,7 +31,7 @@
 						<i class="fa fa-fingerprint text-center me-1"></i> 
 						OTP Tokens
 					</a>
-					<a class="nav-link" id="logout" href="/auth/logout" role="tab">
+					<a class="nav-link" id="logout" href="/auth/logout" hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-post="/auth/logout" role="tab">
 						<i class="fa fa-arrow-right-from-bracket text-center me-1"></i> 
 						Logout
 					</a>
