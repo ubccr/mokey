@@ -144,7 +144,7 @@ func newFiber() (*fiber.App, error) {
 		WriteTimeout:          time.Duration(viper.GetInt("server.write_timeout")) * time.Second,
 		IdleTimeout:           time.Duration(viper.GetInt("server.idle_timeout")) * time.Second,
 		AppName:               "mokey",
-		DisableStartupMessage: false,
+		DisableStartupMessage: true,
 		PassLocalsToViews:     true,
 		ErrorHandler:          HTTPErrorHandler,
 		Views:                 engine,
