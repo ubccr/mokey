@@ -56,6 +56,18 @@
 		  	<input type="text" class="form-control" value="{{ if not .user.LastPasswdChange.IsZero }}{{ TimeAgo .user.LastPasswdChange }}{{ else }}Never{{ end }}" disabled readonly>
 		</div>
 	</div>
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">Home Dir</label>
+		  	<input type="text" class="form-control" value="{{ .user.HomeDir }}" disabled readonly>
+		</div>
+	</div>
+	<div class="col-md-6">
+		<div class="mb-3">
+		  	<label class="form-label">Password Expires</label>
+		  	<input type="text" class="form-control" value="{{ if not .user.PasswdExpire.IsZero }}{{ TimeAgo .user.PasswdExpire }}{{ else }}Never{{ end }}" disabled readonly>
+		</div>
+	</div>
 	<div class="col-md-12">
 		<div class="mb-3">
 		  	<label class="form-label">Groups</label>
