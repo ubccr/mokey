@@ -9,6 +9,16 @@
         </div>
         <div class="text-center">
             <img class="img-fluid" alt="QRCode" src="data:image/png;base64,{{ .otpdata }}" />
+            <p>
+              <a class="text-muted" data-bs-toggle="collapse" href="#showURI" role="button" aria-expanded="false" aria-controls="showURI">
+                Show URI
+              </a>
+            </p>
+            <div class="collapse" id="showURI">
+              <div class="card card-body">
+                <samp>{{ .otptoken.URI }}</samp>
+              </div>
+            </div>
         </div>
         <div class="p-4 p-md-5">
             <label class="form-label">6-Digit Code</label>
