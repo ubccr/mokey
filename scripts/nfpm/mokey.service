@@ -1,0 +1,16 @@
+[Unit]
+Description=mokey server
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=mokey
+Group=mokey
+WorkingDirectory=/var/lib/mokey
+ExecStart=/usr/bin/mokey serve --debug -c /etc/mokey/mokey.toml
+Restart=on-abort
+StateDirectory=mokey
+ConfigurationDirectory=mokey
+
+[Install]
+WantedBy=multi-user.target

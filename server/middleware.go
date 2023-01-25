@@ -5,148 +5,101 @@
 package server
 
 import (
-	"net"
-	"net/http"
+	"fmt"
 	"strings"
 
-	"github.com/gomodule/redigo/redis"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
 )
 
-// LoginRequired ensure the user has logged in and has a valid FreeIPA session.
-// Stores the ipa.UserRecord in the request context
-func LoginRequired(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		sess, err := session.Get(CookieKeySession, c)
-		if err != nil {
-			log.Warn("Failed to get user session. Logging out")
-			logout(c)
-			return c.Redirect(http.StatusFound, Path("/auth/login"))
-		}
+func SecureHeaders(c *fiber.Ctx) error {
+	c.Set(fiber.HeaderXXSSProtection, "1; mode=block")
+	c.Set(fiber.HeaderXContentTypeOptions, "nosniff")
+	c.Set(fiber.HeaderXFrameOptions, "DENY")
+	c.Set(fiber.HeaderContentSecurityPolicy, "default-src 'self' 'unsafe-inline'; img-src 'self' data:;script-src 'self' 'unsafe-inline'")
 
-		if !strings.HasPrefix(c.Request().URL.String(), Path("/auth")) {
-			query := c.Request().URL.Query().Encode()
-			if len(query) > 0 {
-				sess.Values[CookieKeyWYAF] = c.Request().URL.Path + "?" + query
-			} else {
-				sess.Values[CookieKeyWYAF] = c.Request().URL.Path
-			}
-			log.WithFields(log.Fields{
-				"wyaf": sess.Values[CookieKeyWYAF],
-			}).Info("Redirect URL")
-			sess.Save(c.Request(), c.Response())
-		}
-
-		sid := sess.Values[CookieKeySID]
-		user := sess.Values[CookieKeyUser]
-
-		if sid == nil || user == nil {
-			return c.Redirect(http.StatusFound, Path("/auth/login"))
-		}
-
-		if _, ok := user.(string); !ok {
-			logout(c)
-			log.Error("Invalid user record in session.")
-			return c.Redirect(http.StatusFound, Path("/auth/login"))
-		}
-
-		client := ipa.NewDefaultClientWithSession(sid.(string))
-
-		userRec, err := client.UserShow(user.(string))
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error":            err,
-				"uid":              user,
-				"ipa_client_error": err,
-			}).Error("Failed to fetch user info from FreeIPA")
-			return c.Redirect(http.StatusFound, Path("/auth/login"))
-		}
-
-		c.Set(ContextKeyUser, userRec)
-		c.Set(ContextKeyIPAClient, client)
-
-		return next(c)
+	if !strings.HasPrefix(c.Path(), "/static") {
+		c.Set("Cache-Control", "no-store")
+		c.Set("Pragma", "no-cache")
 	}
+	return c.Next()
 }
 
-// RateLimit middleware using redis for rate limiting requests
-func RateLimit(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// check if rate limiting is enabled
-		if !viper.GetBool("rate_limit") {
-			return next(c)
-		}
+func NotFoundHandler(c *fiber.Ctx) error {
+	log.WithFields(log.Fields{
+		"path": c.Path(),
+		"ip":   RemoteIP(c),
+	}).Info("Requested path not found")
 
-		// only rate limit POST request
-		if c.Request().Method != "POST" {
-			return next(c)
-		}
-
-		remoteIP := c.Request().Header.Get("X-Forwarded-For")
-		if len(remoteIP) == 0 {
-			remoteIP, _, _ = net.SplitHostPort(c.Request().RemoteAddr)
-		}
-		path := c.Request().URL.Path
-
-		conn, err := redis.Dial("tcp", viper.GetString("redis"))
+	if c.Get("HX-Request", "false") == "true" {
+		err := c.Render("404-partial.html", nil)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"path":     path,
-				"remoteIP": remoteIP,
-				"err":      err.Error(),
-			}).Error("Failed connecting to redis server")
-			return next(c)
+				"error": err,
+			}).Error("Failed to render custom error partial")
+			return c.Status(fiber.StatusNotFound).SendString("")
 		}
-		defer conn.Close()
+		return nil
+	}
 
-		current, err := redis.Int(conn.Do("INCR", path+remoteIP))
+	return c.Render("404.html", fiber.Map{})
+}
+
+func HTTPErrorHandler(c *fiber.Ctx, err error) error {
+	username := c.Locals(ContextKeyUser)
+	path := c.Path()
+	code := fiber.StatusInternalServerError
+
+	if e, ok := err.(*fiber.Error); ok {
+		code = e.Code
+	}
+
+	log.WithFields(log.Fields{
+		"code":     code,
+		"username": username,
+		"path":     path,
+		"ip":       RemoteIP(c),
+	}).Error(err)
+
+	if c.Locals("NoErrorTemplate") == "true" {
+		return c.Status(code).SendString("")
+	}
+
+	if c.Get("HX-Request", "false") == "true" {
+		errorPage := fmt.Sprintf("%d-partial.html", code)
+		err := c.Render(errorPage, nil)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"path":     path,
-				"remoteIP": remoteIP,
-				"err":      err.Error(),
-			}).Error("Failed to increment counter in redis")
-			return next(c)
+				"error": err,
+			}).Error("Failed to render custom error partial")
+			return c.Status(code).SendString("")
 		}
+		return nil
+	}
 
-		if current > viper.GetInt("max_requests") {
-			log.WithFields(log.Fields{
-				"path":     path,
-				"remoteIP": remoteIP,
-				"counter":  current,
-			}).Warn("Too many connections")
-			return echo.NewHTTPError(http.StatusTooManyRequests, "Too many connections")
-		}
-
-		if current == 1 {
-			_, err := conn.Do("SETEX", path+remoteIP, viper.GetInt("rate_limit_expire"), 1)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"path":     path,
-					"remoteIP": remoteIP,
-					"err":      err.Error(),
-				}).Error("Failed to set expiry on counter in redis")
-			}
-		}
-
+	errorPage := fmt.Sprintf("%d.html", code)
+	err = c.Render(errorPage, nil)
+	if err != nil {
 		log.WithFields(log.Fields{
-			"path":     path,
-			"remoteIP": remoteIP,
-			"counter":  current,
-		}).Info("rate limiting")
-
-		return next(c)
+			"error": err,
+		}).Error("Failed to render custom error page")
+		return c.Status(code).SendString("")
 	}
+
+	return nil
 }
 
-func CacheControl(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		c.Response().Header().Set("Cache-Control", "no-store")
-		c.Response().Header().Set("Pragma", "no-cache")
-		return next(c)
+func LimitReachedHandler(c *fiber.Ctx) error {
+	log.WithFields(log.Fields{
+		"ip": RemoteIP(c),
+	}).Warn("Limit reached")
+	return c.Status(fiber.StatusTooManyRequests).SendString("Too many requests. Please try again later.")
+}
+
+func (r *Router) RequireHTMX(c *fiber.Ctx) error {
+	if c.Get("HX-Request", "false") == "true" {
+		return c.Next()
 	}
+
+	return c.Status(fiber.StatusBadRequest).SendString("")
 }

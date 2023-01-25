@@ -1,0 +1,67 @@
+{{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
+<div class="alert alert-warning mx-auto fade show" role="alert">
+   You must enable Two-Factor authentication on your account.
+</div>
+{{ end }}
+{{  with $.message }}
+<div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+  {{ . }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{{ end }}
+<div id="security-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+</div>
+<h3 class="mb-4">Security Settings</h3>
+<div class="card">
+  <div class="card-header">
+    Authentication Methods
+  </div>
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item">
+    <div class="d-flex w-100 justify-content-between">
+    <h5 class="mb-1">Two-factor authentication</h5>
+    {{ if $.user.OTPOnly }}
+        <button class="btn btn-sm btn-success ml-1" title="Click to Disable" hx-target-error="security-failed"
+                hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                data-hx-trigger="mfadisable"
+                data-hx-vals='{"csrf": "{{ $.csrf }}"}'
+                data-hx-target="#security" data-hx-post="/security/mfa/disable" 
+                _="on click call 
+                      Swal.fire({
+                          title: 'Disable Two-factor authentication?',
+                          backdrop: true,
+                          html: 'This will disable Two-factor authentication. Are you sure?',
+                          focusCancel: true,
+                          confirmButtonText: 'Disable',
+                          reverseButtons: false,
+                          showCancelButton: true,
+                          icon: 'warning'})
+                      if result.isConfirmed trigger mfadisable">
+          <i class="fa fa-toggle-on fa-lg"></i> Enabled
+        </button>
+    {{ else }}
+        <button class="btn btn-sm btn-secondary ml-1" title="Click to Enable" hx-target-error="security-failed"
+                hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                data-hx-trigger="mfaenable"
+                data-hx-vals='{"csrf": "{{ $.csrf }}"}'
+                data-hx-target="#security" data-hx-post="/security/mfa/enable" 
+                _="on click call 
+                      Swal.fire({
+                          title: 'Enable Two-factor authentication?',
+                          backdrop: true,
+                          html: 'This will enable Two-factor authentication. Are you sure?',
+                          focusCancel: true,
+                          reverseButtons: false,
+                          confirmButtonColor: '#157347',
+                          confirmButtonText: 'Enable',
+                          showCancelButton: true,
+                          iconColor: '#157347',
+                          icon: 'question'})
+                      if result.isConfirmed trigger mfaenable">
+          <i class="fa fa-toggle-off fa-lg"></i> Disabled
+        </button>
+    {{ end }}
+    </div>
+    </li>
+  </ul>
+</div>

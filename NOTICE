@@ -1,30 +1,20 @@
 mokey includes software developed by:
 
-- Bootstrap. Copyright 2011-2017 the Bootstrap Authors and Twitter, Inc. Code
+- Bootstrap. Copyright 2011-2018 the Bootstrap Authors and Twitter, Inc. Code
   released under the MIT License. 
 
-- Font Awesome by Dave Gandy - http://fontawesome.io. CSS released under MIT
+- Font Awesome by Dave Gandy (http://fontawesome.io) CSS released under MIT
   License. Webfonts released under SIL OFL 1.1
 
-- jQuery - Copyright JS Foundation and other contributors,
-  https://js.foundation/ released under the following license:
+- htmx (https://htmx.org/) Copyright 2020, Big Sky Software released under
+  BSD 2-Clause License
 
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
+- sweetalert2 (https://sweetalert2.github.io/) Copyright 2014 Tristan Edwards &
+  Limon Monte released under the MIT License.
 
-    The above copyright notice and this permission notice shall be
-    included in all copies or substantial portions of the Software.
+- Email templates adopted from postmark-templates (https://github.com/ActiveCampaign/postmark-templates)
+  Copyright 2015 Wildbit released under the MIT License (MIT)
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+- docker-compose development environment adopted from the webauthinfra project.
+  (https://github.com/adelton/webauthinfra). Web application authentication developer setup
+  Copyright 2016--2018 Jan Pazdziora Licensed under the Apache License, Version 2.0

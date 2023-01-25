@@ -1,0 +1,27 @@
+
+<div class="container">
+  <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+    <p class="col-md-4 mb-0 text-muted">
+        {{ with ConfigValueString "site.homepage" }}
+            <a href="{{ . }}">{{ ConfigValueString "site.name" }}</a>
+        {{ else }}
+            Powered by <a href="https://github.com/ubccr/mokey"><i class="fa-brands fa-github" aria-hidden="true"></i> mokey</a>
+        {{ end }}
+    </p>
+
+    {{ with ConfigValueString "site.help_url" }}
+    <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+      <li class="ms-3"><a class="text-muted" href="{{ . }}"><i class="fa fa-circle-question fa-lg"></i></a></li>
+    </ul>
+    {{ end }}
+  </footer>
+</div>
+
+<script src="/static/js/sweetalert2.min.js" integrity="sha384-MFQHLECN7JsqezT2nLwWieqtG6G9yQWxkJh31QjDyO2dhpkHSo6vQYGDcjMVgDlc" crossorigin="anonymous"></script>
+<script src="/static/js/htmx.min.js" integrity="sha384-cZuAZ+ZbwkNRnrKi05G/fjBX+azI9DNOkNYysZ0I/X5ZFgsmMiBXgDZof30F5ofc" crossorigin="anonymous"></script>
+<script src="/static/js/hyperscript_w9y.min.js" integrity="sha384-eXB1x9yjPqWLBStIhzPmuHalCO17P5Uf/ahLI7RovcRyPGbCUgvpeodAdh0FxVA2" crossorigin="anonymous"></script>
+<script src="/static/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+<script src="/static/js/site.js"></script>
+</script>
+</body>
+</html>

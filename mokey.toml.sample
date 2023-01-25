@@ -1,0 +1,188 @@
+#------------------------------------------------------------------------------
+# Sample Mokey Config
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# Site specific configuration
+#------------------------------------------------------------------------------
+[site]
+# Name of your site
+name = "Identity Management"
+
+# Homepage of your organization
+homepage = ""
+
+# Link to your sites help pages
+help_url = ""
+
+# Link to your getting started guide
+getting_started_url = ""
+
+# Link to your terms of service
+tos_url = ""
+
+# Path to custom favicon.ico file
+favicon = ""
+
+# Path to logo
+logo = ""
+
+# Path to custom css styles file
+css = ""
+
+# Path to local template override directory. You can override one or more
+# of the templates using this directory
+# templates_dir = "/usr/share/mokey/templates"
+
+# Path to local static assets directory This is used to host all
+# css/javascript/images assets locally. Only used for advanced customization.
+# static_assets_dir = "/usr/share/mokey/assets"
+
+# User account for the mokey service
+ktuser = "mokeyapp"
+
+# Path to keytab file
+keytab = "/etc/mokey/private/mokeyapp.keytab"
+
+# Path to logo
+# logo = "/etc/mokey/assets/my-logo.png"
+
+#------------------------------------------------------------------------------
+# User account settings
+#------------------------------------------------------------------------------
+[accounts]
+# Default home directory
+default_homedir = "/home"
+
+# Default login shell
+default_shell = "/bin/bash"
+
+# Minimum password length. Used for validating new passwords. Should match your
+# password policy set in FreeIPA
+min_passwd_len = 8
+
+# Minimum password classes. Classes are lowercase, uppercase, numbers, and
+# special characters.  Used for validating new passwords. Should match your
+# password policy set in FreeIPA
+min_passwd_classes = 2
+
+# Hash algorithm for generating OTP tokens: sha1, sha256, or sha512
+otp_hash_algorithm = "sha1"
+
+# Custom issuer name for OTP tokens. This creates a nice name for importing into authenticator apps 
+otp_issuer = "MYORG"
+
+# Block list of user accounts from logging in
+# block_users = ["username1", "username2", "username3"]
+
+# Extract username from email address
+username_from_email = false
+
+# Allowed domains. Format is {"domain": "username-generator"}, where
+# username-generator can be one of the following username generator algorithms:
+#   - default = takes username part from email
+#   - flast   = assumes emails are formated FirstName.LastName@example.com
+#               Generates usernames using the first letter firstname + last name.
+#               Example: John.Doe@example.com = jdoe
+# allowed_domains = {"example.edu" = "default", "example.com" = "flast"}
+
+# Require Two-Factor authentication on all accounts. This prevents users from
+# uploading ssh keys and displays a warning message reminding users to enable
+# Two-Factor authentication.
+require_mfa = false
+
+#------------------------------------------------------------------------------
+# Email
+#------------------------------------------------------------------------------
+[email]
+# Base URL used for email links. This should be the URL where mokey is being
+# hosted and defaults to the hostname used in the http request. Set this value
+# to hard code the base_url.
+# base_url = "https://localhost"
+
+# Max lifetime of branca tokens used for password resets and account verify
+token_max_age = 3600
+
+# Secret key for branca tokens. Must be 32 bytes. To generate run:
+#    openssl rand -hex 32 
+token_secret = ""
+
+# Hostname for smtp server
+smtp_host = "localhost"
+
+# Port for smtp server
+smtp_port = 25
+
+# Enable smtp tls
+smtp_tls = "off"
+
+# SMTP Authentication Credentials
+smtp_username = ""
+smtp_password = ""
+
+# Email signature to append to end of all emails
+signature = ""
+
+# From email address
+from = "support@example.com"
+
+#------------------------------------------------------------------------------
+# Server settings
+#------------------------------------------------------------------------------
+[server]
+# Address and port to listen
+listen = "0.0.0.0:8866"
+
+# Times out the session after inactivity (in seconds)
+session_idle_timeout = 900
+
+# Path to ssl certificate
+# ssl_cert = ""
+
+# Path to ssl key
+# ssl_key = ""
+
+# Require secure cookies
+secure_cookies = true
+
+# CSRF token secret key. Should be a random string
+csrf_secret = ""
+
+# Timeouts
+read_timeout = 5
+write_timeout = 5
+idle_timeout = 120
+
+# Rate limiter
+# Expiration time in seconds on how long to keep records of requests
+rate_limit_expiration = 60
+# Max number of recent connections during rate_limit_expiration seconds before sending a 429 response
+rate_limit_max = 25
+
+# Enable prometheus metrics endpoint. WARNING: there is no authentication
+# required for this endpoint and it's recommended to proxy this behind
+# something like nginx and enable appropriate access controls.
+enable_metrics = false
+
+#------------------------------------------------------------------------------
+# Storage
+#------------------------------------------------------------------------------
+[storage]
+# Storage driver. Supported drivers: memory, sqlite3, and redis
+driver = "memory"
+
+[storage.sqlite3]
+# Path to sqlite3 database used for session storage
+# dbpath = "/srv/mokey/storage/mokey.db"
+
+[storage.redis]
+# Redis URL
+# url = "redis://<user>:<pass>@127.0.0.1:6379/<db>"
+
+#------------------------------------------------------------------------------
+# Hydra
+#------------------------------------------------------------------------------
+[hydra]
+# admin_url: "http://locahost:4445"
+# login_timeout: 3600
+# fake_tls_termination: true

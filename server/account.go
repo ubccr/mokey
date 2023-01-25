@@ -2,287 +2,314 @@ package server
 
 import (
 	"errors"
-	"net/http"
-	"path"
+	"fmt"
+	"path/filepath"
+	"time"
 
 	"github.com/dchest/captcha"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
-	"github.com/ubccr/mokey/model"
-	"github.com/ubccr/mokey/util"
+	ipa "github.com/ubccr/goipa"
 )
 
-func (h *Handler) SetupAccount(c echo.Context) error {
-	_, tk := path.Split(c.Request().URL.Path)
-	token, err := h.verifyToken(tk, util.VerifySalt, viper.GetInt("setup_max_age"))
+func (r *Router) AccountSettings(c *fiber.Ctx) error {
+	user := r.user(c)
+	client := r.userClient(c)
+
+	vars := fiber.Map{
+		"user": user,
+	}
+
+	if c.Method() == fiber.MethodGet {
+		return c.Render("account.html", vars)
+	}
+
+	user.First = c.FormValue("first")
+	user.Last = c.FormValue("last")
+	user.Mobile = c.FormValue("phone")
+
+	userUpdated, err := client.UserMod(user)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"token": tk,
-		}).Error("Invalid token found")
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid token")
-	}
-
-	userRec, err := h.client.UserShow(token.UserName)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"uid":   token.UserName,
-			"error": err,
-		}).Error("Failed to fetch user record from freeipa")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
-	}
-
-	vars := map[string]interface{}{
-		"uid":   string(userRec.Uid),
-		"email": string(userRec.Email),
-		"csrf":  c.Get("csrf").(string),
-	}
-
-	if c.Request().Method == "POST" {
-		if userRec.Locked() {
-			// Enable user account
-			err := h.client.UserEnable(token.UserName)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"uid":   token.UserName,
-					"error": err,
-				}).Error("Failed enable user in FreeIPA")
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to enable user")
-			}
-		}
-
-		// Destroy token
-		err = h.db.DestroyToken(token.Token)
-		if err != nil {
+		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
-				"uid":   token.UserName,
-				"error": err,
-			}).Error("Failed to remove token from database")
-		}
-
-		vars["completed"] = true
-	}
-
-	return c.Render(http.StatusOK, "setup-account.html", vars)
-}
-
-func (h *Handler) ForgotPassword(c echo.Context) error {
-	vars := map[string]interface{}{
-		"csrf": c.Get("csrf").(string),
-	}
-
-	if viper.GetBool("enable_captcha") {
-		vars["captchaID"] = captcha.New()
-	}
-
-	if c.Request().Method == "POST" {
-		uid := c.FormValue("uid")
-		captchaID := c.FormValue("captcha_id")
-		captchaSol := c.FormValue("captcha_sol")
-
-		err := h.sendPasswordReset(uid, captchaID, captchaSol)
-		if err != nil {
-			vars["message"] = err.Error()
+				"username": user.Username,
+				"message":  ierr.Message,
+				"code":     ierr.Code,
+			}).Error("Failed to update account settings")
+			vars["message"] = ierr.Message
 		} else {
-			vars["completed"] = true
+			log.WithFields(log.Fields{
+				"username": user.Username,
+				"error":    err.Error(),
+			}).Error("Failed to update account settings")
+			vars["message"] = "Fatal system error"
 		}
+	} else {
+		vars["user"] = userUpdated
+		vars["success"] = true
 	}
-
-	return c.Render(http.StatusOK, "forgot-password.html", vars)
+	return c.Render("account.html", vars)
 }
 
-func (h *Handler) ResetPassword(c echo.Context) error {
-	_, tk := path.Split(c.Request().URL.Path)
-	token, err := h.verifyToken(tk, util.ResetSalt, viper.GetInt("reset_max_age"))
+func (r *Router) AccountCreate(c *fiber.Ctx) error {
+	if c.Method() == fiber.MethodGet {
+		vars := fiber.Map{
+			"captchaID":         captcha.New(),
+			"usernameFromEmail": viper.GetBool("accounts.username_from_email"),
+		}
+
+		return c.Render("signup.html", vars)
+	}
+
+	user := &ipa.User{}
+	user.Username = c.FormValue("username")
+	user.Email = c.FormValue("email")
+	user.First = c.FormValue("first")
+	user.Last = c.FormValue("last")
+	password := c.FormValue("password")
+	passwordConfirm := c.FormValue("password2")
+	captchaID := c.FormValue("captcha_id")
+	captchaSol := c.FormValue("captcha_sol")
+
+	err := r.accountCreate(user, password, passwordConfirm, captchaID, captchaSol)
+	if err != nil {
+		c.Append("HX-Trigger", "{\"reloadCaptcha\":\""+captcha.New()+"\"}")
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+	}
+
+	log.WithFields(log.Fields{
+		"username": user.Username,
+		"email":    user.Email,
+	}).Info("AUDIT user account created successfully")
+	r.metrics.totalSignups.Inc()
+
+	// Send user an email to verify their account
+	err = r.emailer.SendAccountVerifyEmail(user, c)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"error": err,
-			"token": tk,
-		}).Error("Invalid token found")
-		return echo.NewHTTPError(http.StatusNotFound, "Invalid token")
-	}
-
-	userRec, err := h.client.UserShow(token.UserName)
-	if err != nil {
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to send new account email")
+	} else {
 		log.WithFields(log.Fields{
-			"uid":   token.UserName,
-			"error": err,
-		}).Error("Failed to fetch user record from freeipa")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+			"username": user.Username,
+			"email":    user.Email,
+		}).Info("New user account email sent successfully")
+		r.metrics.totalAccountVerificationsSent.Inc()
 	}
 
-	vars := map[string]interface{}{
-		"uid":         string(userRec.Uid),
-		"otpRequired": userRec.OTPOnly(),
-		"csrf":        c.Get("csrf").(string),
+	vars := fiber.Map{
+		"user": user,
 	}
-
-	if c.Request().Method == "POST" {
-		pass := c.FormValue("password")
-		pass2 := c.FormValue("password2")
-		challenge := c.FormValue("challenge")
-
-		err := h.resetPassword(userRec, pass, pass2, challenge)
-		if err != nil {
-			vars["message"] = err.Error()
-
-			err := h.db.IncrementToken(token.Token)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err.Error(),
-				}).Error("Failed to increment token attempts")
-			}
-		} else {
-			vars["success"] = true
-
-			// Destroy token
-			err := h.db.DestroyToken(token.Token)
-			if err != nil {
-				log.WithFields(log.Fields{
-					"uid":   token.UserName,
-					"error": err.Error(),
-				}).Error("failed to remove token from database")
-			}
-		}
-	}
-
-	return c.Render(http.StatusOK, "reset-password.html", vars)
+	return c.Render("signup-success.html", vars)
 }
 
-func (h *Handler) resetPassword(user *ipa.UserRecord, pass, pass2, challenge string) error {
-	if err := util.CheckPassword(pass, viper.GetInt("min_passwd_len"), viper.GetInt("min_passwd_classes")); err != nil {
+// accountCreate does the work of validation and creating the account in FreeIPA
+func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captchaID, captchaSol string) error {
+	if err := validateUsername(user); err != nil {
 		return err
 	}
 
-	if pass != pass2 {
-		return errors.New("Password do not match. Please confirm your password.")
+	if user.First == "" || len(user.First) > 150 {
+		return errors.New("Please provide your first name")
 	}
 
-	if user.OTPOnly() && len(challenge) == 0 {
-		return errors.New("Please provide a six-digit authentication code")
+	if user.Last == "" || len(user.Last) > 150 {
+		return errors.New("Please provide your last name")
 	}
 
-	if !user.OTPOnly() {
-		challenge = ""
-	}
-
-	// Reset password in FreeIPA
-	rand, err := h.client.ResetPassword(string(user.Uid))
-	if err != nil {
+	if err := validatePassword(password, passwordConfirm); err != nil {
 		return err
 	}
 
-	// Set new password in FreeIPA
-	err = h.client.SetPassword(string(user.Uid), rand, pass, challenge)
+	if err := r.verifyCaptcha(captchaID, captchaSol); err != nil {
+		return err
+	}
+
+	user.HomeDir = filepath.Join(viper.GetString("accounts.default_homedir"), user.Username)
+	user.Shell = viper.GetString("accounts.default_shell")
+	user.Category = UserCategoryUnverified
+
+	userRec, err := r.adminClient.UserAddWithPassword(user, password)
 	if err != nil {
-		if ierr, ok := err.(*ipa.ErrPasswordPolicy); ok {
+		switch {
+		case errors.Is(err, ipa.ErrUserExists):
+			return fmt.Errorf("Username already exists: %s", user.Username)
+		default:
 			log.WithFields(log.Fields{
-				"uid":   string(user.Uid),
-				"error": ierr.Error(),
-			}).Error("password does not conform to policy")
-			return errors.New("Your password is too weak. Please ensure your password includes a number and lower/upper case character")
+				"err":      err,
+				"username": user.Username,
+				"email":    user.Email,
+				"first":    user.First,
+				"last":     user.Last,
+				"homedir":  user.HomeDir,
+			}).Error("Failed to create user account")
+			return errors.New("Failed to create account. Please contact system administrator")
 		}
+	}
 
-		if ierr, ok := err.(*ipa.ErrInvalidPassword); ok {
-			log.WithFields(log.Fields{
-				"uid":   string(user.Uid),
-				"error": ierr.Error(),
-			}).Error("invalid password from FreeIPA")
-			return errors.New("Invalid OTP code.")
-		}
+	log.WithFields(log.Fields{
+		"username": userRec.Username,
+		"email":    userRec.Email,
+		"first":    userRec.First,
+		"last":     userRec.Last,
+		"homedir":  userRec.HomeDir,
+	}).Warn("New user account created")
 
+	// Disable new users until they have verified their email address
+	err = r.adminClient.UserDisable(userRec.Username)
+	if err != nil {
 		log.WithFields(log.Fields{
-			"uid":   string(user.Uid),
-			"error": err.Error(),
-		}).Error("failed to set user password in FreeIPA")
-		return errors.New("Fatal system error")
+			"err":      err,
+			"username": userRec.Username,
+		}).Error("Failed to disable user")
+
+		// TODO: should we tell user about this? probably not?
 	}
 
 	return nil
 }
 
-func (h *Handler) sendPasswordReset(uid, captchaID, captchaSol string) error {
-	if len(uid) == 0 {
-		return errors.New("Please provide a username")
+func (r *Router) AccountVerify(c *fiber.Ctx) error {
+	token := c.Params("token")
+
+	claims, err := ParseToken(token, TokenAccountVerify, r.storage)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err": err,
+		}).Debug("Invalid account verify token")
+		return c.Status(fiber.StatusNotFound).SendString("")
 	}
 
-	if viper.GetBool("enable_captcha") {
-		if len(captchaID) == 0 {
-			return errors.New("Invalid captcha provided")
-		}
-		if len(captchaSol) == 0 {
-			return errors.New("Please type in the numbers you see in the picture")
-		}
-
-		if !captcha.VerifyString(captchaID, captchaSol) {
-			return errors.New("The numbers you typed in do not match the image")
-		}
+	vars := fiber.Map{
+		"claims": claims,
 	}
 
-	if !viper.GetBool("replace_token") {
-		_, err := h.db.FetchTokenByUser(uid, viper.GetInt("reset_max_age"))
-		if err == nil {
+	if c.Method() == fiber.MethodGet {
+		return c.Render("verify-account.html", vars)
+	}
+
+	user, err := r.adminClient.UserShow(claims.Username)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username": claims.Username,
+			"email":    claims.Email,
+			"err":      err,
+		}).Error("Verifying account failed while fetching user from FreeIPA")
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
+	}
+
+	if user.Locked {
+		err := r.adminClient.UserEnable(claims.Username)
+		if err != nil {
 			log.WithFields(log.Fields{
-				"uid": uid,
-			}).Error("Forgotpw: user already has active token")
-			return nil
+				"username": claims.Username,
+				"email":    claims.Email,
+				"error":    err,
+			}).Error("Verify account failed to enable user in FreeIPA")
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
 		}
 	}
 
-	userRec, err := h.client.UserShow(uid)
+	// User is now verified so unset category
+	if user.Category == UserCategoryUnverified {
+		user.Category = ""
+
+		_, err = r.adminClient.UserMod(user)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"username": claims.Username,
+				"email":    claims.Email,
+				"error":    err,
+			}).Error("Verify account failed to modify user category in FreeIPA")
+			return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
+		}
+	}
+
+	r.storage.Set(TokenAccountVerify+TokenUsedPrefix+token, []byte("true"), time.Until(claims.Timestamp.Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second)))
+
+	err = r.emailer.SendWelcomeEmail(user, c)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"uid":   uid,
-			"error": err,
-		}).Error("Forgotpw: invalid uid")
-		return errors.New("Invalid username")
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to send welcome email")
 	}
 
-	if userRec.NSAccountLock {
-		log.WithFields(log.Fields{
-			"uid": uid,
-		}).Error("Forgotpw: user account is disabled")
-		return errors.New("Your account is disabled")
-	}
+	log.WithFields(log.Fields{
+		"username": user.Username,
+		"email":    user.Email,
+	}).Info("AUDIT user account verified successfully")
+	r.metrics.totalAccountVerifications.Inc()
 
-	if len(userRec.Email) == 0 {
-		log.WithFields(log.Fields{
-			"uid": uid,
-		}).Error("Forgotpw: missing email address")
-		return errors.New("No email address provided for that username")
-	}
-
-	err = h.emailer.SendResetPasswordEmail(uid, string(userRec.Email))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"uid":   uid,
-			"error": err,
-		}).Error("Forgotpw: failed send email to user")
-	}
-
-	return nil
+	return c.Render("verify-success.html", vars)
 }
 
-func (h *Handler) verifyToken(rawToken, salt string, maxAge int) (*model.Token, error) {
-	tk, ok := h.db.VerifyToken(salt, rawToken)
-	if !ok {
-		return nil, errors.New("Invalid token")
+func (r *Router) AccountVerifyResend(c *fiber.Ctx) error {
+	if c.Method() == fiber.MethodGet {
+		vars := fiber.Map{
+			"captchaID": captcha.New(),
+		}
+
+		return c.Render("account-verify-forgot.html", vars)
 	}
 
-	token, err := h.db.FetchToken(tk, maxAge)
+	err := r.verifyCaptcha(c.FormValue("captcha_id"), c.FormValue("captcha_sol"))
 	if err != nil {
-		return nil, err
+		c.Append("HX-Trigger", "{\"reloadCaptcha\":\""+captcha.New()+"\"}")
+		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	if token.Attempts > viper.GetInt("max_attempts") {
+	username := c.FormValue("username")
+
+	if isBlocked(username) {
 		log.WithFields(log.Fields{
-			"token": token.Token,
-			"uid":   token.UserName,
-		}).Error("Too many attempts for token.")
-		return nil, errors.New("Too many attempts")
+			"username": username,
+		}).Warn("Account verify resend attempt for blocked user")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
 	}
 
-	return token, nil
+	user, err := r.adminClient.UserShow(username)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username": username,
+			"err":      err,
+		}).Warn("Account verify resend attempt for unknown username")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
+	}
+
+	if !user.Locked {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("Account verify resend attempt for active user")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
+	}
+
+	if user.Category != UserCategoryUnverified {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warnf("Refusing to send account verify email. Invalid user category")
+		return c.Render("account-verify-forgot-success.html", fiber.Map{})
+	}
+
+	// Resend user an email to verify their account
+	err = r.emailer.SendAccountVerifyEmail(user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+			"email":    user.Email,
+		}).Error("Failed to re-send verify account email")
+	} else {
+		log.WithFields(log.Fields{
+			"username": user.Username,
+			"email":    user.Email,
+		}).Info("Verify user account email sent successfully")
+		r.metrics.totalAccountVerificationsSent.Inc()
+	}
+
+	return c.Render("account-verify-forgot-success.html", fiber.Map{})
 }

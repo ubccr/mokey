@@ -1,0 +1,37 @@
+<div class="login-card rounded-3 overflow-hidden bg-white mx-auto">
+    <div class="login-head bg-dark text-light p-4">
+        <h3 class="text-center m-0">{{ if $.user.OTPOnly }}Two-factor Authentication{{ else }}Password{{ end }}</h3>
+    </div>
+    <div class="login-body p-4 p-md-5">
+        <div class="login-body-wrapper mx-auto">
+            <form>
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="username" class="form-control form-control-lg" value="{{ $.user.Username }}" disabled="disabled">
+                <div id="usernameHelpBlock" class="form-text">
+                 Not you? <a href="/auth/login">Switch account</a>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control form-control-lg" name="password" id="password" autofocus="autofocus" placeholder="">
+            </div>
+            {{ if $.user.OTPOnly }}
+            <div class="mb-3">
+                <label for="otp" class="form-label">OTP six digit code</label>
+                <input type="otp" class="form-control form-control-lg" name="otp" id="otp" placeholder="">
+            </div>
+            {{ end }}
+            <div class="mb-3 d-grid gap-2">
+              <input type="hidden" name="challenge" value="{{ $.challenge }}" />
+              <input type="hidden" name="username" value="{{ $.user.Username }}" />
+              <button hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-target-error="login-failed" hx-post="/auth/authenticate" hx-target="#login" hx-swap="innerHTML" class="btn btn-primary btn-lg" type="submit">
+              <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
+              Login
+              </button>
+            </div>
+          </form>
+            <p class="text-muted text-center"><a href="/auth/forgotpw">Forgot password?</a></p>
+        </div>
+    </div>
+</div>

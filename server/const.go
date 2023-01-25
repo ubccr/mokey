@@ -1,15 +1,18 @@
 package server
 
+var Version = "dev"
+
 const (
-	CookieKeySession        = "mokey-sessck"
-	CookieKeyState          = "state"
-	CookieKeyAuthenticated  = "authenticated"
-	CookieKeySID            = "sid"
-	CookieKeyUser           = "user"
-	CookieKeyWYAF           = "wyaf"
-	CookieKeyGlobus         = "globus"
-	CookieKeyGlobusUsername = "globus_username"
+	SessionKeyAuthenticated = "authenticated"
+	SessionKeySID           = "sid"
+	SessionKeyUsername      = "user"
+	SessionKeyCSRF          = "csrf"
 	ContextKeyUser          = "user"
+	ContextKeyUsername      = "username"
 	ContextKeyIPAClient     = "ipa"
-	ContextKeyApi           = "apikey"
+	UserCategoryUnverified  = "mokey-user-unverified"
+	TokenAccountVerify      = "verify"
+	TokenPasswordReset      = "reset"
+	TokenUsedPrefix         = "used-"
+	TokenIssuedPrefix       = "issued-"
 )

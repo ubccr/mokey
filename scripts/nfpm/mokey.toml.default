@@ -1,0 +1,99 @@
+#------------------------------------------------------------------------------
+# Default Mokey Config
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# Site specific configuration
+#------------------------------------------------------------------------------
+[site]
+# Name of your site
+name = "Identity Management"
+
+# Homepage of your organization
+homepage = ""
+
+# Link to your sites help pages
+help_url = ""
+
+# Link to your getting started guide
+getting_started_url = ""
+
+# Link to your terms of service
+tos_url = ""
+
+# User account for the mokey service
+ktuser = "mokeyapp"
+
+# Path to keytab file
+keytab = "/etc/mokey/private/mokeyapp.keytab"
+
+#------------------------------------------------------------------------------
+# User account settings
+#------------------------------------------------------------------------------
+[accounts]
+# Default home directory
+default_homedir = "/home"
+
+# Default login shell
+default_shell = "/bin/bash"
+
+# Minimum password length. Used for validating new passwords. Should match your
+# password policy set in FreeIPA
+min_passwd_len = 8
+
+# Minimum password classes. Classes are lowercase, uppercase, numbers, and
+# special characters.  Used for validating new passwords. Should match your
+# password policy set in FreeIPA
+min_passwd_classes = 2
+
+# Hash algorithm for generating OTP tokens: sha1, sha256, or sha512
+otp_hash_algorithm = "sha1"
+
+# Custom issuer name for OTP tokens. This creates a nice name for importing into authenticator apps 
+otp_issuer = "MYORG"
+
+# Block list of user accounts from logging in
+# block_users = ["username1", "username2", "username3"]
+
+#------------------------------------------------------------------------------
+# Email
+#------------------------------------------------------------------------------
+[email]
+# Max lifetime of branca tokens used for password resets and account verify
+token_max_age = 3600
+
+# Secret key for branca tokens. Must be 32 bytes. To generate run:
+#    openssl rand -hex 32 
+# token_secret = ""
+
+# Hostname for smtp server
+smtp_host = "localhost"
+
+# Port for smtp server
+smtp_port = 25
+
+# Enable smtp tls
+smtp_tls = "off"
+
+# From email address
+from = "support@example.com"
+
+#------------------------------------------------------------------------------
+# Server settings
+#------------------------------------------------------------------------------
+[server]
+# Address and port to listen
+listen = "0.0.0.0:8866"
+
+# Times out the session after inactivity (in seconds)
+session_idle_timeout = 900
+
+# Require secure cookies
+secure_cookies = true
+
+#------------------------------------------------------------------------------
+# Storage
+#------------------------------------------------------------------------------
+[storage]
+# Storage driver. Supported drivers: memory, sqlite3, and redis
+driver = "memory"

@@ -1,89 +1,122 @@
 package server
 
 import (
-	"fmt"
+	"embed"
 	"html/template"
 	"io"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 
-	"github.com/labstack/echo/v4"
-	log "github.com/sirupsen/logrus"
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/viper"
 )
 
-var (
-	// Template functions
-	funcMap = template.FuncMap{
-		"uri": URI,
-	}
-)
+//go:embed templates
+var templateFiles embed.FS
 
-// Template renderer
-type TemplateRenderer struct {
-	templates map[string]*template.Template
+// Template functions
+var funcMap = template.FuncMap{
+	"SplitSSHFP":        SplitSSHFP,
+	"TimeAgo":           TimeAgo,
+	"ConfigValueString": ConfigValueString,
+	"ConfigValueBool":   ConfigValueBool,
+	"AllowedDomains":    AllowedDomains,
+	"BreakNewlines":     BreakNewlines,
 }
 
-// Create a new template renderer. dir is the path to template files
-func NewTemplateRenderer(dir string) (*TemplateRenderer, error) {
-	t := &TemplateRenderer{
-		templates: make(map[string]*template.Template),
-	}
+type TemplateRenderer struct {
+	templates *template.Template
+}
 
-	tmpls, err := filepath.Glob(filepath.Join(dir, "*.html"))
+func NewTemplateRenderer() (*TemplateRenderer, error) {
+
+	tmpl := template.New("")
+	tmpl.Funcs(funcMap)
+	tmpl, err := tmpl.ParseFS(templateFiles, "templates/*.html")
 	if err != nil {
 		return nil, err
 	}
 
-	for _, file := range tmpls {
-		base := filepath.Base(file)
-		if base != "layout.html" && base != "otp-info.html" {
-			t.templates[base] = template.Must(template.New("layout").Funcs(funcMap).ParseFiles(file,
-				filepath.Join(dir, "layout.html"),
-				filepath.Join(dir, "otp-info.html")))
+	if viper.IsSet("site.templates_dir") {
+		localTemplatePath := filepath.Join(viper.GetString("site.templates_dir"), "*.html")
+		localTemplates, err := filepath.Glob(localTemplatePath)
+		if err != nil {
+			return nil, err
 		}
+
+		if len(localTemplates) > 0 {
+			tmpl, err = tmpl.ParseGlob(localTemplatePath)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	tmpl.Funcs(funcMap)
+
+	t := &TemplateRenderer{
+		templates: tmpl,
 	}
 
 	return t, nil
 }
 
-// Render renders a template
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	if _, ok := t.templates[name]; !ok {
-		return fmt.Errorf("Template not found: %s", name)
-	}
-
-	if viewContext, isMap := data.(map[string]interface{}); isMap {
-		viewContext["ctx"] = c
-		viewContext["apiEnabled"] = viper.GetBool("enable_api_keys")
-	}
-
-	return t.templates[name].ExecuteTemplate(w, "layout", data)
+func (t *TemplateRenderer) Load() error {
+	return nil
 }
 
-func URI(c echo.Context, name string) string {
-	if strings.HasPrefix(name, "/static") || strings.HasPrefix(name, "/auth/captcha/") {
-		return Path(name)
-	}
-
-	if c != nil {
-		return c.Echo().Reverse(name)
-	}
-
-	log.WithFields(log.Fields{
-		"name": name,
-	}).Error("Failed to build URI. Echo context nil")
-
-	return name
+func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, layouts ...string) error {
+	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-func Path(path string) string {
-	if viper.IsSet("path_prefix") {
-		if path == "/" {
-			path = ""
-		}
-		return viper.GetString("path_prefix") + path
+func AllowedDomains() string {
+	allowedDomains := viper.GetStringMapString("accounts.allowed_domains")
+
+	i := 0
+	domains := make([]string, len(allowedDomains))
+	for d := range allowedDomains {
+		domains[i] = d
+		i++
 	}
 
-	return path
+	sort.Strings(domains)
+
+	return strings.Join(domains, ", ")
+}
+
+func ConfigValueString(key string) string {
+	return viper.GetString(key)
+}
+
+func ConfigValueBool(key string) bool {
+	return viper.GetBool(key)
+}
+
+func TimeAgo(t time.Time) string {
+	return humanize.Time(t)
+}
+
+func SplitSSHFP(fp string) []string {
+	if fp == "" {
+		return []string{"", "", ""}
+	}
+
+	parts := strings.Split(fp, " ")
+	if len(parts) == 1 {
+		return []string{parts[0], "", ""}
+	}
+
+	if len(parts) == 2 {
+		return []string{parts[0], parts[1], ""}
+	}
+
+	parts[2] = strings.TrimLeft(parts[2], "(")
+	parts[2] = strings.TrimRight(parts[2], ")")
+	return parts
+}
+
+func BreakNewlines(s string) template.HTML {
+	return template.HTML(strings.Replace(template.HTMLEscapeString(s), "\n", "<br />", -1))
 }

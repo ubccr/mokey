@@ -1,0 +1,113 @@
+{{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") (not $.otptokens) }}
+<div class="alert alert-warning mx-auto fade show" role="alert">
+   Please add an OTP token using your authenticator app to enable Two-Factor authentication on your account.
+</div>
+{{ else if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
+<div class="alert alert-warning mx-auto fade show" role="alert">
+   You must enable Two-Factor authentication on your account.
+</div>
+{{ end }}
+{{  with $.message }}
+<div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+  {{ . }}
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{{ end }}
+<div id="otptoken-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
+</div>
+<div id="otptoken-modal"></div>
+<div class="d-flex w-100 justify-content-between mb-4">
+    <h3 class="mb-1">OTP Tokens</h3>
+    <button type="button" 
+            hx-get="/otptoken/modal" 
+            hx-target="#otptoken-modal" 
+            hx-trigger="click"
+            _="on htmx:afterOnLoad wait 10ms then add .show to #modal then add .show to #modal-backdrop"
+            class="btn btn-primary end">
+      <i class="fa fa-plus"></i> New Token
+    </button>
+</div>
+{{ range $i, $tok := $.otptokens }}
+<div class="row">
+    <div class="d-flex flex-items-center">
+        <div class="text-center d-flex flex-column">
+           <i class="fa fa-fingerprint fa-2x"></i>
+           <span title="Type">
+               <code style="overflow-wrap: anywhere">{{ $tok.Type }}</code>
+           </span>
+        </div>
+        <div class="flex-grow-1 ms-3 mb-3">
+          <strong class="d-block">{{ $tok.DisplayName }}</strong>
+          <span class="d-block fst-italic">
+            {{ $tok.Description }}
+          </span>
+          <span class="text-muted d-block mb-2">{{ if not $tok.NotBefore.IsZero }}Added on {{ $tok.NotBefore.Format "Jan 02, 2006" }}{{ end }}</span>
+          <p>
+          {{ if $tok.Enabled }}
+              <button class="btn btn-sm btn-success ml-1" title="Click to Disable" hx-target-error="otptoken-failed"
+                      hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                      data-hx-trigger="tokendisable"
+                      data-hx-vals='{"csrf": "{{ $.csrf }}", "uuid": "{{ $tok.UUID }}"}'
+                      data-hx-target="#otp" data-hx-post="/otptoken/disable" 
+                      _="on click call 
+                            Swal.fire({
+                                title: 'Disable Token?',
+                                backdrop: true,
+                                html: '<code>{{ $tok.DisplayName }}</code>',
+                                focusCancel: true,
+                                confirmButtonText: 'Disable',
+                                reverseButtons: false,
+                                showCancelButton: true,
+                                icon: 'question'})
+                            if result.isConfirmed trigger tokendisable">
+                <i class="fa fa-toggle-on fa-lg"></i> Enabled
+              </button>
+          {{ else }}
+              <button class="btn btn-sm btn-secondary ml-1" title="Click to Enable" hx-target-error="otptoken-failed"
+                      hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                      data-hx-trigger="tokenenable"
+                      data-hx-vals='{"csrf": "{{ $.csrf }}", "uuid": "{{ $tok.UUID }}"}'
+                      data-hx-target="#otp" data-hx-post="/otptoken/enable" 
+                      _="on click call 
+                            Swal.fire({
+                                title: 'Enable Token?',
+                                backdrop: true,
+                                html: '<code>{{ $tok.DisplayName }}</code>',
+                                focusCancel: true,
+                                reverseButtons: false,
+                                confirmButtonColor: '#157347',
+                                confirmButtonText: 'Enable',
+                                showCancelButton: true,
+                                iconColor: '#157347',
+                                icon: 'question'})
+                            if result.isConfirmed trigger tokenenable">
+                <i class="fa fa-toggle-off fa-lg"></i> Disabled
+              </button>
+          {{ end }}
+              <button class="btn btn-sm btn-outline-danger ml-1" hx-target-error="otptoken-failed"
+                      hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                      data-hx-trigger="tokenremove"
+                      data-hx-vals='{"csrf": "{{ $.csrf }}", "uuid": "{{ $tok.UUID }}"}'
+                      data-hx-target="#otp" data-hx-post="/otptoken/remove" 
+                      _="on click call 
+                            Swal.fire({
+                                title: 'Delete Token?',
+                                backdrop: true,
+                                html: '<code>{{ $tok.DisplayName }}</code><br/><br/>This action <strong>CANNOT</strong> be undone. This will permanently delete the token and you will not be able to use it again in the future',
+                                focusCancel: true,
+                                reverseButtons: false,
+                                confirmButtonColor: '#dc3545',
+                                confirmButtonText: 'Delete',
+                                showCancelButton: true,
+                                icon: 'warning'})
+                            if result.isConfirmed trigger tokenremove">
+                Delete
+              </button>
+          </p>
+        </div>
+    </div>
+
+</div>
+{{ else }}
+    <p>No OTP tokens found</p>
+{{ end }}

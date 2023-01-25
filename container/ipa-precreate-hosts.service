@@ -1,0 +1,13 @@
+[Unit]
+Description=Create IPA client host records and OTPs, and HBAC rules
+After=ipa.service
+After=ipa-server-configure-first.service
+After=ipa-server-update-self-ip-address.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ipa-precreate-hosts
+RemainAfterExit=true
+
+[Install]
+WantedBy=container-ipa.target

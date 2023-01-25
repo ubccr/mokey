@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  ipaserver:
+    image: ipaserver
+    build:
+      context: ./container
+      dockerfile: Dockerfile.ipa
+      args:
+        IPA_DS_PASS: $IPA_DS_PASS
+        IPA_ADMIN_PASS: $IPA_ADMIN_PASS
+    hostname: ipa.mokey.local
+    container_name: mokeyipaserver
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - mokeyipa_data:/data
+    stop_signal: RTMIN+3
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+
+  ipaclient:
+    image: ipaclient
+    build:
+      context: ./container
+      dockerfile: Dockerfile.client
+      args:
+        DEV_SSH_KEY: $DEV_SSH_KEY
+        GO_VERSION: $GO_VERSION
+        USER_ID: ${UID:-1000}
+        USER: ${USER:-developer}
+    hostname: client.mokey.local
+    container_name: mokeyipaclient
+    volumes:
+      - .:/app:cached
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - mokeyclient_data:/data
+    stop_signal: RTMIN+3
+    links:
+      - ipaserver:ipa.mokey.local
+    ports:
+      - "127.0.0.1:9023:22"
+      - "0.0.0.0:8080:8080"
+
+volumes:
+  mokeyipa_data:
+  mokeyclient_data:

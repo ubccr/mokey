@@ -1,187 +1,242 @@
 package server
 
 import (
-	"crypto/tls"
-	"encoding/hex"
-	"fmt"
+	"context"
+	"embed"
+	"errors"
+	"io/fs"
 	"net/http"
-	"path/filepath"
+	"os"
+	"strings"
 	"time"
 
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/filesystem"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
+	frecover "github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/storage/memory"
+	"github.com/gofiber/storage/redis"
+	"github.com/gofiber/storage/sqlite3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/mokey/model"
-	"github.com/ubccr/mokey/util"
 )
 
-func init() {
-	viper.SetDefault("port", 8080)
-	viper.SetDefault("min_passwd_len", 8)
-	viper.SetDefault("min_passwd_classes", 2)
-	viper.SetDefault("develop", false)
-	viper.SetDefault("require_verify_email", false)
-	viper.SetDefault("require_verify_admin", false)
-	viper.SetDefault("enable_api_keys", false)
-	viper.SetDefault("setup_max_age", 86400)
-	viper.SetDefault("reset_max_age", 3600)
-	viper.SetDefault("replace_token", false)
-	viper.SetDefault("max_attempts", 10)
-	viper.SetDefault("bind", "")
-	viper.SetDefault("driver", "mysql")
-	viper.SetDefault("dsn", "/mokey?parseTime=true")
-	viper.SetDefault("rate_limit", false)
-	viper.SetDefault("redis", ":6379")
-	viper.SetDefault("max_requests", 15)
-	viper.SetDefault("rate_limit_expire", 3600)
-	viper.SetDefault("hydra_consent_skip", false)
-	viper.SetDefault("hydra_login_timeout", 86400)
-	viper.SetDefault("hydra_consent_timeout", 86400)
+const (
+	DefaultPort = 80
+)
+
+//go:embed templates/static
+var staticFS embed.FS
+
+type Server struct {
+	ListenAddress string
+	Scheme        string
+	KeyFile       string
+	CertFile      string
+	app           *fiber.App
 }
 
-// Render custom error templates if available
-func HTTPErrorHandler(err error, c echo.Context) {
-	code := http.StatusInternalServerError
-	if he, ok := err.(*echo.HTTPError); ok {
-		code = he.Code
-	}
-
-	if code == http.StatusNotFound {
-		log.WithFields(log.Fields{
-			"path": c.Request().URL,
-			"ip":   c.RealIP(),
-		}).Error("Requested path not found")
-	}
-
-	viewContext := map[string]interface{}{
-		"ctx": c,
-	}
-	errorPage := fmt.Sprintf("%d.html", code)
-	if err := c.Render(code, errorPage, viewContext); err != nil {
-		c.Logger().Error(err)
-		c.String(code, "")
-	}
-
-	c.Logger().Error(err)
+func SetDefaults() {
+	viper.SetDefault("site.name", "Acme Widgets")
+	viper.SetDefault("site.ktuser", "mokeyapp")
+	viper.SetDefault("accounts.default_homedir", "/home")
+	viper.SetDefault("accounts.default_shell", "/bin/bash")
+	viper.SetDefault("accounts.min_passwd_len", 8)
+	viper.SetDefault("accounts.min_passwd_classes", 2)
+	viper.SetDefault("accounts.otp_hash_algorithm", "sha1")
+	viper.SetDefault("accounts.username_from_email", false)
+	viper.SetDefault("accounts.require_mfa", false)
+	viper.SetDefault("email.token_max_age", 3600)
+	viper.SetDefault("email.smtp_host", "localhost")
+	viper.SetDefault("email.smtp_port", 25)
+	viper.SetDefault("email.smtp_tls", "off")
+	viper.SetDefault("email.from", "support@example.com")
+	viper.SetDefault("server.secure_cookies", true)
+	viper.SetDefault("server.session_idle_timeout", 900)
+	viper.SetDefault("server.listen", "0.0.0.0:8866")
+	viper.SetDefault("server.read_timeout", 5)
+	viper.SetDefault("server.write_timeout", 5)
+	viper.SetDefault("server.idle_timeout", 120)
+	viper.SetDefault("server.rate_limit_expiration", 3600)
+	viper.SetDefault("server.rate_limit_max", 10)
+	viper.SetDefault("storage.driver", "memory")
 }
 
-// Start web server
-func Run() error {
-	e := echo.New()
+func NewServer(address string) (*Server, error) {
+	s := &Server{}
+	s.ListenAddress = address
 
-	tmplDir := util.GetTemplateDir()
-	log.Infof("Using template dir: %s", tmplDir)
+	app, err := newFiber()
+	if err != nil {
+		return nil, err
+	}
 
-	renderer, err := NewTemplateRenderer(tmplDir)
+	s.app = app
+
+	return s, nil
+}
+
+func getAssetsFS() http.FileSystem {
+	staticLocalPath := viper.GetString("site.static_assets_dir")
+	if staticLocalPath != "" {
+		log.Debugf("Using local static assets dir: %s", staticLocalPath)
+		return http.FS(os.DirFS(staticLocalPath))
+	}
+
+	fsys, err := fs.Sub(staticFS, "templates/static")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	e.Renderer = renderer
-	e.Static(Path("/static"), filepath.Join(tmplDir, "static"))
-	e.HTTPErrorHandler = HTTPErrorHandler
-	e.HideBanner = true
-	e.Use(middleware.Recover())
-	e.Use(CacheControl)
-	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup:    "form:csrf",
-		CookieSecure:   !viper.GetBool("develop"),
-		CookieHTTPOnly: true,
+	return http.FS(fsys)
+}
+
+func recoverInvalidStorage() {
+	if r := recover(); r != nil {
+		log.Errorf("Failed initialize storage driver %s: %s", viper.GetString("storage.driver"), r)
+	}
+}
+
+func newStorage() fiber.Storage {
+	var storage fiber.Storage
+
+	if viper.IsSet("storage.sqlite3.dbpath") && viper.GetString("storage.driver") == "memory" {
+		viper.Set("storage.driver", "sqlite3")
+	}
+
+	defer recoverInvalidStorage()
+	switch viper.GetString("storage.driver") {
+	case "sqlite3":
+		storage = sqlite3.New(sqlite3.Config{
+			Database: viper.GetString("storage.sqlite3.dbpath"),
+			Table:    "mokey_data",
+		})
+	case "redis":
+		storage = redis.New(redis.Config{
+			URL:   viper.GetString("storage.redis.url"),
+			Reset: false,
+		})
+
+	default:
+		storage = memory.New()
+	}
+
+	return storage
+}
+
+func newFiber() (*fiber.App, error) {
+	engine, err := NewTemplateRenderer()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storage := newStorage()
+	if storage == nil {
+		return nil, errors.New("Failed to open mokey storage database")
+	}
+
+	app := fiber.New(fiber.Config{
+		Prefork:               false,
+		CaseSensitive:         true,
+		StrictRouting:         true,
+		ReadTimeout:           time.Duration(viper.GetInt("server.read_timeout")) * time.Second,
+		WriteTimeout:          time.Duration(viper.GetInt("server.write_timeout")) * time.Second,
+		IdleTimeout:           time.Duration(viper.GetInt("server.idle_timeout")) * time.Second,
+		AppName:               "mokey",
+		DisableStartupMessage: true,
+		PassLocalsToViews:     true,
+		ErrorHandler:          HTTPErrorHandler,
+		Views:                 engine,
+	})
+
+	app.Use(frecover.New())
+	app.Use(SecureHeaders)
+
+	app.Use(limiter.New(limiter.Config{
+		Max:                    viper.GetInt("server.rate_limit_max"),
+		Expiration:             time.Duration(viper.GetInt("server.rate_limit_expiration")) * time.Second,
+		SkipSuccessfulRequests: true,
+		Storage:                storage,
+		LimitReached:           LimitReachedHandler,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			ips := c.IPs()
+			if len(ips) > 0 {
+				return ips[0]
+			}
+
+			return c.IP()
+		},
+		Next: func(c *fiber.Ctx) bool {
+			if c.Method() != fiber.MethodPost {
+				return true
+			}
+
+			if c.Path() == "/signup" {
+				return false
+			}
+
+			if strings.HasPrefix(c.Path(), "/auth") {
+				return false
+			}
+
+			return true
+		},
 	}))
-	e.Use(middleware.SecureWithConfig(middleware.SecureConfig{
-		XFrameOptions:         "DENY",
-		ContentSecurityPolicy: "default-src 'self'; img-src 'self' data:;script-src 'self' 'unsafe-inline';",
+
+	router, err := NewRouter(storage)
+	if err != nil {
+		return nil, err
+	}
+
+	router.SetupRoutes(app)
+
+	assetsFS := getAssetsFS()
+	app.Use("/static", filesystem.New(filesystem.Config{
+		Root:   assetsFS,
+		Browse: false,
+		MaxAge: 900,
 	}))
 
-	encKey, err := hex.DecodeString(viper.GetString("enc_key"))
-	if err != nil {
-		return err
+	if viper.IsSet("site.favicon") {
+		app.Use(favicon.New(favicon.Config{
+			File: viper.GetString("site.favicon"),
+		}))
+	} else {
+		app.Use(favicon.New(favicon.Config{
+			File:       "images/favicon.ico",
+			FileSystem: assetsFS,
+		}))
 	}
 
-	// Sessions
-	cookieStore := sessions.NewCookieStore([]byte(viper.GetString("auth_key")), encKey)
-	cookieStore.Options.Secure = !viper.GetBool("develop")
-	cookieStore.Options.HttpOnly = true
-	cookieStore.MaxAge(0)
-	e.Use(session.Middleware(cookieStore))
+	// This must be last
+	app.Use(NotFoundHandler)
 
-	db, err := model.NewDB(viper.GetString("driver"), viper.GetString("dsn"))
-	if err != nil {
-		return err
-	}
+	return app, nil
+}
 
-	h, err := NewHandler(db)
-	if err != nil {
-		return err
-	}
-
-	h.SetupRoutes(e)
-
-	log.Printf("IPA server: %s", viper.GetString("ipahost"))
-
-	// Redirect to https if enabled
-	if viper.IsSet("insecure_redirect_port") && viper.IsSet("insecure_redirect_host") {
-		log.Infof("Redirecting insecure http requests on port %d to https://%s:%d",
-			viper.GetInt("insecure_redirect_port"),
-			viper.GetString("insecure_redirect_host"),
-			viper.GetInt("port"))
-
-		srv := &http.Server{
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 5 * time.Second,
-			IdleTimeout:  120 * time.Second,
-			Addr:         fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("insecure_redirect_port")),
-			Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				w.Header().Set("Connection", "close")
-				url := fmt.Sprintf("https://%s:%d%s", viper.GetString("insecure_redirect_host"), viper.GetInt("port"), req.URL.String())
-				http.Redirect(w, req, url, http.StatusMovedPermanently)
-			}),
-		}
-		go func() { log.Fatal(srv.ListenAndServe()) }()
-	}
-
-	s := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", viper.GetString("bind"), viper.GetInt("port")),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		IdleTimeout:  120 * time.Second,
-	}
-
-	certFile := viper.GetString("cert")
-	keyFile := viper.GetString("key")
-	if certFile != "" && keyFile != "" {
-		cfg := &tls.Config{
-			MinVersion: tls.VersionTLS12,
-			CurvePreferences: []tls.CurveID{
-				tls.CurveP256,
-				tls.X25519,
-			},
-			PreferServerCipherSuites: true,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			},
-		}
-
-		s.TLSConfig = cfg
-		s.TLSConfig.Certificates = make([]tls.Certificate, 1)
-		s.TLSConfig.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
+func (s *Server) Serve() error {
+	if s.CertFile != "" && s.KeyFile != "" {
+		s.Scheme = "https"
+		log.Infof("Listening on %s://%s", s.Scheme, s.ListenAddress)
+		if err := s.app.ListenTLS(s.ListenAddress, s.CertFile, s.KeyFile); err != nil {
 			return err
 		}
-
-		log.Printf("Running on https://%s:%d%s", viper.GetString("bind"), viper.GetInt("port"), Path("/"))
-	} else {
-		log.Warn("**WARNING*** SSL/TLS not enabled. HTTP communication will not be encrypted and vulnerable to snooping.")
-		log.Printf("Running on http://%s:%d%s", viper.GetString("bind"), viper.GetInt("port"), Path("/"))
 	}
 
-	return e.StartServer(s)
+	s.Scheme = "http"
+	log.Infof("Listening on %s://%s", s.Scheme, s.ListenAddress)
+	if err := s.app.Listen(s.ListenAddress); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	if s.app == nil {
+		return nil
+	}
+
+	return s.app.Shutdown()
 }

@@ -1,182 +1,91 @@
 package server
 
 import (
-	"errors"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/ubccr/goipa"
 )
 
-func (h *Handler) SSHPubKey(c echo.Context) error {
-	user := c.Get(ContextKeyUser).(*ipa.UserRecord)
-	client := c.Get(ContextKeyIPAClient).(*ipa.Client)
-
-	sess, err := session.Get(CookieKeySession, c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
-	}
-
-	vars := map[string]interface{}{
-		"flashes": sess.Flashes(),
-		"user":    user,
-		"csrf":    c.Get("csrf").(string),
-	}
-
-	if c.Request().Method == "POST" {
-		idx := c.FormValue("index")
-
-		err = h.removeSSHPubKey(client, user, idx)
-		if err != nil {
-			vars["message"] = err.Error()
-		} else {
-			vars["message"] = "SSH Public Key Deleted"
-		}
-	}
-
-	sess.Save(c.Request(), c.Response())
-	return c.Render(http.StatusOK, "ssh-pubkey.html", vars)
-}
-
-func (h *Handler) NewSSHPubKey(c echo.Context) error {
-	user := c.Get(ContextKeyUser).(*ipa.UserRecord)
-
-	vars := map[string]interface{}{
+func (r *Router) SSHKeyList(c *fiber.Ctx) error {
+	user := r.user(c)
+	vars := fiber.Map{
 		"user": user,
-		"csrf": c.Get("csrf").(string),
 	}
-
-	return c.Render(http.StatusOK, "new-ssh-pubkey.html", vars)
+	return c.Render("sshkey-list.html", vars)
 }
 
-func (h *Handler) AddSSHPubKey(c echo.Context) error {
-	user := c.Get(ContextKeyUser).(*ipa.UserRecord)
-	client := c.Get(ContextKeyIPAClient).(*ipa.Client)
-
-	sess, err := session.Get(CookieKeySession, c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
-	}
-
-	vars := map[string]interface{}{
-		"user": user,
-		"csrf": c.Get("csrf").(string),
-	}
-
-	pubKey := ""
-	file, err := c.FormFile("key_file")
-	if err == nil && file.Size > 0 {
-		src, err := file.Open()
-		if err != nil {
-			log.WithFields(log.Fields{
-				"user":  string(user.Uid),
-				"error": err,
-			}).Error("Failed to open multipart file upload")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to open file")
-		}
-		defer src.Close()
-
-		data, err := ioutil.ReadAll(src)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"user": string(user.Uid),
-				"err":  err,
-			}).Error("Failed to read ssh pub key file upload")
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to read file")
-		}
-		pubKey = string(data)
-	} else {
-		pubKey = c.FormValue("key")
-	}
-
-	err = addSSHPubKey(client, user, pubKey)
-	if err == nil {
-		sess.AddFlash("SSH Public Key Added")
-		sess.Save(c.Request(), c.Response())
-		return c.Redirect(http.StatusFound, Path("/sshpubkey"))
-	}
-
-	vars["message"] = err.Error()
-
-	return c.Render(http.StatusOK, "new-ssh-pubkey.html", vars)
+func (r *Router) SSHKeyModal(c *fiber.Ctx) error {
+	vars := fiber.Map{}
+	return c.Render("sshkey-new.html", vars)
 }
 
-func addSSHPubKey(client *ipa.Client, user *ipa.UserRecord, pubKey string) error {
-	if len(pubKey) == 0 {
-		return errors.New("No ssh key provided. Please provide a valid ssh public key")
+func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
+	user := r.user(c)
+	client := r.userClient(c)
+
+	title := c.FormValue("title")
+	key := c.FormValue("key")
+
+	if key == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Please provide an ssh key")
 	}
 
-	pubKeys := make([]string, len(user.SSHPubKeys))
-	copy(pubKeys, user.SSHPubKeys)
-	found := false
-	for _, k := range pubKeys {
-		if k == pubKey {
-			found = true
-		}
-	}
-
-	if found {
-		return errors.New("ssh key already exists.")
-	}
-
-	pubKeys = append(pubKeys, pubKey)
-
-	newFps, err := client.UpdateSSHPubKeys(string(user.Uid), pubKeys)
-	if err != nil {
-		if ierr, ok := err.(*ipa.IpaError); ok {
-			// Raised when a parameter value fails a validation rule
-			if ierr.Code == 3009 {
-				return errors.New("Invalid ssh public key")
-			}
-		} else {
-			log.WithFields(log.Fields{
-				"error": err.Error(),
-				"user":  string(user.Uid),
-			}).Error("Ipa error when attempting to add new ssh public key")
-			return errors.New("Fatal system error occured.")
-		}
-	}
-
-	user.SSHPubKeys = pubKeys
-	user.SSHPubKeyFps = newFps
-
-	return nil
-}
-
-func (h *Handler) removeSSHPubKey(client *ipa.Client, user *ipa.UserRecord, idx string) error {
-	index, err := strconv.Atoi(idx)
-	if err != nil {
-		return errors.New("Invalid ssh key provided")
-	}
-	if index < 0 || index > len(user.SSHPubKeys) {
-		log.WithFields(log.Fields{
-			"user":  string(user.Uid),
-			"index": index,
-		}).Error("Invalid ssh pub key index")
-		return errors.New("Invalid ssh key provided")
-	}
-
-	pubKeys := make([]string, len(user.SSHPubKeys))
-	copy(pubKeys, user.SSHPubKeys)
-
-	// Remove key at index
-	pubKeys = append(pubKeys[:index], pubKeys[index+1:]...)
-
-	newFps, err := client.UpdateSSHPubKeys(string(user.Uid), pubKeys)
+	authKey, err := ipa.NewSSHAuthorizedKey(key)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"user":  string(user.Uid),
-			"index": index,
-			"error": err,
-		}).Error("Failed to delete ssh pub key")
-		return errors.New("Fatal error removing ssh key. Please contact your administrator")
+			"username": user.Username,
+			"err":      err,
+		}).Error("Failed to add new ssh key")
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid ssh key")
 	}
 
-	user.SSHPubKeys = pubKeys
-	user.SSHPubKeyFps = newFps
-	return nil
+	if title != "" {
+		// TODO validate title
+		authKey.Comment = title
+	}
+
+	user.AddSSHAuthorizedKey(authKey)
+
+	user, err = client.UserMod(user)
+	if err != nil {
+		return err
+	}
+
+	c.Locals(ContextKeyUser, user)
+
+	err = r.emailer.SendSSHKeyUpdatedEmail(true, user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+		}).Error("Failed to send sshkey added email")
+	}
+
+	return r.SSHKeyList(c)
+}
+
+func (r *Router) SSHKeyRemove(c *fiber.Ctx) error {
+	fp := c.FormValue("fp")
+	client := r.userClient(c)
+	user := r.user(c)
+
+	user.RemoveSSHAuthorizedKey(fp)
+
+	var err error
+	user, err = client.UserMod(user)
+	if err != nil {
+		return err
+	}
+
+	c.Locals(ContextKeyUser, user)
+
+	err = r.emailer.SendSSHKeyUpdatedEmail(false, user, c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"err":      err,
+			"username": user.Username,
+		}).Error("Failed to send sshkey removed email")
+	}
+
+	return r.SSHKeyList(c)
 }

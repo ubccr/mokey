@@ -2,244 +2,327 @@ package server
 
 import (
 	"errors"
-	"net/http"
+	"fmt"
+	"time"
 
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/v4"
-	"github.com/ory/hydra-client-go/client/admin"
+	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
+	ipa "github.com/ubccr/goipa"
 )
 
-func (h *Handler) tryAuth(uid, password string) (string, error) {
-	if len(password) == 0 {
-		return "", errors.New("Please provide a password")
-	}
-
-	client := ipa.NewDefaultClient()
-
-	err := client.RemoteLogin(uid, password)
-	if err != nil {
-		if _, ok := err.(*ipa.ErrExpiredPassword); ok {
-			return "", err
-		} else {
-			log.WithFields(log.Fields{
-				"uid":              uid,
-				"ipa_client_error": err,
-			}).Error("Failed login attempt")
-			return "", errors.New("Invalid login")
+func isBlocked(username string) bool {
+	blockUsers := viper.GetStringSlice("accounts.block_users")
+	for _, u := range blockUsers {
+		if username == u {
+			return true
 		}
 	}
 
-	// Ping to get sessionID for later use
-	_, err = client.Ping()
+	return false
+}
+
+func (r *Router) isLoggedIn(c *fiber.Ctx) (bool, error) {
+	sess, err := r.session(c)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"uid":              uid,
-			"ipa_client_error": err,
-		}).Error("Failed to ping FreeIPA")
-		return "", errors.New("Error contacting FreeIPA")
+		return false, errors.New("Failed to get session")
 	}
 
-	return client.SessionID(), nil
-}
-
-func (h *Handler) LoginPost(c echo.Context) error {
-	message := ""
-	sess, _ := session.Get(CookieKeySession, c)
-
-	uid := c.FormValue("uid")
-	password := c.FormValue("password")
-
-	sid, err := h.tryAuth(uid, password)
-	if err == nil {
-		sess.Values[CookieKeyUser] = uid
-		sess.Values[CookieKeySID] = sid
-		sess.Values[CookieKeyAuthenticated] = true
-
-		location := Path("/")
-		wyaf := sess.Values[CookieKeyWYAF]
-		if _, ok := wyaf.(string); ok {
-			location = wyaf.(string)
-		}
-		delete(sess.Values, CookieKeyWYAF)
-
-		sess.Save(c.Request(), c.Response())
-
-		return c.Redirect(http.StatusFound, location)
-	} else if _, ok := err.(*ipa.ErrExpiredPassword); ok {
-		sess.Values["uid"] = uid
-		sess.Values["password-expired"] = true
-		sess.Save(c.Request(), c.Response())
-		log.WithFields(log.Fields{
-			"uid":              uid,
-			"ipa_client_error": err,
-		}).Info("Password expired, redirecting to /auth/change")
-		return c.Redirect(http.StatusFound, Path("/auth/change"))
-	} else {
-		message = err.Error()
+	username := sess.Get(SessionKeyUsername)
+	sid := sess.Get(SessionKeySID)
+	authenticated := sess.Get(SessionKeyAuthenticated)
+	if sid == nil || username == nil || authenticated == nil {
+		return false, errors.New("Invalid session")
 	}
 
-	vars := map[string]interface{}{
-		"csrf":               c.Get("csrf").(string),
-		"globus":             viper.GetBool("globus_signup"),
-		"enable_user_signup": viper.GetBool("enable_user_signup"),
-		"message":            message}
-
-	return c.Render(http.StatusOK, "login.html", vars)
-}
-
-func (h *Handler) LoginGet(c echo.Context) error {
-	sess, _ := session.Get(CookieKeySession, c)
-
-	vars := map[string]interface{}{
-		"csrf":               c.Get("csrf").(string),
-		"globus":             viper.GetBool("globus_signup"),
-		"enable_user_signup": viper.GetBool("enable_user_signup"),
-		"success":            sess.Flashes("success"),
+	if _, ok := username.(string); !ok {
+		return false, errors.New("Invalid user in session")
 	}
 
-	sess.Save(c.Request(), c.Response())
-
-	return c.Render(http.StatusOK, "login.html", vars)
-}
-
-func (h *Handler) ChangePost(c echo.Context) error {
-	message := ""
-	sess, _ := session.Get(CookieKeySession, c)
-
-	expired := sess.Values["password-expired"]
-
-	if expired == nil || sess.Values["uid"] == nil || !expired.(bool) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Access denied.")
+	if _, ok := sid.(string); !ok {
+		return false, errors.New("Invalid sid in session")
 	}
 
-	user, uerr := h.client.UserShow(sess.Values["uid"].(string))
-	if uerr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Could not retrieve user.")
-	}
-
-	uid := sess.Values["uid"].(string)
-	current := c.FormValue("password")
-	pass := c.FormValue("new_password")
-	pass2 := c.FormValue("new_password2")
-	challenge := c.FormValue("challenge")
-
-	err := h.setPassword(uid, current, pass, pass2, challenge)
-	if err != nil {
-		message = err.Error()
-	} else {
-		sess.AddFlash("Password successfully changed!", "success")
-		delete(sess.Values, "password-expired")
-		delete(sess.Values, "uid")
-		sess.Save(c.Request(), c.Response())
-		return c.Redirect(http.StatusFound, Path("/auth/login"))
-	}
-
-	vars := map[string]interface{}{
-		"csrf":               c.Get("csrf").(string),
-		"globus":             viper.GetBool("globus_signup"),
-		"enable_user_signup": viper.GetBool("enable_user_signup"),
-		"message":            message,
-		"uid":                uid,
-		"otponly":            user.OTPOnly(),
-	}
-
-	return c.Render(http.StatusOK, "change.html", vars)
-}
-
-func (h *Handler) ChangeGet(c echo.Context) error {
-	sess, _ := session.Get(CookieKeySession, c)
-
-	expired := sess.Values["password-expired"]
-
-	if expired == nil || sess.Values["uid"] == nil || !expired.(bool) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Access denied.")
-	}
-
-	user, err := h.client.UserShow(sess.Values["uid"].(string))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Could not retrieve user.")
-	}
-
-	vars := map[string]interface{}{
-		"csrf":               c.Get("csrf").(string),
-		"globus":             viper.GetBool("globus_signup"),
-		"enable_user_signup": viper.GetBool("enable_user_signup"),
-		"uid":                sess.Values["uid"],
-		"otponly":            user.OTPOnly(),
-	}
-
-	return c.Render(http.StatusOK, "change.html", vars)
-}
-
-func (h *Handler) Logout(c echo.Context) error {
-	err := h.revokeHydraAuthenticationSession(c)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Warn("Logout - Failed to revoke hydra authentication session")
-	}
-
-	logout(c)
-	return c.Redirect(http.StatusFound, Path("/auth/login"))
-}
-
-func (h Handler) revokeHydraAuthenticationSession(c echo.Context) error {
-	if !viper.IsSet("hydra_admin_url") {
-		return nil
-	}
-
-	sess, err := session.Get(CookieKeySession, c)
-	if err != nil {
-		return err
-	}
-
-	sid := sess.Values[CookieKeySID]
-	user := sess.Values[CookieKeyUser]
-
-	if sid == nil || user == nil {
-		return errors.New("No sid or user found in session")
-	}
-
-	if _, ok := user.(string); !ok {
-		return errors.New("User is not a string")
+	if isAuthed, ok := authenticated.(bool); !ok || !isAuthed {
+		return false, errors.New("User is not authenticated in session")
 	}
 
 	client := ipa.NewDefaultClientWithSession(sid.(string))
-
-	userRec, err := client.UserShow(user.(string))
+	user, err := client.UserShow(username.(string))
 	if err != nil {
-		return err
+		return false, fmt.Errorf("Failed to refresh FreeIPA user session: %w", err)
 	}
 
-	params := admin.NewRevokeAuthenticationSessionParams()
-	params.SetSubject(string(userRec.Uid))
-	params.SetHTTPClient(h.hydraAdminHTTPClient)
-	_, err = h.hydraClient.Admin.RevokeAuthenticationSession(params)
+	c.Locals(ContextKeyUsername, username)
+	c.Locals(ContextKeyUser, user)
+	c.Locals(ContextKeyIPAClient, client)
+
+	// Update session expiry time
+	sess.SetExpiry(time.Duration(viper.GetInt("server.session_idle_timeout")) * time.Second)
+
+	sess.Save()
+
+	return true, nil
+}
+
+func (r *Router) Login(c *fiber.Ctx) error {
+	vars := fiber.Map{}
+	return c.Render("login.html", vars)
+}
+
+func (r *Router) Logout(c *fiber.Ctx) error {
+	return r.redirectLogin(c)
+}
+
+func (r *Router) logout(c *fiber.Ctx) {
+	sess, err := r.session(c)
 	if err != nil {
-		return err
+		return
+	}
+
+	username := sess.Get(SessionKeyUsername)
+	if username != nil {
+		log.WithFields(log.Fields{
+			"username": username,
+			"ip":       RemoteIP(c),
+			"path":     c.Path(),
+		}).Info("User logging out")
+	}
+
+	if err := sess.Destroy(); err != nil {
+		log.WithFields(log.Fields{
+			"username": username,
+			"ip":       RemoteIP(c),
+			"path":     c.Path(),
+			"err":      err,
+		}).Error("Logout failed to destroy session")
+	}
+
+	if viper.IsSet("hydra.admin_url") {
+		if _, ok := username.(string); ok {
+			err := r.revokeHydraAuthenticationSession(username.(string), c)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Error("Logout failed to revoke hydra authentication session")
+			}
+		}
+	}
+}
+
+func (r *Router) redirectLogin(c *fiber.Ctx) error {
+	r.logout(c)
+
+	if c.Get("HX-Request", "false") == "true" {
+		c.Set("HX-Redirect", "/auth/login")
+		return c.Status(fiber.StatusNoContent).SendString("")
+	}
+
+	return c.Redirect("/auth/login")
+}
+
+func (r *Router) RequireNoLogin(c *fiber.Ctx) error {
+	if ok, _ := r.isLoggedIn(c); ok {
+		if c.Get("HX-Request", "false") == "true" {
+			c.Set("HX-Redirect", "/")
+			return c.Status(fiber.StatusNoContent).SendString("")
+		}
+
+		return c.Redirect("/")
+	}
+
+	return c.Next()
+}
+
+func (r *Router) RequireLogin(c *fiber.Ctx) error {
+	if ok, err := r.isLoggedIn(c); !ok {
+		log.WithFields(log.Fields{
+			"path":  c.Path(),
+			"ip":    RemoteIP(c),
+			"error": err,
+		}).Info("Login required and no authenticated session found.")
+		return r.redirectLogin(c)
+	}
+
+	return c.Next()
+}
+
+func (r *Router) RequireMFA(c *fiber.Ctx) error {
+	if !viper.GetBool("accounts.require_mfa") {
+		return c.Next()
+	}
+
+	user := r.user(c)
+	if !user.OTPOnly() {
+		return c.Status(fiber.StatusUnauthorized).SendString("You must enable Two-Factor Authentication first!")
+	}
+
+	return c.Next()
+}
+
+func (r *Router) CheckUser(c *fiber.Ctx) error {
+	username := c.FormValue("username")
+
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Please provide a username")
+	}
+
+	if isBlocked(username) {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("AUDIT User account is blocked from logging in")
+		r.metrics.totalFailedLogins.Inc()
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
+	}
+
+	userRec, err := r.adminClient.UserShow(username)
+	if err != nil {
+		if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4001 {
+			log.WithFields(log.Fields{
+				"error":    ierr,
+				"username": username,
+			}).Warn("Username not found in FreeIPA")
+			r.metrics.totalFailedLogins.Inc()
+			return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
+		}
+
+		log.WithFields(log.Fields{
+			"error":    err,
+			"username": username,
+		}).Error("Failed to fetch user info from FreeIPA")
+		r.metrics.totalFailedLogins.Inc()
+		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
+	}
+
+	if userRec.Locked {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("AUDIT User account is locked in FreeIPA")
+		r.metrics.totalFailedLogins.Inc()
+		return c.Status(fiber.StatusUnauthorized).SendString("User account is locked")
 	}
 
 	log.WithFields(log.Fields{
-		"user": userRec.Uid,
-	}).Info("Successfully revoked hydra authentication session")
+		"username": username,
+		"ip":       RemoteIP(c),
+	}).Info("Login user attempt")
 
-	return nil
+	vars := fiber.Map{
+		"user":      userRec,
+		"challenge": c.FormValue("challenge"),
+	}
+
+	return c.Render("login-form.html", vars)
 }
 
-func logout(c echo.Context) {
-	sess, _ := session.Get(CookieKeySession, c)
-	delete(sess.Values, CookieKeySID)
-	delete(sess.Values, CookieKeyUser)
-	delete(sess.Values, CookieKeyAuthenticated)
-	delete(sess.Values, CookieKeyWYAF)
-	delete(sess.Values, CookieKeyGlobus)
-	delete(sess.Values, CookieKeyGlobusUsername)
-	delete(sess.Values, "password-expired")
-	delete(sess.Values, "uid")
-	sess.Options.MaxAge = -1
+func (r *Router) Authenticate(c *fiber.Ctx) error {
+	username := c.FormValue("username")
+	password := c.FormValue("password")
+	challenge := c.FormValue("challenge")
+	otp := c.FormValue("otp")
 
-	sess.Save(c.Request(), c.Response())
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Please provide a username")
+	}
+
+	if password == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("Please provide a password")
+	}
+
+	if isBlocked(username) {
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Warn("AUDIT User account is blocked from logging in")
+		r.metrics.totalFailedLogins.Inc()
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+	}
+
+	client := ipa.NewDefaultClient()
+	err := client.RemoteLogin(username, password+otp)
+	if err != nil {
+		switch {
+		case errors.Is(err, ipa.ErrExpiredPassword):
+			log.WithFields(log.Fields{
+				"username": username,
+				"err":      err,
+			}).Info("Password expired, forcing change")
+
+			sess, err := r.session(c)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("")
+			}
+
+			err = sess.Regenerate()
+			if err != nil {
+				return err
+			}
+
+			sess.Set(SessionKeyAuthenticated, false)
+			sess.Set(SessionKeyUsername, username)
+
+			if err := r.sessionSave(c, sess); err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("")
+			}
+
+			userRec, err := r.adminClient.UserShow(username)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).SendString("")
+			}
+
+			vars := fiber.Map{
+				"username": username,
+				"user":     userRec,
+			}
+			return c.Render("login-password-expired.html", vars)
+		default:
+			log.WithFields(log.Fields{
+				"username": username,
+				"ip":       RemoteIP(c),
+				"err":      err,
+			}).Error("AUDIT Failed login attempt")
+			r.metrics.totalFailedLogins.Inc()
+			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+		}
+	}
+
+	_, err = client.Ping()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username": username,
+			"err":      err,
+		}).Error("Failed to ping FreeIPA")
+		r.metrics.totalFailedLogins.Inc()
+		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+	}
+
+	sess, err := r.session(c)
+	if err != nil {
+		return err
+	}
+
+	err = sess.Regenerate()
+	if err != nil {
+		return err
+	}
+
+	sess.Set(SessionKeyAuthenticated, true)
+	sess.Set(SessionKeyUsername, username)
+	sess.Set(SessionKeySID, client.SessionID())
+
+	if err := r.sessionSave(c, sess); err != nil {
+		return err
+	}
+
+	if viper.IsSet("hydra.admin_url") && challenge != "" {
+		return r.LoginOAuthPost(username, challenge, c)
+	}
+
+	log.WithFields(log.Fields{
+		"username": username,
+		"ip":       RemoteIP(c),
+	}).Info("AUDIT User logged in successfully")
+	r.metrics.totalLogins.Inc()
+
+	c.Set("HX-Redirect", "/")
+	return c.Status(fiber.StatusNoContent).SendString("")
 }

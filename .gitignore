@@ -1,3 +1,9 @@
 mokey.yaml
+mokey.toml
+mokey.db
 mokey
-vendor/
+.env
+dist/
+key.gpg
+mokey-*.tar.gz
+*.swp

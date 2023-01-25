@@ -1,0 +1,24 @@
+Thanks for creating an account at [{{ $.site_name }}]. We've pulled together some information and resources to help you get started.
+
+[{{ $.site_name }}] ( {{$.homepage}} )
+
+******************
+Welcome, {{$.user.First}}!
+******************
+
+Thanks for creating an account at [{{$.site_name}}]. We're glad to have you on board. {{ if ConfigValueBool "accounts.require_mfa" }}You MUST enabled Two-Factor authentication on your account. Please login and create a new OTP token using your authenticator app.{{ end }} To get the most out of [{{$.site_name}}], check out our getting started guide here:
+
+Getting started ( {{ $.getting_started_url }} )
+
+For reference, here's your login information:
+
+Login Page: {{$.base_url}}
+
+Username: {{$.user.Username}}
+
+If you have any questions, feel free to email support ( {{ $.contact }} ). Also check out our help documentation ( {{ $.help_url }} ) if you have questions.
+
+Thanks,
+The [{{ $.site_name }}] team
+
+{{ $.sig }}

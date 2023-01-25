@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Copyright 2016--2018 Jan Pazdziora
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+
+# Prepare HBAC rules for services webapp and idp, and OTPs for IPA clients.
+
+set -e
+
+exec >> /var/log/ipa-server-run.log 2>&1
+
+HOSTS="client.mokey.local"
+for i in $HOSTS ; do
+	if ! [ -f /data/$i-otp ] ; then
+		echo "Creating host record for $i"
+		klist > /dev/null || kinit admin < /data/admin-password
+		(
+		set -x
+		ipa host-find $i > /dev/null && ipa host-del $i
+		ipa host-add --random $i --force --raw | awk '/randompassword:/ { print $2 }' > /data/$i-otp.1
+		ipa service-add --force HTTP/$i
+		mv /data/$i-otp.1 /data/$i-otp
+		)
+	fi
+done
+
+kdestroy -A
