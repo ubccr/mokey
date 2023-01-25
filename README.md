@@ -1,5 +1,3 @@
-![Mokey](docs/mokey-logo.png)
-
 # FreeIPA self-service account management tool
 
 ## What is mokey?
@@ -37,21 +35,33 @@ and can make your systems vulnerable to abuse.
 ## Requirements
 
 - FreeIPA v4.5.0
-- Linux x86_64 (CentOS 7.x preferred)
+- Linux x86_64 
 - Redis (optional)
 - Hydra v1.0.0 (optional)
-
-## Upgrading
-
-Update to latest rpm release::
-
-    $ rpm -Uvh mokey-0.x.x-x.el7.centos.x86_64.rpm
 
 ## Install
 
 Note: mokey needs to be installed on a machine already enrolled in FreeIPA.
-It's also recommended to have the ipa-admintools package installed. Enrolling
-a host in FreeIPA is outside the scope of this document.
+It's also recommended to have the ipa-admintools package installed. Enrolling a
+host in FreeIPA is outside the scope of this document.
+
+To install mokey download a copy of the pre-compiled binary [here](https://github.com/ubccr/mokey/releases).
+
+tar.gz archive:
+
+```
+$ tar xvzf mokey-VERSION-linux-x86_64.tar.gz 
+```
+
+deb, rpm packages:
+
+```
+$ sudo dpkg -i mokey_VERSION_amd64.deb
+
+$ sudo rpm -ivh mokey-VERSION-amd64.rpm
+```
+
+## Setup and configuration
 
 Create a user account and role in FreeIPA with the "Modify users and Reset
 passwords" privilege. This user account will be used by the mokey application
@@ -110,7 +120,13 @@ To configure the Hydra login/consent flow set the following variables in
 `/etc/mokey/mokey.toml`:
 
 ```
-hydra_admin_url: "https://localhost:4444"
+#------------------------------------------------------------------------------
+# Hydra config
+#------------------------------------------------------------------------------
+[hydra]
+admin_url = "http://127.0.0.1:4445"
+login_timeout = 86400
+fake_tls_termination = true
 ```
 
 Any OAuth clients configured in Hydra will be authenticated via mokey using
@@ -119,7 +135,7 @@ application see [here](examples/mokey-oidc/main.go).
 
 ## Building from source
 
-First, you will need Go v1.13 or greater. Clone the repository:
+First, you will need Go v1.19 or greater. Clone the repository:
 
 ```
 $ git clone https://github.com/ubccr/mokey
