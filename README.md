@@ -80,11 +80,16 @@ $ chmod 640 /etc/mokey/private/mokeyapp.keytab
 $ chgrp mokey /etc/mokey/private/mokeyapp.keytab
 ```
 
-Edit mokey configuration file:
+Edit mokey configuration file and set secrets and other config options:
 
 ```
 $ vim /etc/mokey/mokey.toml
-[ edit to taste ]
+# Secret key for branca tokens. Must be 32 bytes. To generate run:
+#    openssl rand -hex 32 
+token_secret = ""
+
+# CSRF token secret key. Should be a random string
+csrf_secret = ""
 ```
 
 It's highly recommended to run mokey using HTTPS. You'll need an SSL

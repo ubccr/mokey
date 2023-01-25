@@ -39,10 +39,13 @@ css = ""
 # static_assets_dir = "/usr/share/mokey/assets"
 
 # User account for the mokey service
-# ktuser = "mokeyapp"
+ktuser = "mokeyapp"
 
 # Path to keytab file
-# keytab = "/srv/mokey/private/mokey.keytab"
+keytab = "/etc/mokey/private/mokeyapp.keytab"
+
+# Path to logo
+# logo = "/etc/mokey/assets/my-logo.png"
 
 #------------------------------------------------------------------------------
 # User account settings
@@ -64,7 +67,7 @@ min_passwd_len = 8
 min_passwd_classes = 2
 
 # Hash algorithm for generating OTP tokens: sha1, sha256, or sha512
-otp_hash_algorithm = "sha256"
+otp_hash_algorithm = "sha1"
 
 # Custom issuer name for OTP tokens. This creates a nice name for importing into authenticator apps 
 otp_issuer = "MYORG"
@@ -95,14 +98,14 @@ require_mfa = false
 # Base URL used for email links. This should be the URL where mokey is being
 # hosted and defaults to the hostname used in the http request. Set this value
 # to hard code the base_url.
-base_url = "https://localhost"
+# base_url = "https://localhost"
 
 # Max lifetime of branca tokens used for password resets and account verify
 token_max_age = 3600
 
 # Secret key for branca tokens. Must be 32 bytes. To generate run:
 #    openssl rand -hex 32 
-# token_secret = ""
+token_secret = ""
 
 # Hostname for smtp server
 smtp_host = "localhost"
@@ -143,7 +146,7 @@ session_idle_timeout = 900
 secure_cookies = true
 
 # CSRF token secret key. Should be a random string
-# csrf_secret = ""
+csrf_secret = ""
 
 # Timeouts
 read_timeout = 5
