@@ -1,5 +1,19 @@
 # Mokey ChangeLog
 
+## [v0.6.0] - 2023-01-25
+
+- Major re-write. New login flow and template layout
+- Upgrade to bootstrap 5
+- Remove database dependency
+- Switch to using Fiber web framework and htmx frontend
+- New email text/html templates
+- Add terms of service url to sign up page [#97](https://github.com/ubccr/mokey/issues/97)
+- Add better messaging for disabled user at login [#22](https://github.com/ubccr/mokey/issues/22)
+- Notification email sent anytime account updated [#82](https://github.com/ubccr/mokey/issues/82)
+- Allow configuring default hash algorithm for OTP [#99](https://github.com/ubccr/mokey/issues/99)
+- Add user block list [#83](https://github.com/ubccr/mokey/issues/83)
+- Make server timeouts configurable [#109](https://github.com/ubccr/mokey/issues/109)
+
 ## [v0.5.6] - 2021-05-18
 
 - Add config option to replace unexpired password tokens
@@ -93,3 +107,4 @@
 [v0.5.4]: https://github.com/ubccr/mokey/releases/tag/v0.5.4
 [v0.5.5]: https://github.com/ubccr/mokey/releases/tag/v0.5.5
 [v0.5.6]: https://github.com/ubccr/mokey/releases/tag/v0.5.6
+[v0.6.0]: https://github.com/ubccr/mokey/releases/tag/v0.6.0
