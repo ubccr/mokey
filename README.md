@@ -80,10 +80,14 @@ $ chmod 640 /etc/mokey/private/mokeyapp.keytab
 $ chgrp mokey /etc/mokey/private/mokeyapp.keytab
 ```
 
-Edit mokey configuration file and set secrets and other config options:
+Edit mokey configuration file and set path to keytab file, optionally set
+secrets and any other site specific config options:
 
 ```
 $ vim /etc/mokey/mokey.toml
+# Path to keytab file
+keytab = "/etc/mokey/private/mokeyapp.keytab"
+
 # Secret key for branca tokens. Must be 32 bytes. To generate run:
 #    openssl rand -hex 32 
 token_secret = ""

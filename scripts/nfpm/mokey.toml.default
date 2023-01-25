@@ -25,7 +25,7 @@ tos_url = ""
 ktuser = "mokeyapp"
 
 # Path to keytab file
-# keytab = "/etc/mokey/private/mokey.keytab"
+keytab = "/etc/mokey/private/mokeyapp.keytab"
 
 #------------------------------------------------------------------------------
 # User account settings
