@@ -20,9 +20,7 @@ mokey should be considered alpha software and used at your own risk. There are
 inherent security risks in providing features like self-service password resets
 and can make your systems vulnerable to abuse.
 
-------------------------------------------------------------------------
 ## Features
-------------------------------------------------------------------------
 
 - Account Signup
 - Forgot/Change Password
@@ -120,9 +118,6 @@ To configure the Hydra login/consent flow set the following variables in
 `/etc/mokey/mokey.toml`:
 
 ```
-#------------------------------------------------------------------------------
-# Hydra config
-#------------------------------------------------------------------------------
 [hydra]
 admin_url = "http://127.0.0.1:4445"
 login_timeout = 86400
