@@ -15,7 +15,6 @@ import (
 
 func (r *Router) AccountSettings(c *fiber.Ctx) error {
 	user := r.user(c)
-	client := r.userClient(c)
 
 	vars := fiber.Map{
 		"user": user,
@@ -29,7 +28,7 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 	user.Last = c.FormValue("last")
 	user.Mobile = c.FormValue("phone")
 
-	userUpdated, err = r.adminClient.UserMod(user)
+	userUpdated, err := r.adminClient.UserMod(user)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
