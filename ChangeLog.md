@@ -1,5 +1,10 @@
 # Mokey ChangeLog
 
+## [v0.6.1] - 2023-01-26
+
+- Fix account settings update bug
+- Add hydra login prometheus counters
+
 ## [v0.6.0] - 2023-01-25
 
 - Major re-write. New login flow and template layout
@@ -108,3 +113,4 @@
 [v0.5.5]: https://github.com/ubccr/mokey/releases/tag/v0.5.5
 [v0.5.6]: https://github.com/ubccr/mokey/releases/tag/v0.5.6
 [v0.6.0]: https://github.com/ubccr/mokey/releases/tag/v0.6.0
+[v0.6.1]: https://github.com/ubccr/mokey/releases/tag/v0.6.1
