@@ -13,6 +13,8 @@ type Metrics struct {
 	handler                       fasthttp.RequestHandler
 	totalLogins                   prometheus.Counter
 	totalFailedLogins             prometheus.Counter
+	totalHydraLogins              prometheus.Counter
+	totalHydraFailedLogins        prometheus.Counter
 	totalSignups                  prometheus.Counter
 	totalPasswordResets           prometheus.Counter
 	totalPasswordResetsSent       prometheus.Counter
@@ -29,6 +31,14 @@ func NewMetrics() *Metrics {
 		totalFailedLogins: promauto.NewCounter(prometheus.CounterOpts{
 			Name: "mokey_logins_failed_total",
 			Help: "The total number of failed logins",
+		}),
+		totalHydraLogins: promauto.NewCounter(prometheus.CounterOpts{
+			Name: "mokey_hydra_logins_total",
+			Help: "The total number of successful Hydra logins",
+		}),
+		totalHydraFailedLogins: promauto.NewCounter(prometheus.CounterOpts{
+			Name: "mokey_hydra_logins_failed_total",
+			Help: "The total number of failed Hydra logins",
 		}),
 		totalSignups: promauto.NewCounter(prometheus.CounterOpts{
 			Name: "mokey_signups_total",
