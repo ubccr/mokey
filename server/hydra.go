@@ -158,7 +158,6 @@ func (r *Router) LoginOAuthGet(c *fiber.Ctx) error {
 		log.WithFields(log.Fields{
 			"username": *login.Subject,
 		}).Debug("Hydra OAuth login GET challenge signed successfully")
-		r.metrics.totalHydraLogins.Inc()
 
 		c.Set("HX-Redirect", *completedResponse.Payload.RedirectTo)
 		return c.Redirect(*completedResponse.Payload.RedirectTo)
