@@ -29,7 +29,7 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 	user.Last = c.FormValue("last")
 	user.Mobile = c.FormValue("phone")
 
-	userUpdated, err := client.UserMod(user)
+	userUpdated, err = r.adminClient.UserMod(user)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
 			log.WithFields(log.Fields{
@@ -37,7 +37,7 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 				"message":  ierr.Message,
 				"code":     ierr.Code,
 			}).Error("Failed to update account settings")
-			vars["message"] = ierr.Message
+			vars["message"] = "Failed to save account settings"
 		} else {
 			log.WithFields(log.Fields{
 				"username": user.Username,
