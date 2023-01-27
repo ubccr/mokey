@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/ubccr/goipa"
+	ipa "github.com/ubccr/goipa"
 )
 
 func (r *Router) SSHKeyList(c *fiber.Ctx) error {
@@ -21,7 +21,6 @@ func (r *Router) SSHKeyModal(c *fiber.Ctx) error {
 
 func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 	user := r.user(c)
-	client := r.userClient(c)
 
 	title := c.FormValue("title")
 	key := c.FormValue("key")
@@ -46,7 +45,7 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 
 	user.AddSSHAuthorizedKey(authKey)
 
-	user, err = client.UserMod(user)
+	user, err = r.adminClient.UserMod(user)
 	if err != nil {
 		return err
 	}
@@ -66,13 +65,12 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 
 func (r *Router) SSHKeyRemove(c *fiber.Ctx) error {
 	fp := c.FormValue("fp")
-	client := r.userClient(c)
 	user := r.user(c)
 
 	user.RemoveSSHAuthorizedKey(fp)
 
 	var err error
-	user, err = client.UserMod(user)
+	user, err = r.adminClient.UserMod(user)
 	if err != nil {
 		return err
 	}
