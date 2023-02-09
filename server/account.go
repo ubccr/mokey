@@ -25,9 +25,14 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 		return c.Render("account.html", vars)
 	}
 
-	user.First = c.FormValue("first")
-	user.Last = c.FormValue("last")
-	user.Mobile = c.FormValue("phone")
+	user.First = strings.TrimSpace(c.FormValue("first"))
+	user.Last = strings.TrimSpace(c.FormValue("last"))
+	user.Mobile = strings.TrimSpace(c.FormValue("phone"))
+
+	if user.First == "" || user.Last == "" {
+		vars["message"] = "Please provide a first and last name"
+		return c.Render("account.html", vars)
+	}
 
 	userUpdated, err := r.adminClient.UserMod(user)
 	if err != nil {
