@@ -80,8 +80,10 @@ $ chmod 640 /etc/mokey/private/mokeyapp.keytab
 $ chgrp mokey /etc/mokey/private/mokeyapp.keytab
 ```
 
-Edit mokey configuration file and set path to keytab file, optionally set
-secrets and any other site specific config options:
+Edit mokey configuration file and set path to keytab file. The values for
+`token_secret` and `csrf_secret` will be automatically generated for you if
+left blank. Set these secret values if you'd like sessions to persist after a restart.
+For other site specific config options [see here](https://github.com/ubccr/mokey/blob/main/mokey.toml.sample):
 
 ```
 $ vim /etc/mokey/mokey.toml
