@@ -16,7 +16,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/mileusna/useragent v1.2.0
-	github.com/ory/hydra-client-go v1.9.2
+	github.com/ory/hydra-client-go v1.10.6
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/pquerna/otp v1.3.0
