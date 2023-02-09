@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/dchest/captcha"
@@ -62,10 +63,10 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 	}
 
 	user := &ipa.User{}
-	user.Username = c.FormValue("username")
-	user.Email = c.FormValue("email")
-	user.First = c.FormValue("first")
-	user.Last = c.FormValue("last")
+	user.Username = strings.TrimSpace(c.FormValue("username"))
+	user.Email = strings.TrimSpace(c.FormValue("email"))
+	user.First = strings.TrimSpace(c.FormValue("first"))
+	user.Last = strings.TrimSpace(c.FormValue("last"))
 	password := c.FormValue("password")
 	passwordConfirm := c.FormValue("password2")
 	captchaID := c.FormValue("captcha_id")
