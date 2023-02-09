@@ -170,7 +170,7 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 		"first":    userRec.First,
 		"last":     userRec.Last,
 		"homedir":  userRec.HomeDir,
-	}).Warn("New user account created")
+	}).Debug("New user account created")
 
 	// Disable new users until they have verified their email address
 	err = r.adminClient.UserDisable(userRec.Username)

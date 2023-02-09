@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	golog "log"
 	"os"
@@ -15,9 +16,7 @@ import (
 var (
 	cfgFile     string
 	cfgFileUsed string
-	trace       bool
-	debug       bool
-	verbose     bool
+	logLevel    string
 
 	Root = &cobra.Command{
 		Use:     "mokey",
@@ -37,9 +36,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	Root.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file")
-	Root.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug messages")
-	Root.PersistentFlags().BoolVar(&trace, "trace", false, "Enable trace messages")
-	Root.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable verbose messages")
+	Root.PersistentFlags().StringVar(&logLevel, "loglevel", "info", "Set log level")
 
 	Root.PersistentPreRunE = func(command *cobra.Command, args []string) error {
 		return SetupLogging()
@@ -47,15 +44,21 @@ func init() {
 }
 
 func SetupLogging() error {
-	if trace {
+	switch logLevel {
+	case "trace":
 		logrus.SetLevel(logrus.TraceLevel)
-	} else if debug {
+	case "debug":
 		logrus.SetLevel(logrus.DebugLevel)
-	} else if verbose {
+	case "info":
 		logrus.SetLevel(logrus.InfoLevel)
-	} else {
+	case "warn":
 		logrus.SetLevel(logrus.WarnLevel)
+	case "error":
+		logrus.SetLevel(logrus.ErrorLevel)
+	default:
+		return fmt.Errorf("Unknown log level: %s", logLevel)
 	}
+
 	golog.SetOutput(ioutil.Discard)
 
 	if cfgFileUsed != "" {
