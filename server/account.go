@@ -34,6 +34,11 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 		return c.Render("account.html", vars)
 	}
 
+	if len(user.First) > 150 || len(user.Last) > 150 {
+		vars["message"] = "First or Last name is too long. Maximum of 150 chars allowed"
+		return c.Render("account.html", vars)
+	}
+
 	userUpdated, err := r.adminClient.UserMod(user)
 	if err != nil {
 		if ierr, ok := err.(*ipa.IpaError); ok {
@@ -117,12 +122,16 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 		return err
 	}
 
-	if user.First == "" || len(user.First) > 150 {
-		return errors.New("Please provide your first name")
+	if user.First == "" || user.Last == "" {
+		return errors.New("Please provide your first and last name")
 	}
 
-	if user.Last == "" || len(user.Last) > 150 {
-		return errors.New("Please provide your last name")
+	if len(user.First) > 150 {
+		return errors.New("First name is too long. Maximum of 150 chars allowed")
+	}
+
+	if len(user.Last) > 150 {
+		return errors.New("Last name is too long. Maximum of 150 chars allowed")
 	}
 
 	if err := validatePassword(password, passwordConfirm); err != nil {
