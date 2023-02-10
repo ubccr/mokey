@@ -177,7 +177,7 @@ func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string
 	log.WithFields(log.Fields{
 		"email":    user.Email,
 		"username": user.Username,
-	}).Info("Sending email to user")
+	}).Debug("Sending email to user")
 
 	if data == nil {
 		data = make(map[string]interface{})

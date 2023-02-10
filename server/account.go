@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/dchest/captcha"
@@ -24,9 +25,19 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 		return c.Render("account.html", vars)
 	}
 
-	user.First = c.FormValue("first")
-	user.Last = c.FormValue("last")
-	user.Mobile = c.FormValue("phone")
+	user.First = strings.TrimSpace(c.FormValue("first"))
+	user.Last = strings.TrimSpace(c.FormValue("last"))
+	user.Mobile = strings.TrimSpace(c.FormValue("phone"))
+
+	if user.First == "" || user.Last == "" {
+		vars["message"] = "Please provide a first and last name"
+		return c.Render("account.html", vars)
+	}
+
+	if len(user.First) > 150 || len(user.Last) > 150 {
+		vars["message"] = "First or Last name is too long. Maximum of 150 chars allowed"
+		return c.Render("account.html", vars)
+	}
 
 	userUpdated, err := r.adminClient.UserMod(user)
 	if err != nil {
@@ -62,10 +73,10 @@ func (r *Router) AccountCreate(c *fiber.Ctx) error {
 	}
 
 	user := &ipa.User{}
-	user.Username = c.FormValue("username")
-	user.Email = c.FormValue("email")
-	user.First = c.FormValue("first")
-	user.Last = c.FormValue("last")
+	user.Username = strings.TrimSpace(c.FormValue("username"))
+	user.Email = strings.TrimSpace(c.FormValue("email"))
+	user.First = strings.TrimSpace(c.FormValue("first"))
+	user.Last = strings.TrimSpace(c.FormValue("last"))
 	password := c.FormValue("password")
 	passwordConfirm := c.FormValue("password2")
 	captchaID := c.FormValue("captcha_id")
@@ -111,12 +122,16 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 		return err
 	}
 
-	if user.First == "" || len(user.First) > 150 {
-		return errors.New("Please provide your first name")
+	if user.First == "" || user.Last == "" {
+		return errors.New("Please provide your first and last name")
 	}
 
-	if user.Last == "" || len(user.Last) > 150 {
-		return errors.New("Please provide your last name")
+	if len(user.First) > 150 {
+		return errors.New("First name is too long. Maximum of 150 chars allowed")
+	}
+
+	if len(user.Last) > 150 {
+		return errors.New("Last name is too long. Maximum of 150 chars allowed")
 	}
 
 	if err := validatePassword(password, passwordConfirm); err != nil {
@@ -155,7 +170,7 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 		"first":    userRec.First,
 		"last":     userRec.Last,
 		"homedir":  userRec.HomeDir,
-	}).Warn("New user account created")
+	}).Debug("New user account created")
 
 	// Disable new users until they have verified their email address
 	err = r.adminClient.UserDisable(userRec.Username)
