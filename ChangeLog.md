@@ -1,5 +1,13 @@
 # Mokey ChangeLog
 
+## [v0.6.3] - 2023-02-09
+
+- Update fiber
+- Update hydra go client
+- Trim spaces in names when creating/updating account
+- Add better error messages for name length
+- Add ability to better control log level
+
 ## [v0.6.2] - 2023-01-26
 
 - Fix sshpubkey update bug
@@ -119,3 +127,4 @@
 [v0.6.0]: https://github.com/ubccr/mokey/releases/tag/v0.6.0
 [v0.6.1]: https://github.com/ubccr/mokey/releases/tag/v0.6.1
 [v0.6.2]: https://github.com/ubccr/mokey/releases/tag/v0.6.2
+[v0.6.3]: https://github.com/ubccr/mokey/releases/tag/v0.6.3
