@@ -117,8 +117,8 @@ smtp_port = 25
 smtp_tls = "off"
 
 # SMTP Authentication Credentials
-smtp_username = ""
-smtp_password = ""
+#smtp_username = ""
+#smtp_password = ""
 
 # Email signature to append to end of all emails
 signature = ""
