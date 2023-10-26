@@ -91,6 +91,10 @@ username_from_email = false
 # Two-Factor authentication.
 require_mfa = false
 
+# Require FreeIPA admin to activate the account. With this option enabled new
+# accounts are disabled by default until a FreeIPA admin activates them.
+require_admin_verify = false
+
 #------------------------------------------------------------------------------
 # Email
 #------------------------------------------------------------------------------

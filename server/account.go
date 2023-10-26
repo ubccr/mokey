@@ -215,7 +215,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
 	}
 
-	if user.Locked {
+	if user.Locked && !viper.GetBool("accounts.require_admin_verify") {
 		err := r.adminClient.UserEnable(claims.Username)
 		if err != nil {
 			log.WithFields(log.Fields{
