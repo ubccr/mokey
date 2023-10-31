@@ -295,7 +295,7 @@ func (r *Router) AccountVerifyResend(c *fiber.Ctx) error {
 		return c.Render("account-verify-forgot-success.html", fiber.Map{})
 	}
 
-	if !user.Locked {
+	if !user.Locked && !viper.GetBool("accounts.require_admin_verify") {
 		log.WithFields(log.Fields{
 			"username": username,
 		}).Warn("Account verify resend attempt for active user")
