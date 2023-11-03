@@ -47,6 +47,7 @@ func SetDefaults() {
 	viper.SetDefault("accounts.otp_hash_algorithm", "sha1")
 	viper.SetDefault("accounts.username_from_email", false)
 	viper.SetDefault("accounts.require_mfa", false)
+	viper.SetDefault("accounts.require_admin_verify", false)
 	viper.SetDefault("email.token_max_age", 3600)
 	viper.SetDefault("email.smtp_host", "localhost")
 	viper.SetDefault("email.smtp_port", 25)

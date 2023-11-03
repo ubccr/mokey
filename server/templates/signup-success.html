@@ -7,7 +7,15 @@
             <div class="text-center">
             <p><span class="badge bg-success"><i class="fa-regular fa-circle-check"></i> Account created successfully</span></p>
             <p class="text-center">Your username is: <strong>{{ $.user.Username }}</strong></p>
-            <p class="text-center">You must verify your email address to activate your account. Check your email for further instructions.</p>
+            <p class="text-center">
+            {{ if not (ConfigValueBool "accounts.require_admin_verify") }}
+            You must verify your email address to activate your account.
+            {{ else }}
+            An administrator will need to activate your account before you can use it.
+            You must also verify your email address.
+            {{ end }}
+            Check your email for further instructions.
+            </p>
             </div>
         </div>
     </div>
