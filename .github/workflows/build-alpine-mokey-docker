@@ -1,0 +1,31 @@
+name: Build test Mokey Alpine Docker image 
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  Build-Test-Mokey-Alpine-Docker-image:
+    name: Build Mokey-Alpine-Docker-image
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+
+        - name: Set up Docker Buildx
+          id: buildx
+          uses: docker/setup-buildx-action@v1
+
+        - name: Get current date
+          id: date
+          run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+        - name: Build image only
+          uses: docker/build-push-action@v4
+          with:
+            context: .
+            push: false
+            dockerfile: ./Dockerfiles/Alpine/Dockerfile
+
+        - name: Image digest
+          run: echo ${{ steps.docker_build.outputs.digest }}

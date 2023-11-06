@@ -1,0 +1,25 @@
+name: Build test Mokey Docker image
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  Build-Test-Mokey-Alpine:
+    name: Build Mokey for Alpine.
+    runs-on: golang:alpine
+    steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+
+        - name: Add Prereqs
+          run: apk --no-cache add build-base git gcc ca-certificates
+
+        - name: Build Mokey
+          run: go generate && env GOOS=linux GOARCH=amd64 go build -o ./mokey main.go && chmod +x mokey
+
+        - name: Archive the generated binary
+          uses: actions/upload-artifact@v3
+          with:
+            name: Mokey-binary
+            path: ./mokey
