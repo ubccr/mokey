@@ -1,0 +1,67 @@
+default:
+  image: alpine
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - when: always
+# TODO: Need to find out which files we don't want to trigger the CI on
+#    - changes:
+#      - "**/Containerfile"
+
+stages:
+  - build
+  - test-build-container
+  - build-testing-container
+  - build-container
+
+build:
+  stage: build
+  image: registry.git.xx4h.de/xx4h/build-containers/languages/golang:latest
+  script:
+    - echo "Ai, we're building mokey app"
+    - go build -o mokey
+  artifacts:
+    paths:
+      - mokey
+    expire_in: 1 week
+
+test-build-container:
+  stage: test-build-container
+  image:
+    name: "gcr.io/kaniko-project/executor:v1.9.0-debug"
+    entrypoint: [""]
+  script:
+    - echo "Ai, we're creating the container"
+    - |
+      echo "/kaniko/executor --context \"${CI_PROJECT_DIR}\" --dockerfile \"Containerfile\" --destination \"${CI_REGISTRY_IMAGE}\" --no-push"
+      /kaniko/executor --context "${CI_PROJECT_DIR}" --dockerfile "Containerfile" --destination "${CI_REGISTRY_IMAGE}" --no-push
+  rules:
+    - if: $CI_COMMIT_BRANCH !~ /^master$/ && $CI_COMMIT_BRANCH !~ /^master_xx4h$/ && $CI_COMMIT_BRANCH !~ /^main$/
+
+build-testing-container:
+  stage: build-testing-container
+  image:
+    name: "gcr.io/kaniko-project/executor:v1.9.0-debug"
+    entrypoint: [""]
+  script:
+    - echo "Ai, we're creating the container"
+    - |
+      echo "/kaniko/executor --context \"${CI_PROJECT_DIR}\" --dockerfile \"Containerfile\" --destination \"${CI_REGISTRY_IMAGE}:${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}\""
+      /kaniko/executor --context "${CI_PROJECT_DIR}" --dockerfile "Containerfile" --destination "${CI_REGISTRY_IMAGE}:${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /(^|,)ready-for-testing(,|$)/
+
+build-container:
+  stage: build-container
+  image:
+    name: "gcr.io/kaniko-project/executor:v1.9.0-debug"
+    entrypoint: [""]
+  script:
+    - echo "Ai, we're creating the container"
+    - |
+      echo "/kaniko/executor --context \"${CI_PROJECT_DIR}\" --dockerfile \"Containerfile\" --destination \"${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}\""
+      /kaniko/executor --context "${CI_PROJECT_DIR}" --dockerfile "Containerfile" --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
+  rules:
+    - if: $CI_COMMIT_TAG =~ /-xx4h$/
