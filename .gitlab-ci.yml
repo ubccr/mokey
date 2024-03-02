@@ -43,7 +43,7 @@ test-build-container:
 build-testing-container:
   stage: build-testing-container
   image:
-    name: "gcr.io/kaniko-project/executor:v1.20.1-debug
+    name: "gcr.io/kaniko-project/executor:v1.20.1-debug"
     entrypoint: [""]
   script:
     - echo "Ai, we're creating the container"
@@ -56,7 +56,7 @@ build-testing-container:
 build-container:
   stage: build-container
   image:
-    name: "gcr.io/kaniko-project/executor:v1.20.1-debug
+    name: "gcr.io/kaniko-project/executor:v1.20.1-debug"
     entrypoint: [""]
   script:
     - echo "Ai, we're creating the container"
