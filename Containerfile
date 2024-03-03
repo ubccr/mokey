@@ -1,4 +1,4 @@
-FROM docker.io/alpine:3.13
+FROM docker.io/alpine:3.19
 
 RUN touch /etc/krb5.conf
 COPY mokey /usr/local/bin
