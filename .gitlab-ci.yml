@@ -19,6 +19,8 @@ stages:
 build:
   stage: build
   image: registry.git.xx4h.de/xx4h/build-containers/languages/golang:latest
+  variables:
+    CGO_ENABLED: 0
   script:
     - echo "Ai, we're building mokey app"
     - go build -o mokey
