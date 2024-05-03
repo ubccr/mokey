@@ -1,4 +1,4 @@
-FROM freeipa/freeipa-server:centos-7
+FROM freeipa/freeipa-server:rocky-9
 ARG IPA_ADMIN_PASS
 ARG IPA_DS_PASS
 COPY init-ipa-server-install-options ipa-precreate-hosts /usr/sbin/

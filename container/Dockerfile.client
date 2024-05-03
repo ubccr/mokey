@@ -1,6 +1,6 @@
-FROM centos:centos7
-RUN yum swap -y -- remove fakesystemd -- install systemd systemd-libs && yum clean all
-RUN yum install -y ipa-client openssh-server openssh-clients sudo vim vim-go wget dbus-python perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' && yum clean all
+FROM rockylinux:9
+RUN dnf upgrade -y
+RUN dnf install systemd ipa-client openssh-server openssh-clients sudo vim wget perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' -y
 COPY init-data ipa-client-enroll populate-data-volume /usr/sbin/
 RUN sed -i 's/^#AddressFamily any/AddressFamily inet/' /etc/ssh/sshd_config
 COPY ipa-client-enroll.service populate-data-volume.service /usr/lib/systemd/system/
