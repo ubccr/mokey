@@ -5,13 +5,18 @@ before:
     - go mod tidy
 builds:
   - env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
     goarch:
       - amd64
     goos:
       - linux
     ldflags:
       - -s -w -X github.com/ubccr/mokey/server.Version={{.Version}}
+      - -extldflags=-static
+    tags:
+      - sqlite_omit_load_extension
+      - osusergo
+      - netgo
 archives:
   - replacements:
       linux: linux
