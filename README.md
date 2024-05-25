@@ -32,7 +32,7 @@ and can make your systems vulnerable to abuse.
 
 ## Requirements
 
-- FreeIPA v4.5.0
+- FreeIPA v4.6.8 or greater
 - Linux x86_64 
 - Redis (optional)
 - Hydra v1.0.0 (optional)
@@ -114,7 +114,7 @@ $ systemctl enable mokey
 
 mokey allows users to add/remove ssh public keys. Servers that are enrolled in
 FreeIPA can be configured to have sshd lookup users public keys in LDAP by
-adding the following lines in /etc/ssh/sshd_config and restarting sshd::
+adding the following lines in /etc/ssh/sshd_config and restarting sshd:
 
     AuthorizedKeysCommand /usr/bin/sss_ssh_authorizedkeys
     AuthorizedKeysCommandUser nobody
@@ -141,7 +141,7 @@ application see [here](examples/mokey-oidc/main.go).
 
 ## Building from source
 
-First, you will need Go v1.19 or greater. Clone the repository:
+First, you will need Go v1.21 or greater. Clone the repository:
 
 ```
 $ git clone https://github.com/ubccr/mokey
