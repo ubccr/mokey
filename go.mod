@@ -20,7 +20,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	github.com/ubccr/goipa v0.0.6
+	github.com/ubccr/goipa v0.0.7
 	github.com/urfave/negroni v1.0.0
 	github.com/valyala/fasthttp v1.53.0
 	golang.org/x/net v0.25.0
