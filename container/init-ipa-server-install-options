@@ -32,6 +32,7 @@ if ! [ -f /etc/ipa/ca.crt -a -f $DATA/ipa-server-install-options ] ; then
 --no-forwarders
 --no-dnssec-validation
 --no-ntp
+--skip-mem-check
 -U
 EOS
 fi
