@@ -1,5 +1,11 @@
 # Mokey ChangeLog
 
+## [v0.6.4] - 2024-05-28
+
+- Update fiber
+- Add option to require admin verification [#121](https://github.com/ubccr/mokey/issues/121)
+- Fix OTP enabled bug [#125](https://github.com/ubccr/mokey/issues/125)
+
 ## [v0.6.3] - 2023-02-09
 
 - Update fiber
@@ -128,3 +134,4 @@
 [v0.6.1]: https://github.com/ubccr/mokey/releases/tag/v0.6.1
 [v0.6.2]: https://github.com/ubccr/mokey/releases/tag/v0.6.2
 [v0.6.3]: https://github.com/ubccr/mokey/releases/tag/v0.6.3
+[v0.6.4]: https://github.com/ubccr/mokey/releases/tag/v0.6.4
