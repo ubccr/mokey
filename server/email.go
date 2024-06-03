@@ -341,7 +341,19 @@ func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string
 	}
 
 	if e.slackNotifier != nil {
-		slackMessage := fmt.Sprintf("Notif from %s: %s", viper.GetString("site.name"), subject)
+		var slackMessage string
+		switch tmpl {
+		case "password-reset":
+			slackMessage = fmt.Sprintf(
+				"[%s] (%s)\n\n****************\nHi %s,\n****************\n\nYou recently requested to reset your password for your [%s] account. Use the link below to reset it. This password reset is only valid for the next %s.\n\nReset your password: %s\n\nFor security, this request was received from a %s device using %s. If you did not request a password reset, please ignore this email and contact support (%s) or check out our help documentation (%s) if you have questions.\n\nThanks,\nThe [%s] team\n\nIf you're having trouble with the link above, copy and paste the URL into your web browser.\n\n%s",
+				data["site_name"], data["homepage"], user.First, data["site_name"], data["link_expires"], data["link"], data["os"], data["browser"], data["contact"], data["help_url"], data["site_name"], data["sig"],
+			)
+		case "account-updated":
+			slackMessage = "Your password has been reset successfully. You can now [login](/auth/login)."
+		default:
+			slackMessage = fmt.Sprintf("Notification from %s: %s", data["site_name"], subject)
+		}
+
 		err = e.slackNotifier.SendSlackMessage(user.Email, slackMessage)
 		if err != nil {
 			log.WithFields(log.Fields{
