@@ -190,3 +190,9 @@ driver = "memory"
 # admin_url: "http://locahost:4445"
 # login_timeout: 3600
 # fake_tls_termination: true
+
+#------------------------------------------------------------------------------
+# Slack
+#------------------------------------------------------------------------------
+[slack]
+token = "your-slack-bot-token"
