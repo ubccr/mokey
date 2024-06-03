@@ -23,14 +23,15 @@ import (
 	"github.com/mileusna/useragent"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ubccr/goipa"
+	ipa "github.com/ubccr/goipa"
 )
 
 const crlf = "\r\n"
 
 type Emailer struct {
-	templates *template.Template
-	storage   fiber.Storage
+	templates     *template.Template
+	storage       fiber.Storage
+	slackNotifier *SlackNotifier
 }
 
 func BaseURL(ctx *fiber.Ctx) string {
@@ -66,7 +67,11 @@ func NewEmailer(storage fiber.Storage) (*Emailer, error) {
 		}
 	}
 
-	return &Emailer{storage: storage, templates: tmpl}, nil
+	return &Emailer{
+		storage:       storage,
+		templates:     tmpl,
+		slackNotifier: NewSlackNotifier(),
+	}, nil
 }
 
 func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
@@ -333,6 +338,18 @@ func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string
 	}
 	if _, err = wc.Write(multipartBody.Bytes()); err != nil {
 		return err
+	}
+
+	if e.slackNotifier != nil {
+		slackMessage := fmt.Sprintf("Notif from %s: %s", viper.GetString("site.name"), subject)
+		err = e.slackNotifier.SendSlackMessage(user.Email, slackMessage)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"email":    user.Email,
+				"username": user.Username,
+				"error":    err,
+			}).Error("Failed to send Slack notification")
+		}
 	}
 
 	return nil
