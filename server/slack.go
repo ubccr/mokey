@@ -29,6 +29,8 @@ func (s *SlackNotifier) SendSlackMessage(email, message string) error {
 	channelID, timestamp, err := s.client.PostMessage(
 		user.ID,
 		slack.MsgOptionText(message, false),
+		slack.MsgOptionDisableLinkUnfurl(),
+		slack.MsgOptionDisableMediaUnfurl(),
 	)
 	if err != nil {
 		return err
