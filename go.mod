@@ -6,7 +6,7 @@ require (
 	github.com/dchest/captcha v1.0.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/essentialkaos/branca v1.3.4
-	github.com/gofiber/fiber/v2 v2.52.4
+	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/gofiber/storage/memory v1.3.4
 	github.com/gofiber/storage/redis v1.3.4
 	github.com/gofiber/storage/sqlite3 v1.3.8
