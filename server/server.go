@@ -40,6 +40,7 @@ type Server struct {
 func SetDefaults() {
 	viper.SetDefault("site.name", "Acme Widgets")
 	viper.SetDefault("site.ktuser", "mokeyapp")
+	viper.SetDefault("accounts.check_user", true)
 	viper.SetDefault("accounts.default_homedir", "/home")
 	viper.SetDefault("accounts.default_shell", "/bin/bash")
 	viper.SetDefault("accounts.min_passwd_len", 8)

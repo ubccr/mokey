@@ -95,6 +95,10 @@ require_mfa = false
 # accounts are disabled by default until a FreeIPA admin activates them.
 require_admin_verify = false
 
+# Check if username exists on /auth/login, you should set this to false
+# when you're exposing mokey to the internet
+check_user = true
+
 #------------------------------------------------------------------------------
 # Email
 #------------------------------------------------------------------------------
