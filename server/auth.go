@@ -167,39 +167,47 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString("Please provide a username")
 	}
 
-	if isBlocked(username) {
-		log.WithFields(log.Fields{
-			"username": username,
-		}).Warn("AUDIT User account is blocked from logging in")
-		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
-	}
+	var userRec *ipa.User
+	if viper.GetBool("accounts.check_user") {
 
-	userRec, err := r.adminClient.UserShow(username)
-	if err != nil {
-		if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4001 {
+		if isBlocked(username) {
 			log.WithFields(log.Fields{
-				"error":    ierr,
 				"username": username,
-			}).Warn("Username not found in FreeIPA")
+			}).Warn("AUDIT User account is blocked from logging in")
 			r.metrics.totalFailedLogins.Inc()
 			return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
 		}
 
-		log.WithFields(log.Fields{
-			"error":    err,
-			"username": username,
-		}).Error("Failed to fetch user info from FreeIPA")
-		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
-	}
+		userRec, err := r.adminClient.UserShow(username)
+		if err != nil {
+			if ierr, ok := err.(*ipa.IpaError); ok && ierr.Code == 4001 {
+				log.WithFields(log.Fields{
+					"error":    ierr,
+					"username": username,
+				}).Warn("Username not found in FreeIPA")
+				r.metrics.totalFailedLogins.Inc()
+				return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
+			}
 
-	if userRec.Locked {
-		log.WithFields(log.Fields{
-			"username": username,
-		}).Warn("AUDIT User account is locked in FreeIPA")
-		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusUnauthorized).SendString("User account is locked")
+			log.WithFields(log.Fields{
+				"error":    err,
+				"username": username,
+			}).Error("Failed to fetch user info from FreeIPA")
+			r.metrics.totalFailedLogins.Inc()
+			return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
+		}
+
+		if userRec.Locked {
+			log.WithFields(log.Fields{
+				"username": username,
+			}).Warn("AUDIT User account is locked in FreeIPA")
+			r.metrics.totalFailedLogins.Inc()
+			return c.Status(fiber.StatusUnauthorized).SendString("User account is locked")
+		}
+	} else {
+		// We need an IPA User
+		userRec = new(ipa.User)
+		userRec.Username = username
 	}
 
 	log.WithFields(log.Fields{
