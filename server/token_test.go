@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofiber/storage/memory"
+	"github.com/gofiber/storage/memory/v2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
