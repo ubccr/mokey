@@ -15,9 +15,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	frecover "github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/gofiber/storage/memory"
-	"github.com/gofiber/storage/redis"
-	"github.com/gofiber/storage/sqlite3"
+	"github.com/gofiber/storage/memory/v2"
+	"github.com/gofiber/storage/redis/v3"
+	"github.com/gofiber/storage/sqlite3/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
