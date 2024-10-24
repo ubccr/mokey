@@ -95,6 +95,12 @@ require_mfa = false
 # accounts are disabled by default until a FreeIPA admin activates them.
 require_admin_verify = false
 
+# By default, login attempts for non-existent user accounts will be shown an
+# error message indicating that the username is not found in the system. If
+# your site is concerned about the potential for username enumeration attacks,
+# you could hide this error message by setting this to true.
+hide_invalid_username_error = false
+
 #------------------------------------------------------------------------------
 # Email
 #------------------------------------------------------------------------------
