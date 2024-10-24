@@ -182,16 +182,21 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 				"error":    ierr,
 				"username": username,
 			}).Warn("Username not found in FreeIPA")
-			r.metrics.totalFailedLogins.Inc()
-			return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
-		}
 
-		log.WithFields(log.Fields{
-			"error":    err,
-			"username": username,
-		}).Error("Failed to fetch user info from FreeIPA")
-		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
+			if !viper.GetBool("accounts.hide_invalid_username_error") {
+				r.metrics.totalFailedLogins.Inc()
+				return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
+			}
+			userRec = new(ipa.User)
+			userRec.Username = username
+		} else {
+			log.WithFields(log.Fields{
+				"error":    err,
+				"username": username,
+			}).Error("Failed to fetch user info from FreeIPA")
+			r.metrics.totalFailedLogins.Inc()
+			return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
+		}
 	}
 
 	if userRec.Locked {
