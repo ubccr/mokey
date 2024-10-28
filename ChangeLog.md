@@ -1,5 +1,10 @@
 # Mokey ChangeLog
 
+## [v0.6.5] - 2024-10-28
+
+- Update fiber, htmx (v2.0.3), hyperscript (v0.9.13)
+- Add config option to hide invalid username error on login [#92](https://github.com/ubccr/mokey/issues/92)
+
 ## [v0.6.4] - 2024-05-28
 
 - Update fiber
@@ -135,3 +140,4 @@
 [v0.6.2]: https://github.com/ubccr/mokey/releases/tag/v0.6.2
 [v0.6.3]: https://github.com/ubccr/mokey/releases/tag/v0.6.3
 [v0.6.4]: https://github.com/ubccr/mokey/releases/tag/v0.6.4
+[v0.6.5]: https://github.com/ubccr/mokey/releases/tag/v0.6.6
