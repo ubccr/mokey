@@ -61,8 +61,8 @@ $ sudo rpm -ivh mokey-VERSION-amd64.rpm
 
 ## Setup and configuration
 
-Create a user account and role in FreeIPA with the "Modify users and Reset
-passwords" privilege. This user account will be used by the mokey application
+Create a service account and role in FreeIPA with the "Modify users and Reset
+passwords" privilege. This service account will be used by the mokey application
 to reset users passwords. The "Modify Users" permission also needs to have the
 "ipauserauthtype" enabled. Run the following commands (requires ipa-admintools
 to be installed):
@@ -72,12 +72,14 @@ $ mkdir /etc/mokey/private
 $ kinit adminuser
 $ ipa role-add 'Mokey User Manager' --desc='Mokey User management'
 $ ipa role-add-privilege 'Mokey User Manager' --privilege='User Administrators'
-$ ipa user-add mokeyapp --first Mokey --last App
-$ ipa role-add-member 'Mokey User Manager' --users=mokeyapp
+$ ipa service-add mokey/$(hostname -f)
+$ ipa service-add-principal mokey/$(hostname -f) mokey/mokey
+$ ipa role-add-member 'Mokey User Manager' --service=mokey/mokey
 $ ipa permission-mod 'System: Modify Users' --includedattrs=ipauserauthtype
-$ ipa-getkeytab -s [your.ipa-master.server] -p mokeyapp -k /etc/mokey/private/mokeyapp.keytab
+$ ipa-getkeytab -s [your.ipa-master.server] -p mokey/mokey -k /etc/mokey/private/mokeyapp.keytab
 $ chmod 640 /etc/mokey/private/mokeyapp.keytab
 $ chgrp mokey /etc/mokey/private/mokeyapp.keytab
+$ kdestroy
 ```
 
 Edit mokey configuration file and set path to keytab file. The values for
