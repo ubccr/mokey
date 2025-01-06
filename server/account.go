@@ -212,7 +212,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 			"email":    claims.Email,
 			"err":      err,
 		}).Error("Verifying account failed while fetching user from FreeIPA")
-		return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
+		return c.Status(fiber.StatusInternalServerError).SendString(Translate("", "account.failed_to_verify_account"))
 	}
 
 	if user.Locked && !viper.GetBool("accounts.require_admin_verify") {
@@ -223,7 +223,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 				"email":    claims.Email,
 				"error":    err,
 			}).Error("Verify account failed to enable user in FreeIPA")
-			return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
+			return c.Status(fiber.StatusInternalServerError).SendString(Translate("", "account.failed_to_verify_account"))
 		}
 	}
 
@@ -238,7 +238,7 @@ func (r *Router) AccountVerify(c *fiber.Ctx) error {
 				"email":    claims.Email,
 				"error":    err,
 			}).Error("Verify account failed to modify user category in FreeIPA")
-			return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify account please contact administrator")
+			return c.Status(fiber.StatusInternalServerError).SendString(Translate("", "account.failed_to_verify_account"))
 		}
 	}
 

@@ -27,6 +27,14 @@ ktuser = "mokeyapp"
 # Path to keytab file
 keytab = "/etc/mokey/private/mokeyapp.keytab"
 
+# Default language for the site
+# Languages supported: English (english), Dutch (dutch)
+# Default is english
+default_language = "english"
+
+# Directory where translations can be placed
+translations_dir = "/etc/mokey/translations"
+
 #------------------------------------------------------------------------------
 # User account settings
 #------------------------------------------------------------------------------

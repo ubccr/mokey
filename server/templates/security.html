@@ -1,6 +1,6 @@
 {{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
 <div class="alert alert-warning mx-auto fade show" role="alert">
-   You must enable Two-Factor authentication on your account.
+   {{ Translate $.lang "common.must_enable_2fa" }}
 </div>
 {{ end }}
 {{  with $.message }}
@@ -11,54 +11,54 @@
 {{ end }}
 <div id="security-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
 </div>
-<h3 class="mb-4">Security Settings</h3>
+<h3 class="mb-4">{{ Translate $.lang "security.title" }}</h3>
 <div class="card">
   <div class="card-header">
-    Authentication Methods
+    {{ Translate $.lang "security.authentication_methods" }}
   </div>
   <ul class="list-group list-group-flush">
     <li class="list-group-item">
     <div class="d-flex w-100 justify-content-between">
-    <h5 class="mb-1">Two-factor authentication</h5>
+    <h5 class="mb-1">{{ Translate $.lang "security.two_factor_authentication" }}</h5>
     {{ if $.user.OTPOnly }}
-        <button class="btn btn-sm btn-success ml-1" title="Click to Disable" hx-target-error="security-failed"
+        <button class="btn btn-sm btn-success ml-1" title="{{ Translate $.lang "security.disable" }}" hx-target-error="security-failed"
                 hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
                 data-hx-trigger="mfadisable"
                 data-hx-vals='{"csrf": "{{ $.csrf }}"}'
                 data-hx-target="#security" data-hx-post="/security/mfa/disable" 
                 _="on click call 
                       Swal.fire({
-                          title: 'Disable Two-factor authentication?',
+                          title: '{{ Translate $.lang "security.disable_title" }}',
                           backdrop: true,
-                          html: 'This will disable Two-factor authentication. Are you sure?',
+                          html: '{{ Translate $.lang "security.disable_message" }}',
                           focusCancel: true,
-                          confirmButtonText: 'Disable',
+                          confirmButtonText: '{{ Translate $.lang "security.confirm_disable" }}',
                           reverseButtons: false,
                           showCancelButton: true,
                           icon: 'warning'})
                       if result.isConfirmed trigger mfadisable">
-          <i class="fa fa-toggle-on fa-lg"></i> Enabled
+          <i class="fa fa-toggle-on fa-lg"></i> {{ Translate $.lang "common.enabled" }}
         </button>
     {{ else }}
-        <button class="btn btn-sm btn-secondary ml-1" title="Click to Enable" hx-target-error="security-failed"
+        <button class="btn btn-sm btn-secondary ml-1" title="{{ Translate $.lang "security.enable" }}" hx-target-error="security-failed"
                 hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
                 data-hx-trigger="mfaenable"
                 data-hx-vals='{"csrf": "{{ $.csrf }}"}'
                 data-hx-target="#security" data-hx-post="/security/mfa/enable" 
                 _="on click call 
                       Swal.fire({
-                          title: 'Enable Two-factor authentication?',
+                          title: '{{ Translate $.lang "security.enable_title" }}',
                           backdrop: true,
-                          html: 'This will enable Two-factor authentication. Are you sure?',
+                          html: '{{ Translate $.lang "security.enable_message" }}',
                           focusCancel: true,
                           reverseButtons: false,
                           confirmButtonColor: '#157347',
-                          confirmButtonText: 'Enable',
+                          confirmButtonText: '{{ Translate $.lang "security.confirm_enable" }}',
                           showCancelButton: true,
                           iconColor: '#157347',
                           icon: 'question'})
                       if result.isConfirmed trigger mfaenable">
-          <i class="fa fa-toggle-off fa-lg"></i> Disabled
+          <i class="fa fa-toggle-off fa-lg"></i> {{ Translate $.lang "common.disabled" }}
         </button>
     {{ end }}
     </div>

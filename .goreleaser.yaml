@@ -61,6 +61,9 @@ nfpms:
       - src: ./scripts/nfpm/mokey.env
         dst: /etc/default/mokey
         type: "config|noreplace"
+      - src: ./scripts/nfpm/translations/*
+        dst: /etc/mokey/translations/
+        type: "config|noreplace"
       - src: ./scripts/nfpm/mokey.service
         dst: /usr/lib/systemd/system/mokey.service
 checksum:

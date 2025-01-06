@@ -1,16 +1,15 @@
 {{ template "header.html" . }}
 <section class="col-lg-8 mx-auto p-3 py-md-5">
-	<div class="container">
+        <div class="container">
 
 <div class="page-header">
-  <h1><i class="fa fa-face-frown"></i> Page not found </h1>
+  <h1><i class="fa fa-face-frown"></i> {{ Translate $.lang "error.sorry_page_not_found" }}</h1>
 </div>
 
   <div class="alert alert-danger" role="alert">
-    Sorry the page you requested is not found
+    {{ Translate $.lang "error.sorry_page_not_found" }}
   </div>
 
-
-	</div>
+        </div>
 </section>
 {{ template "footer.html" . }}

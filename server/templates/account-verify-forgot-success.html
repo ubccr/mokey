@@ -1,12 +1,12 @@
 <div class="login-card rounded-3 overflow-hidden bg-white mx-auto">
     <div class="login-head bg-dark text-light p-4">
-        <h3 class="text-center m-0">Verify Account</h3>
+        <h3 class="text-center m-0">{{ Translate $.lang "common.verify_account" }}</h3>
     </div>
     <div class="login-body p-4 p-md-5">
         <div class="login-body-wrapper mx-auto">
             <div class="text-center">
-            <p><span class="badge bg-success"><i class="fa-regular fa-circle-check"></i> A verify account email has been sent.</span></p>
-            <p>Please check your email for further instructions.</p>
+            <p><span class="badge bg-success"><i class="fa-regular fa-circle-check"></i> {{ Translate $.lang "account.verify_email_sent" }}</span></p>
+            <p>{{ Translate $.lang "common.check_email" }}</p>
             </div>
         </div>
     </div>
