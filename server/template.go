@@ -48,7 +48,7 @@ func NewTemplateRenderer() (*TemplateRenderer, error) {
 		return nil, err
 	}
 
-	// Voeg lokale sjablonen toe als ze beschikbaar zijn
+	// Add local templates if available
 	if viper.IsSet("site.templates_dir") {
 		localTemplatePath := filepath.Join(viper.GetString("site.templates_dir"), "*.html")
 		localTemplates, err := filepath.Glob(localTemplatePath)
@@ -78,7 +78,7 @@ func (t *TemplateRenderer) Load() error {
 }
 
 func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, layouts ...string) error {
-	// Hetzelfde logica om te controleren of "lang" is ingesteld en vertaling toe te passen
+	// Same logic to check if "lang" is set and apply translation
 	var dataMap map[string]interface{}
 	switch v := data.(type) {
 	case map[string]interface{}:

@@ -13,8 +13,8 @@ import (
 // Global variable to hold translations
 var translations map[string]map[string]string
 
-// getDefaultLanguage haalt de standaardtaal op uit de configuratie
-// of gebruikt 'english' als fallback.
+// getDefaultLanguage gets the default language from the configuration
+// or use 'english' as fallback.
 func getDefaultLanguage() string {
     defaultLang := viper.GetString("site.default_language")
     if defaultLang == "" {
@@ -75,12 +75,12 @@ func LoadTranslations() error {
 // Translate fetches the translation for a key in the specified language
 // with a fallback to the default language ('english') if not found.
 func Translate(lang, key string) string {
-    // Als er geen taal wordt opgegeven, gebruik de standaardtaal
+    // If no language is specified, use the default language
     if lang == "" {
         lang = getDefaultLanguage()
     }
 
-    // Probeer de vertaling in de opgegeven taal
+    // Try the translation in the specified language
     if langTranslations, ok := translations[lang]; ok {
         if value, ok := langTranslations[key]; ok {
             return value
@@ -90,7 +90,7 @@ func Translate(lang, key string) string {
         log.Warnf("No translations found for language '%s'", lang)
     }
 
-    // Als de vertaling niet gevonden is in de opgegeven taal, probeer de standaardtaal
+    // If the translation is not found in the specified language, try the default language
     defaultLang := getDefaultLanguage()
     if lang != defaultLang {
         if defaultLangTranslations, ok := translations[defaultLang]; ok {
@@ -100,7 +100,6 @@ func Translate(lang, key string) string {
         }
     }
 
-    // Als geen vertaling wordt gevonden, gebruik de sleutel zelf
     log.Warnf("Falling back to key '%s' as translation", key)
     return key
 }
