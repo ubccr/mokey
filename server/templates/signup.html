@@ -1,4 +1,5 @@
 {{ template "header.html" . }}
+{{ if ConfigValueBool "accounts.enable_user_signup" }}
 <section class="main-content">
         <div id="login-failed" style="display: none" class="login-failed alert alert-danger mx-auto" role="alert">
         </div>
@@ -102,5 +103,6 @@ function reloadCaptcha() {
     return false;
 }
 </script>
+{{ end }}
 {{ end }}
 {{ template "footer.html" . }}

@@ -23,7 +23,9 @@
                           </button>
                         </div>
                         </form>
+			{{ if ConfigValueBool "accounts.enable_user_signup" }}
 			<p class="text-muted text-center">{{ Translate $.lang "login.new_user" }} <a href="/signup">{{ Translate $.lang "login.create_account" }}</a></p>
+			{{ end }}
                     </div>
                 </div>
             </div>

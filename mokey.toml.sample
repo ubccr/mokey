@@ -109,6 +109,9 @@ require_admin_verify = false
 # you could hide this error message by setting this to true.
 hide_invalid_username_error = false
 
+# Enable or disable user signup link on the login page
+enable_user_signup = true
+
 #------------------------------------------------------------------------------
 # Email
 #------------------------------------------------------------------------------

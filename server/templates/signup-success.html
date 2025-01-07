@@ -1,3 +1,4 @@
+{{ if ConfigValueBool "accounts.enable_user_signup" }}
 <div class="login-card rounded-3 overflow-hidden bg-white mx-auto">
     <div class="login-head bg-dark text-light p-4">
         <h3 class="text-center m-0">{{ Translate $.lang "signup_success.title" }}</h3>
@@ -20,3 +21,4 @@
         </div>
     </div>
 </div>
+{{ end }}
