@@ -154,7 +154,7 @@ func (r *Router) RequireMFA(c *fiber.Ctx) error {
 
 	user := r.user(c)
 	if !user.OTPOnly() {
-		return c.Status(fiber.StatusUnauthorized).SendString("You must enable Two-Factor Authentication first!")
+		return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.you_must_enable_two_factor_authentication_first"))
 	}
 
 	return c.Next()
@@ -164,7 +164,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 	username := c.FormValue("username")
 
 	if username == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Please provide a username")
+		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "account.please_provide_username"))
 	}
 
 	if isBlocked(username) {
@@ -172,7 +172,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 			"username": username,
 		}).Warn("AUDIT User account is blocked from logging in")
 		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
+		return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.invalid_username"))
 	}
 
 	userRec, err := r.adminClient.UserShow(username)
@@ -185,7 +185,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 
 			if !viper.GetBool("accounts.hide_invalid_username_error") {
 				r.metrics.totalFailedLogins.Inc()
-				return c.Status(fiber.StatusUnauthorized).SendString("Invalid username")
+				return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.invalid_username"))
 			}
 			userRec = new(ipa.User)
 			userRec.Username = username
@@ -195,7 +195,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 				"username": username,
 			}).Error("Failed to fetch user info from FreeIPA")
 			r.metrics.totalFailedLogins.Inc()
-			return c.Status(fiber.StatusInternalServerError).SendString("Fatal system error")
+			return c.Status(fiber.StatusInternalServerError).SendString(Translate("", "account.fatal_system_error"))
 		}
 	}
 
@@ -204,7 +204,7 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 			"username": username,
 		}).Warn("AUDIT User account is locked in FreeIPA")
 		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusUnauthorized).SendString("User account is locked")
+		return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.user_account_is_locked"))
 	}
 
 	log.WithFields(log.Fields{
@@ -227,11 +227,11 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	otp := c.FormValue("otp")
 
 	if username == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Please provide a username")
+		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "account.please_provide_username"))
 	}
 
 	if password == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Please provide a password")
+		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "account.please_provide_password"))
 	}
 
 	if isBlocked(username) {
@@ -239,7 +239,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 			"username": username,
 		}).Warn("AUDIT User account is blocked from logging in")
 		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+		return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.invalid_credentials"))
 	}
 
 	client := ipa.NewDefaultClient()
@@ -286,7 +286,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 				"err":      err,
 			}).Error("AUDIT Failed login attempt")
 			r.metrics.totalFailedLogins.Inc()
-			return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+			return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.invalid_credentials"))
 		}
 	}
 
@@ -297,7 +297,7 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 			"err":      err,
 		}).Error("Failed to ping FreeIPA")
 		r.metrics.totalFailedLogins.Inc()
-		return c.Status(fiber.StatusUnauthorized).SendString("Invalid credentials")
+		return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.invalid_credentials"))
 	}
 
 	sess, err := r.session(c)

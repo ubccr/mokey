@@ -1,24 +1,17 @@
-Thanks for creating an account at [{{ $.site_name }}]. We've pulled together some information and resources to help you get started.
+{{ Translate $.lang "email_template.welcome_preheader_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.welcome_preheader_part2" }}
 
 [{{ $.site_name }}] ( {{$.homepage}} )
 
 ******************
-Welcome, {{$.user.First}}!
+{{ Translate $.lang "email_template.welcome_greeting" }} {{ $.user.First }}!
 ******************
 
-Thanks for creating an account at [{{$.site_name}}]. We're glad to have you on board. {{ if ConfigValueBool "accounts.require_mfa" }}You MUST enabled Two-Factor authentication on your account. Please login and create a new OTP token using your authenticator app.{{ end }} To get the most out of [{{$.site_name}}], check out our getting started guide here:
+{{ Translate $.lang "email_template.welcome_intro_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.welcome_intro_part2" }}
 
-Getting started ( {{ $.getting_started_url }} )
+{{ Translate $.lang "email_template.welcome_button" }} ( {{ $.getting_started_url }} )
 
-For reference, here's your login information:
+{{ Translate $.lang "email_template.welcome_note_part1" }}{{ $.base_url }}{{ Translate $.lang "email_template.welcome_note_part2" }}{{ $.user.Username }}
 
-Login Page: {{$.base_url}}
-
-Username: {{$.user.Username}}
-
-If you have any questions, feel free to email support ( {{ $.contact }} ). Also check out our help documentation ( {{ $.help_url }} ) if you have questions.
-
-Thanks,
-The [{{ $.site_name }}] team
+{{ Translate $.lang "email_template.closing_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.closing_part2" }}
 
 {{ $.sig }}

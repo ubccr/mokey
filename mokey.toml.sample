@@ -47,6 +47,14 @@ keytab = "/etc/mokey/private/mokeyapp.keytab"
 # Path to logo
 # logo = "/etc/mokey/assets/my-logo.png"
 
+# Default language for the site
+# Languages supported: English (english), Dutch (dutch)
+# Default is english
+default_language = "english"
+
+# Directory where translations can be placed
+translations_dir = "/etc/mokey/translations"
+
 #------------------------------------------------------------------------------
 # User account settings
 #------------------------------------------------------------------------------
@@ -100,6 +108,9 @@ require_admin_verify = false
 # your site is concerned about the potential for username enumeration attacks,
 # you could hide this error message by setting this to true.
 hide_invalid_username_error = false
+
+# Enable or disable user signup link on the login page
+enable_user_signup = true
 
 #------------------------------------------------------------------------------
 # Email

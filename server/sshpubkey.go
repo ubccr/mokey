@@ -26,7 +26,8 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 	key := c.FormValue("key")
 
 	if key == "" {
-		return c.Status(fiber.StatusBadRequest).SendString("Please provide an ssh key")
+		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "sshkey_list.please_provide_sshkey"))
+
 	}
 
 	authKey, err := ipa.NewSSHAuthorizedKey(key)
@@ -35,7 +36,7 @@ func (r *Router) SSHKeyAdd(c *fiber.Ctx) error {
 			"username": user.Username,
 			"err":      err,
 		}).Error("Failed to add new ssh key")
-		return c.Status(fiber.StatusBadRequest).SendString("Invalid ssh key")
+		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "sshkey_list.invalid_sshkey"))
 	}
 
 	if title != "" {

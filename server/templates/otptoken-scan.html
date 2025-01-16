@@ -1,63 +1,72 @@
 <div class="modal-dialog modal-dialog-centered">
-  <div class="modal-content">
-    <form>
-    <div class="modal-header">
-       <h5 class="modal-title" id="modalLabel"><i class="fa fa-qrcode"></i> Scan QR code with authenticator app</h5>
-    </div>
-    <div id="modal-body" class="modal-body">
-        <div id="verify-token-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto" role="alert">
-        </div>
-        <div class="text-center">
-            <img class="img-fluid" alt="QRCode" src="data:image/png;base64,{{ .otpdata }}" />
-            <p>
-              <a class="text-muted" data-bs-toggle="collapse" href="#showURI" role="button" aria-expanded="false" aria-controls="showURI">
-                Show URI
-              </a>
-            </p>
-            <div class="collapse" id="showURI">
-              <div class="card card-body">
-                <samp>{{ .otptoken.URI }}</samp>
-              </div>
+    <div class="modal-content">
+        <form>
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">
+                    <i class="fa fa-qrcode"></i> {{ Translate $.lang "otptoken.scan_qr_title" }}
+                </h5>
             </div>
-        </div>
-        <div class="p-4 p-md-5">
-            <label class="form-label">6-Digit Code</label>
-            <input type="text" class="form-control" name="otpcode" id="otpcode" value="" autofocus="autofocus" aria-describedby="tokenHelpBlock">
-            <input type="hidden" name="uuid" value="{{ $.otptoken.UUID }}" />
-            <input type="hidden" name="uri" value="{{ $.otptoken.URI }}" />
-            <div id="tokenHelpBlock" class="form-text">
-                Enter the 6-digit code from your mobile app
+            <div id="modal-body" class="modal-body">
+                <div id="verify-token-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto" role="alert">
+                </div>
+                <div class="text-center">
+                    <img class="img-fluid" alt="{{ Translate $.lang "otptoken.qr_code_alt" }}" src="data:image/png;base64,{{ .otpdata }}" />
+                    <p>
+                        <a class="text-muted" data-bs-toggle="collapse" href="#showURI" role="button" aria-expanded="false" aria-controls="showURI">
+                            {{ Translate $.lang "otptoken.show_uri" }}
+                        </a>
+                    </p>
+                    <div class="collapse" id="showURI">
+                        <div class="card card-body">
+                            <samp>{{ .otptoken.URI }}</samp>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 p-md-5">
+                    <label class="form-label">{{ Translate $.lang "otptoken.6_digit_code_label" }}</label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        name="otpcode" 
+                        id="otpcode" 
+                        value="" 
+                        autofocus="autofocus" 
+                        aria-describedby="tokenHelpBlock">
+                    <input type="hidden" name="uuid" value="{{ $.otptoken.UUID }}" />
+                    <input type="hidden" name="uri" value="{{ $.otptoken.URI }}" />
+                    <div id="tokenHelpBlock" class="form-text">
+                        {{ Translate $.lang "otptoken.enter_6_digit_code_help" }}
+                    </div>
+                </div>
             </div>
-        </div>
+            <div class="modal-footer">
+                <div id="verify-indicator" class="htmx-indicator spinner-border text-primary" role="status">
+                    <span class="visually-hidden">{{ Translate $.lang "otptoken.verifying_token" }}</span>
+                </div>
+                <button 
+                    hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                    hx-target-error="verify-token-failed"
+                    hx-post="/otptoken/verify"
+                    hx-target="#otp"
+                    hx-indicator="#verify-indicator"
+                    hx-swap="innerHTML"
+                    class="btn btn-primary"
+                    type="submit">
+                    {{ Translate $.lang "common.verify" }}
+                </button>
+                <button 
+                    hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
+                    hx-target-error="verify-token-failed"
+                    hx-post="/otptoken/verify"
+                    hx-vals='{"action": "cancel"}'
+                    hx-target="#otp"
+                    hx-indicator="#verify-indicator"
+                    hx-swap="innerHTML"
+                    class="btn btn-secondary"
+                    type="submit">
+                    {{ Translate $.lang "common.cancel" }}
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="modal-footer">
-      <div id="verify-indicator" class="htmx-indicator spinner-border text-primary" role="status">
-          <span class="visually-hidden">Verifying token...</span>
-      </div>
-      <button 
-        hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
-        hx-target-error="verify-token-failed"
-        hx-post="/otptoken/verify"
-        hx-target="#otp"
-        hx-indicator="#verify-indicator"
-        hx-swap="innerHTML"
-        class="btn btn-primary"
-        type="submit">
-      Verify
-      </button>
-      <button 
-        hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
-        hx-target-error="verify-token-failed"
-        hx-post="/otptoken/verify"
-        hx-vals='{"action": "cancel"}'
-        hx-target="#otp"
-        hx-indicator="#verify-indicator"
-        hx-swap="innerHTML"
-        class="btn btn-secondary"
-        type="submit">
-      Cancel
-      </button>
-    </div>
-    </form>
-  </div>
 </div>

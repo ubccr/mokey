@@ -1,92 +1,107 @@
 {{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
 <div class="alert alert-warning mx-auto fade show" role="alert">
-   You must enable Two-Factor authentication on your account.
+   {{ Translate $.lang "common.must_enable_2fa" }}
 </div>
 {{ end }}
-{{  with $.message }}
+
+{{ with $.message }}
 <div class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
   {{ . }}
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {{ end }}
-{{  with $.success }}
+
+{{ with $.success }}
 <div class="alert alert-success alert-dismissible mx-auto fade show" role="alert">
-  Account settings updated successfully
+  {{ Translate $.lang "account.settings_updated" }}
   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 {{ end }}
+
 <div id="account-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto fade show" role="alert">
 </div>
-<h3 class="mb-4">Account Settings</h3>
+
+<h3 class="mb-4">{{ Translate $.lang "account.settings" }}</h3>
+
 <form>
-<div class="row">
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">First Name</label>
-		  	<input type="text" class="form-control" name="first" id="first" value="{{ .user.First }}">
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Last Name</label>
-		  	<input type="text" class="form-control" name="last" id="last" value="{{ .user.Last }}">
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Email</label>
-		  	<input type="text" class="form-control" value="{{ .user.Email }}" disabled readonly>
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Phone number</label>
-		  	<input type="text" class="form-control" name="phone" id="phone" value="{{ .user.Mobile }}">
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Username</label>
-		  	<input type="text" class="form-control" value="{{ .user.Username }}" disabled readonly>
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Last Password Change</label>
-		  	<input type="text" class="form-control" value="{{ if not .user.LastPasswdChange.IsZero }}{{ TimeAgo .user.LastPasswdChange }}{{ else }}Never{{ end }}" disabled readonly>
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Home Dir</label>
-		  	<input type="text" class="form-control" value="{{ .user.HomeDir }}" disabled readonly>
-		</div>
-	</div>
-	<div class="col-md-6">
-		<div class="mb-3">
-		  	<label class="form-label">Password Expires</label>
-		  	<input type="text" class="form-control" value="{{ if not .user.PasswdExpire.IsZero }}{{ TimeAgo .user.PasswdExpire }}{{ else }}Never{{ end }}" disabled readonly>
-		</div>
-	</div>
-	<div class="col-md-12">
-		<div class="mb-3">
-		  	<label class="form-label">Groups</label>
-            <div class="form-control-plaintext">
-                    {{ range $g := .user.Groups }}
-                        <span class="badge rounded-pill bg-dark">{{ $g }}</span> 
-                    {{ else }}
-                        &nbsp;
-                    {{ end }}
-		    </div>
-		</div>
-	</div>
-</div>
-<div>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "common.first_name" }}</label>
+        <input type="text" class="form-control" name="first" id="first" value="{{ .user.First }}">
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "common.last_name" }}</label>
+        <input type="text" class="form-control" name="last" id="last" value="{{ .user.Last }}">
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "common.email" }}</label>
+        <input type="text" class="form-control" value="{{ .user.Email }}" disabled readonly>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.phone_number" }}</label>
+        <input type="text" class="form-control" name="phone" id="phone" value="{{ .user.Mobile }}">
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "common.username" }}</label>
+        <input type="text" class="form-control" value="{{ .user.Username }}" disabled readonly>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.last_password_change" }}</label>
+        <input type="text" class="form-control" value="{{ if not .user.LastPasswdChange.IsZero }}{{ TimeAgo .user.LastPasswdChange }}{{ else }}{{ Translate $.lang "account.never" }}{{ end }}" disabled readonly>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.home_dir" }}</label>
+        <input type="text" class="form-control" value="{{ .user.HomeDir }}" disabled readonly>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.password_expires" }}</label>
+        <input type="text" class="form-control" value="{{ if not .user.PasswdExpire.IsZero }}{{ TimeAgo .user.PasswdExpire }}{{ else }}{{ Translate $.lang "account.never" }}{{ end }}" disabled readonly>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.groups" }}</label>
+        <div class="form-control-plaintext">
+          {{ range $g := .user.Groups }}
+            <span class="badge rounded-pill bg-dark">{{ $g }}</span> 
+          {{ else }}
+            &nbsp;
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
     <button class="btn btn-primary" hx-target-error="account-failed"
             hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
             data-hx-vals='{"csrf": "{{ $.csrf }}"}'
             data-hx-target="#account" data-hx-post="/account/settings">
-      Update
+      {{ Translate $.lang "common.update" }}
     </button>
+  </div>
 </form>
 </div>

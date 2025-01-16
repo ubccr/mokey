@@ -1,0 +1,165 @@
+[common]
+add = "Toevoegen"
+cancel = "Annuleren"
+captcha_image = "Captcha-afbeelding"
+captcha_instruction = "Voer de cijfers in die u in de afbeelding hieronder ziet:"
+check_email = "Controleer uw e-mail voor verdere instructies."
+close = "Sluiten"
+confirm_password = "Bevestig Wachtwoord"
+current_password = "Huidig Wachtwoord"
+delete = "Verwijderen"
+disable = "Uitschakelen"
+disabled = "Uitgeschakeld"
+email = "E-mail"
+enable = "Inschakelen"
+enabled = "Ingeschakeld"
+first_name = "Voornaam"
+last_name = "Achternaam"
+login = "Inloggen"
+must_enable_2fa = "Je moet Two-Factor authenticatie inschakelen voor je account."
+new_password = "Nieuw wachtwoord"
+otp_code = "OTP Code"
+password = "Wachtwoord"
+reload = "Herlaad"
+submit = "Verzenden"
+update = "Bijwerken"
+username = "Gebruikersnaam"
+verify = "Verifiëren"
+verify_account = "Verifieer Account"
+
+[account]
+title = "Accountinstellingen"
+groups = "Groepen"
+home_dir = "Home Dir"
+last_password_change = "Laatste Wachtwoordwijziging"
+never = "Nooit"
+password_expires = "Wachtwoord verloopt"
+phone_number = "Telefoonnummer"
+settings = "Accountinstellingen"
+settings_updated = "Accountinstellingen succesvol bijgewerkt"
+verify_email_sent = "Een verificatie-e-mail is verzonden."
+
+[error]
+title = "Foutmeldingen"
+access_denied = "Toegang geweigerd"
+bad_gateway = "De server heeft een foutieve gatewayfout ondervonden. Probeer het later opnieuw of neem contact op met de sitebeheerder."
+log_in_again = "inloggen opnieuw"
+no_access_to_resource = "Je hebt geen toegang tot deze bron"
+session_timed_out = "Je sessie is verlopen. Probeer het opnieuw"
+something_bad_happened = "Er is iets mis gegaan"
+sorry_page_not_found = "Sorry, de pagina die je hebt aangevraagd is niet gevonden"
+system_trouble = "We hebben momenteel wat systeemproblemen. Als dit probleem aanhoudt, neem dan contact op met de sitebeheerder."
+
+[login]
+title = "Inloggen"
+create_account = "Account aanmaken"
+forgot_password = "Wachtwoord vergeten?"
+new_user = "Nieuwe gebruiker?"
+next_button = "Volgende"
+not_you = "Niet jij?"
+otp_authentication = "Twee-Factor Authenticatie"
+switch_account = "Account wisselen"
+
+[otptoken]
+title = "OTP-tokens"
+6_digit_code_label = "6-cijferige code"
+add_new_title = "Nieuw TOTP-token toevoegen"
+add_token_prompt = "Voeg een OTP-token toe via uw authenticator-app om Twee-Factor-authenticatie op uw account in te schakelen."
+added_on = "Toegevoegd op"
+adding_token = "Token toevoegen..."
+click_to_disable = "Klik om uit te schakelen"
+click_to_enable = "Klik om in te schakelen"
+delete_prompt_title = "Token verwijderen?"
+delete_warning = "Deze actie kan NIET ongedaan worden gemaakt. Dit zal het token permanent verwijderen en u kunt het in de toekomst niet meer gebruiken."
+disable_prompt_title = "Token uitschakelen?"
+disabled = "Uitgeschakeld"
+enable_prompt_title = "Token inschakelen?"
+enter_6_digit_code_help = "Voer de 6-cijferige code in uit uw mobiele app"
+no_tokens_found = "Geen OTP-tokens gevonden"
+new_token_button = "Nieuw Token"
+qr_code_alt = "Scan QR-code"
+scan_qr_title = "Scan QR-code met authenticator-app"
+show_uri = "Toon URI"
+token_description_help = "Voer de beschrijving van het token in (bijvoorbeeld het apparaat waarvoor het wordt gebruikt). Klik vervolgens op de knop Toevoegen hieronder om het nieuwe TOTP-token te verifiëren. De QR-code verschijnt op het volgende scherm. Zorg ervoor dat u deze scant met uw authenticator-app en voer de 6-cijferige code in om te verifiëren."
+token_description_label = "Tokenbeschrijving"
+token_description_placeholder = "Mijn telefoon"
+
+[password_change]
+title = "Wachtwoord Wijzigen"
+confirm_new_password = "Bevestig nieuw wachtwoord"
+otp_help = "Voer de zes-cijferige code in uit je mobiele app"
+success = "Wachtwoord succesvol bijgewerkt"
+
+[password_expired]
+title = "Wachtwoord Verlopen"
+change_password_button = "Wachtwoord Wijzigen"
+
+[password_forgot]
+title = "Wachtwoord vergeten"
+email_sent = "Er is een e-mail voor het opnieuw instellen van uw wachtwoord verstuurd."
+
+[password_reset]
+title = "Wachtwoord Herstellen"
+reset_button = "Wachtwoord Herstellen"
+success_message = "Je wachtwoord is succesvol hersteld"
+
+[profile]
+title = "Profielinstellingen"
+account = "Account"
+avatar_alt = "Gebruikersavatar"
+logout = "Uitloggen"
+otp_tokens = "OTP Tokens"
+security = "Beveiliging"
+ssh_keys = "SSH-sleutels"
+
+[security]
+title = "Beveiligingsinstellingen"
+authentication_methods = "Authenticatiemethoden"
+confirm_disable = "Uitschakelen"
+confirm_enable = "Inschakelen"
+disable = "Klik om uit te schakelen"
+disable_message = "Dit zal de Two-Factor authenticatie uitschakelen. Weet je zeker dat je dit wilt doen?"
+disable_title = "Two-Factor authenticatie uitschakelen?"
+enable = "Klik om in te schakelen"
+enable_message = "Dit zal de Two-Factor authenticatie inschakelen. Weet je zeker dat je dit wilt doen?"
+enable_title = "Two-Factor authenticatie inschakelen?"
+two_factor_authentication = "Two-Factor authenticatie"
+
+[signup]
+title = "Aanmelden"
+already_have_account = "Heb je al een account?"
+allowed_domains = "Toegestane domeinen"
+create_account = "Account maken"
+tos_link = "Algemene voorwaarden"
+tos_message = "Door op 'Account maken' te klikken ga je akkoord met onze"
+
+[signup_success]
+title = "Bevestig je account"
+account_created = "Account succesvol aangemaakt"
+admin_verification = "Een beheerder moet je account activeren voordat je het kunt gebruiken."
+email_verification = "Je moet je e-mailadres verifiëren om je account te activeren."
+
+[sshkey_list]
+title = "SSH Sleutels"
+delete_key = "Sleutel Verwijderen?"
+delete_warning = "Deze actie <strong>KAN NIET</strong> worden teruggedraaid. Dit zal de sleutel permanent verwijderen en je kunt deze in de toekomst niet meer gebruiken"
+enable_mfa = "Je moet Two-Factor authenticatie inschakelen voordat je SSH-sleutels kunt toevoegen!"
+new_key = "Nieuwe SSH Sleutel"
+no_keys = "Geen SSH sleutels geüpload"
+type = "Type"
+
+[sshkey_new]
+title = "SSH Sleutels Toevoegen"
+add_title = "Nieuwe SSH Sleutel Toevoegen"
+adding = "SSH-sleutel toevoegen..."
+key_help = "Plak hierboven de inhoud van de SSH publieke sleutel. Moet beginnen met 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', of 'sk-ssh-ed25519@openssh.com'"
+public_key = "Publieke Sleutel"
+
+[verify_account]
+title = "Account Verifiëren"
+instruction = "Klik hieronder op verifiëren om je account in te stellen."
+message = "Verifieer je e-mail"
+
+[verify_success]
+title = "Account Verifiëren"
+message = "Je account is succesvol geverifieerd. Dank je wel"

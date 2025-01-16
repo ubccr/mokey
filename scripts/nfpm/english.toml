@@ -1,0 +1,165 @@
+[common]
+add = "Add"
+cancel = "Cancel"
+captcha_image = "Captcha Image"
+captcha_instruction = "Enter the numbers you see in the image below:"
+check_email = "Check your email for further instructions."
+close = "Close"
+confirm_password = "Confirm Password"
+current_password = "Current Password"
+delete = "Delete"
+disable = "Disable"
+disabled = "Disabled"
+email = "Email"
+enable = "Enable"
+enabled = "Enabled"
+first_name = "First Name"
+last_name = "Last Name"
+login = "Login"
+must_enable_2fa = "You must enable Two-Factor authentication for your account."
+new_password = "New Password"
+otp_code = "OTP Code"
+password = "Password"
+reload = "Reload"
+submit = "Submit"
+update = "Update"
+username = "Username"
+verify = "Verify"
+verify_account = "Verify Account"
+
+[account]
+title = "Account Settings"
+groups = "Groups"
+home_dir = "Home Directory"
+last_password_change = "Last Password Change"
+never = "Never"
+password_expires = "Password Expires"
+phone_number = "Phone Number"
+settings = "Account Settings"
+settings_updated = "Account settings successfully updated"
+verify_email_sent = "A verification email has been sent."
+
+[error]
+title = "Error Messages"
+access_denied = "Access Denied"
+bad_gateway = "The server encountered a bad gateway error. Please try again later or contact the site administrator."
+log_in_again = "log in again"
+no_access_to_resource = "You do not have access to this resource"
+session_timed_out = "Your session has timed out. Please try again"
+something_bad_happened = "Something bad happened"
+sorry_page_not_found = "Sorry, the page you requested was not found"
+system_trouble = "We are currently experiencing some system trouble. If this problem persists, please contact the site administrator."
+
+[login]
+title = "Login"
+create_account = "Create Account"
+forgot_password = "Forgot Password?"
+new_user = "New User?"
+next_button = "Next"
+not_you = "Not You?"
+otp_authentication = "Two-Factor Authentication"
+switch_account = "Switch Account"
+
+[otptoken]
+title = "OTP Tokens"
+6_digit_code_label = "6-digit Code"
+add_new_title = "Add New TOTP Token"
+add_token_prompt = "Add an OTP token via your authenticator app to enable Two-Factor authentication on your account."
+added_on = "Added On"
+adding_token = "Adding Token..."
+click_to_disable = "Click to Disable"
+click_to_enable = "Click to Enable"
+delete_prompt_title = "Delete Token?"
+delete_warning = "This action CANNOT be undone. This will permanently delete the token and you will not be able to use it in the future."
+disable_prompt_title = "Disable Token?"
+disabled = "Disabled"
+enable_prompt_title = "Enable Token?"
+enter_6_digit_code_help = "Enter the 6-digit code from your mobile app"
+new_token_button = "New Token"
+no_tokens_found = "No OTP Tokens Found"
+qr_code_alt = "Scan QR Code"
+scan_qr_title = "Scan QR Code with Authenticator App"
+show_uri = "Show URI"
+token_description_help = "Enter the token description (e.g., the device it's used for). Then click Add below to verify the new TOTP token. The QR code will appear on the next screen. Be sure to scan it with your authenticator app and enter the 6-digit code to verify."
+token_description_label = "Token Description"
+token_description_placeholder = "My Phone"
+
+[password_change]
+title = "Change Password"
+confirm_new_password = "Confirm New Password"
+otp_help = "Enter the 6-digit code from your mobile app"
+success = "Password successfully updated"
+
+[password_expired]
+title = "Password Expired"
+change_password_button = "Change Password"
+
+[password_forgot]
+title = "Forgot Password"
+email_sent = "An email to reset your password has been sent."
+
+[password_reset]
+title = "Reset Password"
+reset_button = "Reset Password"
+success_message = "Your password has been successfully reset"
+
+[profile]
+title = "Profile Settings"
+account = "Account"
+avatar_alt = "User Avatar"
+logout = "Logout"
+otp_tokens = "OTP Tokens"
+security = "Security"
+ssh_keys = "SSH Keys"
+
+[security]
+title = "Security Settings"
+authentication_methods = "Authentication Methods"
+confirm_disable = "Disable"
+confirm_enable = "Enable"
+disable = "Click to Disable"
+disable_message = "This will disable Two-Factor authentication. Are you sure you want to do this?"
+disable_title = "Disable Two-Factor Authentication?"
+enable = "Click to Enable"
+enable_message = "This will enable Two-Factor authentication. Are you sure you want to do this?"
+enable_title = "Enable Two-Factor Authentication?"
+two_factor_authentication = "Two-Factor Authentication"
+
+[signup]
+title = "Sign Up"
+already_have_account = "Already have an account?"
+allowed_domains = "Allowed Domains"
+create_account = "Create Account"
+tos_link = "Terms of Service"
+tos_message = "By clicking 'Create Account,' you agree to our"
+
+[signup_success]
+title = "Confirm Your Account"
+account_created = "Account successfully created"
+admin_verification = "An administrator must activate your account before you can use it."
+email_verification = "You need to verify your email address to activate your account."
+
+[sshkey_list]
+title = "SSH Keys"
+delete_key = "Delete Key?"
+delete_warning = "This action <strong>CANNOT</strong> be undone. This will permanently delete the key and you will not be able to use it in the future."
+enable_mfa = "You must enable Two-Factor authentication before you can add SSH keys!"
+new_key = "New SSH Key"
+no_keys = "No SSH keys uploaded"
+type = "Type"
+
+[sshkey_new]
+title = "Add SSH Keys"
+add_title = "Add New SSH Key"
+adding = "Adding SSH Key..."
+key_help = "Paste the contents of the SSH public key above. Must start with 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', or 'sk-ssh-ed25519@openssh.com'"
+public_key = "Public Key"
+
+[verify_account]
+title = "Verify Account"
+instruction = "Click Verify below to set up your account."
+message = "Verify Your Email"
+
+[verify_success]
+title = "Verify Account"
+message = "Your account has been successfully verified. Thank you"

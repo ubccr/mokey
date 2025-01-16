@@ -1,22 +1,24 @@
+{{ if ConfigValueBool "accounts.enable_user_signup" }}
 <div class="login-card rounded-3 overflow-hidden bg-white mx-auto">
     <div class="login-head bg-dark text-light p-4">
-        <h3 class="text-center m-0">Verify Your Account</h3>
+        <h3 class="text-center m-0">{{ Translate $.lang "signup_success.title" }}</h3>
     </div>
     <div class="login-body p-4 p-md-5">
         <div class="login-body-wrapper mx-auto">
             <div class="text-center">
-            <p><span class="badge bg-success"><i class="fa-regular fa-circle-check"></i> Account created successfully</span></p>
-            <p class="text-center">Your username is: <strong>{{ $.user.Username }}</strong></p>
+            <p><span class="badge bg-success"><i class="fa-regular fa-circle-check"></i> {{ Translate $.lang "signup_success.account_created" }}</span></p>
+            <p class="text-center">{{ Translate $.lang "common.username" }}: <strong>{{ $.user.Username }}</strong></p>
             <p class="text-center">
             {{ if not (ConfigValueBool "accounts.require_admin_verify") }}
-            You must verify your email address to activate your account.
+                {{ Translate $.lang "signup_success.email_verification" }}
             {{ else }}
-            An administrator will need to activate your account before you can use it.
-            You must also verify your email address.
+                {{ Translate $.lang "signup_success.admin_verification" }}
+                {{ Translate $.lang "signup_success.email_verification" }}
             {{ end }}
-            Check your email for further instructions.
+            {{ Translate $.lang "common.check_email" }}
             </p>
             </div>
         </div>
     </div>
 </div>
+{{ end }}

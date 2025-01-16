@@ -1,67 +1,67 @@
 {{ template "header.html" . }}
 
 <section class="col-lg-8 mx-auto p-3 py-md-5">
-	<div class="container">
-		<div class="bg-white shadow rounded-3 d-block d-sm-flex">
-			<div class="profile-tab-nav border-end">
-				<div class="p-4">
-					<div class="img-circle text-center mb-3">
-						<img src="/static/images/user-circle.png" alt="Gravatar" class="shadow">
-					</div>
-					<h4 class="text-center">{{ .user.Username }}</h4>
-				</div>
-				<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-					<a class="nav-link{{ if eq $.path "account" }} active{{end}}" id="account-tab" href="/account" role="tab">
-						<i class="fa fa-home text-center me-1"></i> 
-						Account
-					</a>
-					<a class="nav-link{{ if eq $.path "password" }} active{{end}}" id="password-tab" href="/password" role="tab">
-						<i class="fa fa-lock text-center me-1"></i> 
-						Password
-					</a>
-					<a class="nav-link{{ if eq $.path "security" }} active{{end}}" id="security-tab" href="/security" role="tab">
-						<i class="fa fa-shield text-center me-1"></i> 
-						Security
-					</a>
-					<a class="nav-link{{ if eq $.path "sshkey" }} active{{end}}" id="sshkey-tab" href="/sshkey" role="tab">
-						<i class="fa fa-key text-center me-1"></i> 
-						SSH Keys
-					</a>
-					<a class="nav-link{{ if eq $.path "otp" }} active{{end}}" id="otp-tab" href="/otp" role="tab">
-						<i class="fa fa-fingerprint text-center me-1"></i> 
-						OTP Tokens
-					</a>
-					<a class="nav-link" id="logout" href="/auth/logout" hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-post="/auth/logout" role="tab">
-						<i class="fa fa-arrow-right-from-bracket text-center me-1"></i> 
-						Logout
-					</a>
-				</div>
-			</div>
-			<div class="tab-content p-4 p-md-5" id="v-pills-tabContent">
+    <div class="container">
+        <div class="bg-white shadow rounded-3 d-block d-sm-flex">
+            <div class="profile-tab-nav border-end">
+                <div class="p-4">
+                    <div class="img-circle text-center mb-3">
+                        <img src="/static/images/user-circle.png" alt="{{ Translate $.lang "profile.avatar_alt" }}" class="shadow">
+                    </div>
+                    <h4 class="text-center">{{ .user.Username }}</h4>
+                </div>
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                    <a class="nav-link{{ if eq $.path "account" }} active{{end}}" id="account-tab" href="/account" role="tab">
+                        <i class="fa fa-home text-center me-1"></i>
+                        {{ Translate $.lang "profile.account" }}
+                    </a>
+                    <a class="nav-link{{ if eq $.path "password" }} active{{end}}" id="password-tab" href="/password" role="tab">
+                        <i class="fa fa-lock text-center me-1"></i>
+                        {{ Translate $.lang "common.password" }}
+                    </a>
+                    <a class="nav-link{{ if eq $.path "security" }} active{{end}}" id="security-tab" href="/security" role="tab">
+                        <i class="fa fa-shield text-center me-1"></i>
+                        {{ Translate $.lang "profile.security" }}
+                    </a>
+                    <a class="nav-link{{ if eq $.path "sshkey" }} active{{end}}" id="sshkey-tab" href="/sshkey" role="tab">
+                        <i class="fa fa-key text-center me-1"></i>
+                        {{ Translate $.lang "profile.ssh_keys" }}
+                    </a>
+                    <a class="nav-link{{ if eq $.path "otp" }} active{{end}}" id="otp-tab" href="/otp" role="tab">
+                        <i class="fa fa-fingerprint text-center me-1"></i>
+                        {{ Translate $.lang "profile.otp_tokens" }}
+                    </a>
+                    <a class="nav-link" id="logout" href="/auth/logout" hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-post="/auth/logout" role="tab">
+                        <i class="fa fa-arrow-right-from-bracket text-center me-1"></i>
+                        {{ Translate $.lang "profile.logout" }}
+                    </a>
+                </div>
+            </div>
+            <div class="tab-content p-4 p-md-5" id="v-pills-tabContent">
                 {{ if eq $.path "account" }}
-				<div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab">
-                    {{ template "account.html" . }}
-                </div>
+                    <div class="tab-pane fade show active" id="account" role="tabpanel" aria-labelledby="account-tab">
+                        {{ template "account.html" . }}
+                    </div>
                 {{ else if eq $.path "password" }}
-				<div class="tab-pane fade show active" id="password" role="tabpanel" aria-labelledby="password-tab">
-                    {{ template "password.html" . }}
-                </div>
+                    <div class="tab-pane fade show active" id="password" role="tabpanel" aria-labelledby="password-tab">
+                        {{ template "password.html" . }}
+                    </div>
                 {{ else if eq $.path "security" }}
-				<div class="tab-pane fade show active" id="security" role="tabpanel" aria-labelledby="security-tab">
-                    {{ template "security.html" . }}
-                </div>
+                    <div class="tab-pane fade show active" id="security" role="tabpanel" aria-labelledby="security-tab">
+                        {{ template "security.html" . }}
+                    </div>
                 {{ else if eq $.path "sshkey" }}
-				<div class="tab-pane fade show active" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab">
-                    {{ template "sshkey-list.html" . }}
-                </div>
+                    <div class="tab-pane fade show active" id="sshkey" role="tabpanel" aria-labelledby="sshkey-tab">
+                        {{ template "sshkey-list.html" . }}
+                    </div>
                 {{ else if eq $.path "otp" }}
-				<div class="tab-pane fade show active" id="otp" role="tabpanel" aria-labelledby="otp-tab">
-                    {{ template "otptoken-list.html" . }}
-                </div>
+                    <div class="tab-pane fade show active" id="otp" role="tabpanel" aria-labelledby="otp-tab">
+                        {{ template "otptoken-list.html" . }}
+                    </div>
                 {{ end }}
-			</div>
-		</div>
-	</div>
+            </div>
+        </div>
+    </div>
 </section>
 
 {{ template "footer.html" . }}

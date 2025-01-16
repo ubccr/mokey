@@ -8,9 +8,12 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"fmt"
 
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/viper"
+	log "github.com/sirupsen/logrus"
+	"github.com/gofiber/fiber/v2"
 )
 
 //go:embed templates
@@ -24,6 +27,7 @@ var funcMap = template.FuncMap{
 	"ConfigValueBool":   ConfigValueBool,
 	"AllowedDomains":    AllowedDomains,
 	"BreakNewlines":     BreakNewlines,
+	"Translate":         Translate,
 }
 
 type TemplateRenderer struct {
@@ -31,14 +35,20 @@ type TemplateRenderer struct {
 }
 
 func NewTemplateRenderer() (*TemplateRenderer, error) {
+	// Laad vertalingen
+	err := LoadTranslations()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load translations: %w", err)
+	}
 
 	tmpl := template.New("")
 	tmpl.Funcs(funcMap)
-	tmpl, err := tmpl.ParseFS(templateFiles, "templates/*.html")
+	tmpl, err = tmpl.ParseFS(templateFiles, "templates/*.html")
 	if err != nil {
 		return nil, err
 	}
 
+	// Add local templates if available
 	if viper.IsSet("site.templates_dir") {
 		localTemplatePath := filepath.Join(viper.GetString("site.templates_dir"), "*.html")
 		localTemplates, err := filepath.Glob(localTemplatePath)
@@ -68,7 +78,31 @@ func (t *TemplateRenderer) Load() error {
 }
 
 func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, layouts ...string) error {
-	return t.templates.ExecuteTemplate(w, name, data)
+	// Same logic to check if "lang" is set and apply translation
+	var dataMap map[string]interface{}
+	switch v := data.(type) {
+	case map[string]interface{}:
+		dataMap = v
+	case fiber.Map:
+		dataMap = map[string]interface{}(v)
+	default:
+		log.Println("WARN: The provided data is not a map[string]interface{}, wrapping in map")
+		dataMap = map[string]interface{}{"data": data}
+	}
+
+	defaultLang := "en"
+	if viper.IsSet("site.default_language") {
+		defaultLang = viper.GetString("site.default_language")
+	}
+
+	if lang, exists := dataMap["lang"]; !exists {
+		log.Printf("DEBUG: 'lang' key not found, using default language '%s'", defaultLang)
+		dataMap["lang"] = defaultLang
+	} else {
+		log.Debugf("DEBUG: Found 'lang' key with value: %v", lang)
+	}
+
+	return t.templates.ExecuteTemplate(w, name, dataMap)
 }
 
 func AllowedDomains() string {

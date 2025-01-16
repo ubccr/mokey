@@ -139,6 +139,33 @@ Any OAuth clients configured in Hydra will be authenticated via mokey using
 FreeIPA as the identity provider. For an example OAuth 2.0/OIDC client
 application see [here](examples/mokey-oidc/main.go).
 
+## Translations
+
+mokey supports multiple languages for its interface and email templates. Default are English and Dutch supported.
+
+### Configuring Translations
+
+1. **Place translation files**  
+   Translation files should be placed in `/etc/mokey/translations/`.  
+   For example:  
+   - `english.toml` for English translations  
+   - `dutch.toml` for Dutch translations  
+
+2. **Update the configuration file**  
+   Add the following options to `/etc/mokey/mokey.toml`:  
+   ```toml
+   # Default language for the site
+   # Languages supported: English (english), Dutch (dutch)
+   # Default is english
+   default_language = "english"
+
+   # Directory where translations can be placed
+   translations_dir = "/etc/mokey/translations"
+   ```
+
+3. **Create custom translations** 
+   Users can translate mokey into their own language by creating a new .toml file in the translations_dir and referencing it in the default_language configuration. This allows for complete customization of the interface and email templates in the preferred language.
+
 ## Building from source
 
 First, you will need Go v1.21 or greater. Clone the repository:
