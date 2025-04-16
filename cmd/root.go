@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/ubccr/mokey/server"
+	"github.com/tubby1981/mokey/server"
 )
 
 var (

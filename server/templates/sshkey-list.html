@@ -1,6 +1,6 @@
 {{ if and (not $.user.OTPOnly) (ConfigValueBool "accounts.require_mfa") }}
 <div class="alert alert-warning mx-auto fade show" role="alert">
-   You must enable Two-Factor authentication before adding SSH Keys!
+   {{ Translate $.lang "sshkey_list.enable_mfa" }}
 </div>
 {{ end }}
 {{  with $.message }}
@@ -14,14 +14,14 @@
 <div id="sshkey-modal"></div>
 
 <div class="d-flex w-100 justify-content-between mb-4">
-    <h3 class="mb-1">SSH Keys</h3>
+    <h3 class="mb-1">{{ Translate $.lang "sshkey_list.title" }}</h3>
     <button type="button" 
             hx-get="/sshkey/modal" 
             hx-target="#sshkey-modal" 
             hx-trigger="click"
             _="on htmx:afterOnLoad wait 10ms then add .show to #modal then add .show to #modal-backdrop"
             class="btn btn-primary end">
-      <i class="fa fa-plus"></i> New SSH Key
+      <i class="fa fa-plus"></i> {{ Translate $.lang "sshkey_list.new_key" }}
     </button>
 </div>
 {{ range $i, $key := $.user.SSHAuthKeys }}
@@ -39,7 +39,7 @@
             <code style="overflow-wrap: anywhere">{{ $key.Fingerprint }}</code>
           </span>
           <span class="text-muted d-block mb-2">
-            Type: {{ slice $key.PublicKey.Type 4 }}
+            {{ Translate $.lang "sshkey_list.type" }}: {{ slice $key.PublicKey.Type 4 }}
           </span>
           <p>
               <button class="btn btn-sm btn-outline-danger ml-1" hx-target-error="sshkey-failed"
@@ -49,22 +49,22 @@
                       data-hx-target="#sshkey" data-hx-post="/sshkey/remove" 
                       _="on click call 
                             Swal.fire({
-                                title: 'Delete Key?',
+                                title: '{{ Translate $.lang "sshkey_list.delete_key" }}',
                                 backdrop: true,
-                                html: '<code>{{ $key.Comment }}</code><br/><br/>This action <strong>CANNOT</strong> be undone. This will permanently delete the key and you will not be able to use it again in the future',
+                                html: '<code>{{ $key.Comment }}</code><br/><br/>{{ Translate $.lang "sshkey_list.delete_warning" }}',
                                 focusCancel: true,
                                 reverseButtons: false,
                                 confirmButtonColor: '#dc3545',
-                                confirmButtonText: 'Delete',
+                                confirmButtonText: '{{ Translate $.lang "common.delete" }}',
                                 showCancelButton: true,
                                 icon: 'warning'})
                             if result.isConfirmed trigger keyremove">
-                Delete
+                {{ Translate $.lang "common.delete" }}
               </button>
           </p>
         </div>
     </div>
 </div>
 {{ else }}
-<p>No ssh keys uploaded</p>
+<p>{{ Translate $.lang "sshkey_list.no_keys" }}</p>
 {{ end }}

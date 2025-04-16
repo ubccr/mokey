@@ -453,102 +453,98 @@
     }
     </style>
   </head>
-  <body style="width: 100% !important; height: 100%; -webkit-text-size-adjust: none; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; background-color: #F2F4F6; color: #51545E; margin: 0;" bgcolor="#F2F4F6">
-    <span class="preheader" style="display: none !important; visibility: hidden; mso-hide: all; font-size: 1px; line-height: 1px; max-height: 0; max-width: 0; opacity: 0; overflow: hidden;">Use this link to verify your account. The link is only valid for {{$.link_expires}}.</span>
-    <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; -premailer-width: 100%; -premailer-cellpadding: 0; -premailer-cellspacing: 0; background-color: #F2F4F6; margin: 0; padding: 0;" bgcolor="#F2F4F6">
-      <tr>
-        <td align="center" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px;">
-          <table class="email-content" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; -premailer-width: 100%; -premailer-cellpadding: 0; -premailer-cellspacing: 0; margin: 0; padding: 0;">
-            <tr>
-              <td class="email-masthead" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px; text-align: center; padding: 25px 0;" align="center">
-                <a href="{{ $.homepage }}" class="f-fallback email-masthead_name" style="color: #A8AAAF; font-size: 16px; font-weight: bold; text-decoration: none; text-shadow: 0 1px 0 white;">
-                [{{ $.site_name }}]
-              </a>
-              </td>
-            </tr>
-            <!-- Email Body -->
-            <tr>
-              <td class="email-body" width="570" cellpadding="0" cellspacing="0" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px; width: 100%; -premailer-width: 100%; -premailer-cellpadding: 0; -premailer-cellspacing: 0; margin: 0; padding: 0;">
-                <table class="email-body_inner" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="width: 570px; -premailer-width: 570px; -premailer-cellpadding: 0; -premailer-cellspacing: 0; background-color: #FFFFFF; margin: 0 auto; padding: 0;" bgcolor="#FFFFFF">
-                  <!-- Body content -->
-                  <tr>
-                    <td class="content-cell" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px; padding: 45px;">
-                      <div class="f-fallback">
-                        <h1 style="margin-top: 0; color: #333333; font-size: 22px; font-weight: bold; text-align: left;" align="left">Hi {{ $.user.First }},</h1>
-                        <p style="font-size: 16px; line-height: 1.625; color: #51545E; margin: .4em 0 1.1875em;">You recently created an account at [{{ $.site_name }}] and you <strong>MUST</strong> verify your email before using your account. Use the button below to verify your email address. <strong>This account verification is only valid for the next {{ $.link_expires }}.</strong></p>
-                        <!-- Action -->
-                        <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; -premailer-width: 100%; -premailer-cellpadding: 0; -premailer-cellspacing: 0; text-align: center; margin: 30px auto; padding: 0;">
-                          <tr>
-                            <td align="center" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px;">
-                              <!-- Border based button
-           https://litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design -->
-                              <table width="100%" border="0" cellspacing="0" cellpadding="0" role="presentation">
+<body style="width: 100% !important; height: 100%; -webkit-text-size-adjust: none; font-family: 'Nunito Sans', Helvetica, Arial, sans-serif; background-color: #F2F4F6; color: #51545E; margin: 0;" bgcolor="#F2F4F6">
+    <span class="preheader" style="display: none !important; visibility: hidden; mso-hide: all; font-size: 1px; line-height: 1px; max-height: 0; max-width: 0; opacity: 0; overflow: hidden;">
+	    {{ Translate $.lang "email_template.account_verify_preheader" }} $.link_expires.
+    </span>
+    <table class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #F2F4F6; margin: 0; padding: 0;" bgcolor="#F2F4F6">
+        <tr>
+            <td align="center">
+                <table class="email-content" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0; padding: 0;">
+                    <tr>
+                        <td class="email-masthead" align="center" style="padding: 25px 0;">
+                            <a href="{{ $.homepage }}" class="f-fallback email-masthead_name" style="color: #A8AAAF; font-size: 16px; font-weight: bold; text-decoration: none;">
+                                [{{ $.site_name }}]
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="email-body" width="570" align="center">
+                            <table class="email-body_inner" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #FFFFFF; margin: 0 auto; padding: 0;" bgcolor="#FFFFFF">
                                 <tr>
-                                  <td align="center" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px;">
-                                    <a href="{{ $.link }}" class="f-fallback button button--green" target="_blank" style="color: #FFF; background-color: #22BC66; display: inline-block; text-decoration: none; border-radius: 3px; box-shadow: 0 2px 3px rgba(0, 0, 0, 0.16); -webkit-text-size-adjust: none; box-sizing: border-box; border-color: #22BC66; border-style: solid; border-width: 10px 18px;">Verify your account</a>
-                                  </td>
+                                    <td class="content-cell" style="padding: 45px;">
+                                        <div class="f-fallback">
+                                            <h1 style="color: #333333; font-size: 22px; font-weight: bold; margin-top: 0;">
+						    {{ Translate $.lang "email_template.account_verify_greeting" }} {{ $.user.First }},
+                                            </h1>
+                                            <p style="font-size: 16px; color: #51545E;">
+                                                {{ Translate $.lang "email_template.account_verify_body" $.site_name $.link_expires }}
+						{{ Translate $.lang "email_template.account_verify_body_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.account_verify_body_part2" }}{{ Translate $.lang "email_template.account_verify_body_part3" }}{{ Translate $.lang "email_template.account_verify_body_part4" }}{{ $.link_expires }}.
+					    </p>
+                                            <table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="text-align: center; margin: 30px auto;">
+                                                <tr>
+                                                    <td align="center">
+                                                        <a href="{{ $.link }}" class="f-fallback button button--green" target="_blank" style="color: #FFF; background-color: #22BC66; text-decoration: none; border-radius: 3px; border-style: solid; border-width: 10px 18px;">
+                                                            {{ Translate $.lang "email_template.account_verify_button" }}
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            <p style="font-size: 16px; color: #51545E;">
+                                                {{ Translate $.lang "email_template.account_verify_login_info_intro" }}
+                                            </p>
+                                            <table class="attributes" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #F4F4F7; padding: 16px;" bgcolor="#F4F4F7">
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ Translate $.lang "email_template.account_verify_login_page" }}:</strong> {{ $.base_url }}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ Translate $.lang "email_template.account_verify_username" }}:</strong> {{ $.user.Username }}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            <p style="font-size: 16px; color: #51545E;">
+					    	{{ Translate $.lang "email_template.account_updated_security_notice_part1" }}{{ $.os }}{{ Translate $.lang "email_template.account_updated_security_notice_part2" }}{{ $.browser }}{{ Translate $.lang "email_template.account_updated_security_notice_part3" }}{{ Translate $.lang "email_template.account_updated_security_notice_part4" }}<a href="mailto:{{ $.contact }}" style="color: #3869D4;">{{ Translate $.lang "email_template.account_updated_security_notice_contact" }}</a>{{ Translate $.lang "email_template.account_updated_security_notice_part5" }}<a href="{{ $.help_url }}" style="color: #3869D4;">{{ Translate $.lang "email_template.account_updated_security_notice_help" }}</a>{{ Translate $.lang "email_template.account_updated_security_notice_part6" }}
+                                            </p>
+                                            <p style="font-size: 16px; color: #51545E;">
+						{{ Translate $.lang "email_template.account_verify_signature_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.account_verify_signature_part2" }}
+                                            </p>
+                                            <table class="body-sub" style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #EAEAEC;">
+                                                <tr>
+                                                    <td>
+                                                        <p style="font-size: 13px; color: #51545E;">
+                                                            {{ Translate $.lang "email_template.account_verify_trouble_link" }}
+                                                        </p>
+                                                        <p style="font-size: 13px; color: #51545E;">
+                                                            {{ $.link }}
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </td>
                                 </tr>
-                              </table>
-                            </td>
-                          </tr>
-                        </table>
-                        <p style="font-size: 16px; line-height: 1.625; color: #51545E; margin: .4em 0 1.1875em;">For reference, here's your login information:</p>
-                        <table class="attributes" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 0 21px;">
-                          <tr>
-                            <td class="attributes_content" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px; background-color: #F4F4F7; padding: 16px;" bgcolor="#F4F4F7">
-                              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 45px;">
+                            <table class="email-footer" align="center" width="570">
                                 <tr>
-                                  <td class="attributes_item" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px; padding: 0;">
-                                    <span class="f-fallback">
-              <strong>Login Page:</strong> {{ $.base_url }}
-            </span>
-                                  </td>
+                                    <td align="center">
+                                        <p style="font-size: 13px; color: #A8AAAF; text-align: center;">
+                                            {{ $.sig | BreakNewlines }}
+                                        </p>
+                                    </td>
                                 </tr>
-                                <tr>
-                                  <td class="attributes_item" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px; padding: 0;">
-                                    <span class="f-fallback">
-              <strong>Username:</strong> {{ $.user.Username }}
-            </span>
-                                  </td>
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-                        </table>
-                        <p style="font-size: 16px; line-height: 1.625; color: #51545E; margin: .4em 0 1.1875em;">For security, this request was received from a {{ $.os }} device using {{ $.browser }}. If you did not create an account, please ignore this email and <a href="mailto:{{ $.contact }}" style="color: #3869D4;">contact support</a> or check out our <a href="{{ $.help_url }}" style="color: #3869D4;">help documentation</a> if you have questions.</p>
-                        <p style="font-size: 16px; line-height: 1.625; color: #51545E; margin: .4em 0 1.1875em;">Thanks,
-                          <br />The [{{ $.site_name }}] team</p>
-                        <!-- Sub copy -->
-                        <table class="body-sub" role="presentation" style="margin-top: 25px; padding-top: 25px; border-top-width: 1px; border-top-color: #EAEAEC; border-top-style: solid;">
-                          <tr>
-                            <td style="word-break: break-all; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px;">
-                              <p class="f-fallback sub" style="font-size: 13px; line-height: 1.625; color: #51545E; margin: .4em 0 1.1875em;">If you’re having trouble with the button above, copy and paste the URL below into your web browser.</p>
-                              <p class="f-fallback sub" style="font-size: 13px; line-height: 1.625; color: #51545E; margin: .4em 0 1.1875em; word-break: break-all;">{{ $.link }}</p>
-                            </td>
-                          </tr>
-                        </table>
-                      </div>
-                    </td>
-                  </tr>
+                            </table>
+                        </td>
+                    </tr>
                 </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px;">
-                <table class="email-footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="width: 570px; -premailer-width: 570px; -premailer-cellpadding: 0; -premailer-cellspacing: 0; text-align: center; margin: 0 auto; padding: 0;">
-                  <tr>
-                    <td class="content-cell" align="center" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px; padding: 45px;">
-                      <p class="f-fallback sub align-center" style="font-size: 13px; line-height: 1.625; text-align: center; color: #A8AAAF; margin: .4em 0 1.1875em;" align="center">
-                        {{ $.sig | BreakNewlines }}
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+            </td>
+        </tr>
     </table>
-  </body>
+</body>
 </html>

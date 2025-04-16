@@ -1,5 +1,12 @@
 # Mokey ChangeLog
 
+## [v0.6.7] - 
+- Added `timeago` function with support for English, Portuguese, Spanish, Dutch, French, German, and Turkish. Based on [xeonx/timeago](https://github.com/xeonx/timeago).
+
+## [v0.6.6] - 2025-04-16
+- Add config option to hide registratrion link: enable_user_signup true/false
+- Add support for multiple languages with configurable translations. See README
+
 ## [v0.6.5] - 2024-10-28
 
 - Update fiber, htmx (v2.0.3), hyperscript (v0.9.13)

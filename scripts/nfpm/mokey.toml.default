@@ -27,6 +27,14 @@ ktuser = "mokeyapp"
 # Path to keytab file
 keytab = "/etc/mokey/private/mokeyapp.keytab"
 
+# Default language for the site
+# Languages supported: English (english), Dutch (dutch)
+# Default is english
+default_language = "english"
+
+# Directory where translations can be placed
+translations_dir = "/etc/mokey/translations"
+
 #------------------------------------------------------------------------------
 # User account settings
 #------------------------------------------------------------------------------
@@ -54,6 +62,9 @@ otp_issuer = "MYORG"
 
 # Block list of user accounts from logging in
 # block_users = ["username1", "username2", "username3"]
+
+# Enable or disable user signup link on the login page
+enable_user_signup = true
 
 #------------------------------------------------------------------------------
 # Email

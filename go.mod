@@ -1,15 +1,18 @@
-module github.com/ubccr/mokey
+// module github.com/ubccr/mokey
+// replace github.com/ubccr/mokey => /opt/tromp/mokey
+module github.com/tubby1981/mokey
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dchest/captcha v1.0.0
-	github.com/dustin/go-humanize v1.0.1
 	github.com/essentialkaos/branca/v2 v2.0.5
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/gofiber/storage/memory/v2 v2.0.1
 	github.com/gofiber/storage/redis/v3 v3.1.2
 	github.com/gofiber/storage/sqlite3/v2 v2.1.1
+	// github.com/dustin/go-humanize v1.0.1
+	github.com/goodsign/monday v1.0.2
 	github.com/gorilla/mux v1.8.1
 	github.com/mileusna/useragent v1.3.5
 	github.com/ory/hydra-client-go v1.10.6
@@ -26,6 +29,8 @@ require (
 	golang.org/x/net v0.29.0
 	golang.org/x/oauth2 v0.18.0
 )
+
+require github.com/dustin/go-humanize v1.0.1
 
 require (
 	github.com/andybalholm/brotli v1.1.1 // indirect

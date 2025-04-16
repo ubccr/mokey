@@ -93,7 +93,7 @@ func LimitReachedHandler(c *fiber.Ctx) error {
 	log.WithFields(log.Fields{
 		"ip": RemoteIP(c),
 	}).Warn("Limit reached")
-	return c.Status(fiber.StatusTooManyRequests).SendString("Too many requests. Please try again later.")
+	return c.Status(fiber.StatusTooManyRequests).SendString(Translate("", "common.too_many_requests"))
 }
 
 func (r *Router) RequireHTMX(c *fiber.Ctx) error {

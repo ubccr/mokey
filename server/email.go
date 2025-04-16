@@ -80,7 +80,7 @@ func (e *Emailer) SendPasswordResetEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		"link_expires": strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", "")),
 	}
 
-	return e.sendEmail(user, ctx, "Please reset your password", "password-reset", vars)
+	return e.sendEmail(user, ctx, Translate("", "email_template.password_reset_subject"), "password-reset", vars)
 }
 
 func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
@@ -94,7 +94,7 @@ func (e *Emailer) SendAccountVerifyEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		"link_expires": strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(time.Duration(viper.GetInt("email.token_max_age"))*time.Second), "", "")),
 	}
 
-	return e.sendEmail(user, ctx, "Verify your email", "account-verify", vars)
+	return e.sendEmail(user, ctx, Translate("", "email_template.account_verify_subject"), "account-verify", vars)
 }
 
 func (e *Emailer) SendWelcomeEmail(user *ipa.User, ctx *fiber.Ctx) error {
@@ -102,9 +102,10 @@ func (e *Emailer) SendWelcomeEmail(user *ipa.User, ctx *fiber.Ctx) error {
 		"getting_started_url": viper.GetString("site.getting_started_url"),
 	}
 
-	subject := "Welcome to " + viper.GetString("site.name")
+	subject := Translate("", "email_template.welcome_subject") + " " + viper.GetString("site.name")
 
 	return e.sendEmail(user, ctx, subject, "welcome", vars)
+
 }
 
 func (e *Emailer) SendMFAChangedEmail(enabled bool, user *ipa.User, ctx *fiber.Ctx) error {
@@ -112,7 +113,7 @@ func (e *Emailer) SendMFAChangedEmail(enabled bool, user *ipa.User, ctx *fiber.C
 	if enabled {
 		verb = "Enabled"
 	}
-	event := "Two-Factor Authentication " + verb
+	event := Translate("", "email_template.two_factor_auth_event") + verb
 
 	vars := map[string]interface{}{
 		"event": event,
@@ -126,7 +127,7 @@ func (e *Emailer) SendSSHKeyUpdatedEmail(added bool, user *ipa.User, ctx *fiber.
 	if added {
 		verb = "added"
 	}
-	event := "SSH key " + verb
+	event := Translate("", "email_template.ssh_key_event") + verb
 
 	vars := map[string]interface{}{
 		"event": event,
@@ -140,7 +141,7 @@ func (e *Emailer) SendOTPTokenUpdatedEmail(added bool, user *ipa.User, ctx *fibe
 	if added {
 		verb = "added"
 	}
-	event := "OTP token " + verb
+	event := Translate("", "email_template.otp_token_event") + verb
 
 	vars := map[string]interface{}{
 		"event": event,
@@ -151,10 +152,10 @@ func (e *Emailer) SendOTPTokenUpdatedEmail(added bool, user *ipa.User, ctx *fibe
 
 func (e *Emailer) SendPasswordChangedEmail(user *ipa.User, ctx *fiber.Ctx) error {
 	vars := map[string]interface{}{
-		"event": "Password changed",
+		"event": Translate("", "email_template.password_changed_event"),
 	}
 
-	return e.sendEmail(user, ctx, "Your password has been changed", "account-updated", vars)
+	return e.sendEmail(user, ctx, Translate("", "email_template.account_updated_subject"), "account-updated", vars)
 }
 
 func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
@@ -174,166 +175,179 @@ func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
 }
 
 func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string, data map[string]interface{}) error {
-	log.WithFields(log.Fields{
-		"email":    user.Email,
-		"username": user.Username,
-	}).Debug("Sending email to user")
+    log.WithFields(log.Fields{
+        "email":    user.Email,
+        "username": user.Username,
+    }).Debug("Sending email to user")
 
-	if data == nil {
-		data = make(map[string]interface{})
-	}
+    if data == nil {
+        data = make(map[string]interface{})
+    }
 
-	ua := useragent.Parse(ctx.Get(fiber.HeaderUserAgent))
+    ua := useragent.Parse(ctx.Get(fiber.HeaderUserAgent))
 
-	data["os"] = ua.OS
-	data["browser"] = ua.Name
-	data["user"] = user
-	data["date"] = time.Now()
-	data["contact"] = viper.GetString("email.from")
-	data["sig"] = viper.GetString("email.signature")
-	data["site_name"] = viper.GetString("site.name")
-	data["help_url"] = viper.GetString("site.help_url")
-	data["homepage"] = viper.GetString("site.homepage")
-	data["base_url"] = BaseURL(ctx)
+    data["os"] = ua.OS
+    data["browser"] = ua.Name
+    data["user"] = user
+    data["date"] = time.Now()
+    data["contact"] = viper.GetString("email.from")
+    data["sig"] = viper.GetString("email.signature")
+    data["site_name"] = viper.GetString("site.name")
+    data["help_url"] = viper.GetString("site.help_url")
+    data["homepage"] = viper.GetString("site.homepage")
+    data["base_url"] = BaseURL(ctx)
 
-	var text bytes.Buffer
-	err := e.templates.ExecuteTemplate(&text, tmpl+".txt", data)
-	if err != nil {
-		return err
-	}
+    // Ensure the "lang" key exists in the data map
+    defaultLang := "en"
+    if viper.IsSet("site.default_language") {
+        defaultLang = viper.GetString("site.default_language")
+    }
 
-	txtBody, err := e.quotedBody(text.Bytes())
-	if err != nil {
-		return err
-	}
+    if lang, exists := data["lang"]; !exists || lang == "" {
+        log.Printf("DEBUG: 'lang' key not found or empty, using default language '%s'", defaultLang)
+        data["lang"] = defaultLang
+    } else {
+        log.Debugf("DEBUG: Using provided 'lang' key with value: %v", lang)
+    }
 
-	var html bytes.Buffer
-	err = e.templates.ExecuteTemplate(&html, tmpl+".html", data)
-	if err != nil {
-		return err
-	}
+    var text bytes.Buffer
+    err := e.templates.ExecuteTemplate(&text, tmpl+".txt", data)
+    if err != nil {
+        return err
+    }
 
-	htmlBody, err := e.quotedBody(html.Bytes())
-	if err != nil {
-		return err
-	}
+    txtBody, err := e.quotedBody(text.Bytes())
+    if err != nil {
+        return err
+    }
 
-	header := make(textproto.MIMEHeader)
-	header.Set("Mime-Version", "1.0")
-	header.Set("Date", time.Now().Format(time.RFC1123Z))
-	header.Set("To", user.Email)
-	header.Set("Subject", fmt.Sprintf("[%s] %s", viper.GetString("site.name"), subject))
-	header.Set("From", viper.GetString("email.from"))
+    var html bytes.Buffer
+    err = e.templates.ExecuteTemplate(&html, tmpl+".html", data)
+    if err != nil {
+        return err
+    }
 
-	var multipartBody bytes.Buffer
-	mp := multipart.NewWriter(&multipartBody)
-	header.Set("Content-Type", fmt.Sprintf("multipart/alternative;%s boundary=%s", crlf, mp.Boundary()))
+    htmlBody, err := e.quotedBody(html.Bytes())
+    if err != nil {
+        return err
+    }
 
-	txtPart, err := mp.CreatePart(textproto.MIMEHeader(
-		map[string][]string{
-			"Content-Type":              []string{"text/plain; charset=utf-8"},
-			"Content-Transfer-Encoding": []string{"quoted-printable"},
-		}))
-	if err != nil {
-		return err
-	}
+    header := make(textproto.MIMEHeader)
+    header.Set("Mime-Version", "1.0")
+    header.Set("Date", time.Now().Format(time.RFC1123Z))
+    header.Set("To", user.Email)
+    header.Set("Subject", fmt.Sprintf("[%s] %s", viper.GetString("site.name"), subject))
+    header.Set("From", viper.GetString("email.from"))
 
-	_, err = txtPart.Write(txtBody)
-	if err != nil {
-		return err
-	}
+    var multipartBody bytes.Buffer
+    mp := multipart.NewWriter(&multipartBody)
+    header.Set("Content-Type", fmt.Sprintf("multipart/alternative;%s boundary=%s", crlf, mp.Boundary()))
 
-	htmlPart, err := mp.CreatePart(textproto.MIMEHeader(
-		map[string][]string{
-			"Content-Type":              []string{"text/html; charset=utf-8"},
-			"Content-Transfer-Encoding": []string{"quoted-printable"},
-		}))
-	if err != nil {
-		return err
-	}
+    txtPart, err := mp.CreatePart(textproto.MIMEHeader{
+        "Content-Type":              []string{"text/plain; charset=utf-8"},
+        "Content-Transfer-Encoding": []string{"quoted-printable"},
+    })
+    if err != nil {
+        return err
+    }
 
-	_, err = htmlPart.Write(htmlBody)
-	if err != nil {
-		return err
-	}
+    _, err = txtPart.Write(txtBody)
+    if err != nil {
+        return err
+    }
 
-	err = mp.Close()
-	if err != nil {
-		return err
-	}
+    htmlPart, err := mp.CreatePart(textproto.MIMEHeader{
+        "Content-Type":              []string{"text/html; charset=utf-8"},
+        "Content-Transfer-Encoding": []string{"quoted-printable"},
+    })
+    if err != nil {
+        return err
+    }
 
-	smtpHostPort := fmt.Sprintf("%s:%d", viper.GetString("email.smtp_host"), viper.GetInt("email.smtp_port"))
-	var conn net.Conn
-	tlsMode := viper.GetString("email.smtp_tls")
+    _, err = htmlPart.Write(htmlBody)
+    if err != nil {
+        return err
+    }
 
-	switch tlsMode {
-	case "on":
-		tlsConfig := &tls.Config{
-			InsecureSkipVerify: false,
-			ServerName:         viper.GetString("email.smtp_host"),
-		}
-		conn, err = tls.Dial("tcp", smtpHostPort, tlsConfig)
-	case "off", "starttls":
-		conn, err = net.Dial("tcp", smtpHostPort)
-	default:
-		return fmt.Errorf("invalid config value for smtp_tls: %s", tlsMode)
-	}
+    err = mp.Close()
+    if err != nil {
+        return err
+    }
 
-	if err != nil {
-		return err
-	}
+    smtpHostPort := fmt.Sprintf("%s:%d", viper.GetString("email.smtp_host"), viper.GetInt("email.smtp_port"))
+    var conn net.Conn
+    tlsMode := viper.GetString("email.smtp_tls")
 
-	c, err := smtp.NewClient(conn, viper.GetString("email.smtp_host"))
-	if err != nil {
-		return err
-	}
-	defer c.Close()
+    switch tlsMode {
+    case "on":
+        tlsConfig := &tls.Config{
+            InsecureSkipVerify: false,
+            ServerName:         viper.GetString("email.smtp_host"),
+        }
+        conn, err = tls.Dial("tcp", smtpHostPort, tlsConfig)
+    case "off", "starttls":
+        conn, err = net.Dial("tcp", smtpHostPort)
+    default:
+        return fmt.Errorf("invalid config value for smtp_tls: %s", tlsMode)
+    }
 
-	if tlsMode == "starttls" {
-		err := c.StartTLS(&tls.Config{
-			ServerName: viper.GetString("email.smtp_host"),
-		})
-		if err != nil {
-			return err
-		}
-	}
+    if err != nil {
+        return err
+    }
 
-	if viper.IsSet("email.smtp_username") && viper.IsSet("email.smtp_password") {
-		auth := smtp.PlainAuth("", viper.GetString("email.smtp_username"), viper.GetString("email.smtp_password"), viper.GetString("email.smtp_host"))
-		if err = c.Auth(auth); err != nil {
-			log.Error(err)
-			return err
-		}
-	}
-	if err = c.Mail(viper.GetString("email.from")); err != nil {
-		log.Error(err)
-		return err
-	}
-	if err = c.Rcpt(user.Email); err != nil {
-		log.Error(err)
-		return err
-	}
+    c, err := smtp.NewClient(conn, viper.GetString("email.smtp_host"))
+    if err != nil {
+        return err
+    }
+    defer c.Close()
 
-	wc, err := c.Data()
-	if err != nil {
-		return err
-	}
-	defer wc.Close()
+    if tlsMode == "starttls" {
+        err := c.StartTLS(&tls.Config{
+            ServerName: viper.GetString("email.smtp_host"),
+        })
+        if err != nil {
+            return err
+        }
+    }
 
-	var buf bytes.Buffer
-	for k, vv := range header {
-		for _, v := range vv {
-			fmt.Fprintf(&buf, "%s: %s\r\n", k, v)
-		}
-	}
-	fmt.Fprintf(&buf, "\r\n")
+    if viper.IsSet("email.smtp_username") && viper.IsSet("email.smtp_password") {
+        auth := smtp.PlainAuth("", viper.GetString("email.smtp_username"), viper.GetString("email.smtp_password"), viper.GetString("email.smtp_host"))
+        if err = c.Auth(auth); err != nil {
+            log.Error(err)
+            return err
+        }
+    }
 
-	if _, err = buf.WriteTo(wc); err != nil {
-		return err
-	}
-	if _, err = wc.Write(multipartBody.Bytes()); err != nil {
-		return err
-	}
+    if err = c.Mail(viper.GetString("email.from")); err != nil {
+        log.Error(err)
+        return err
+    }
+    if err = c.Rcpt(user.Email); err != nil {
+        log.Error(err)
+        return err
+    }
 
-	return nil
+    wc, err := c.Data()
+    if err != nil {
+        return err
+    }
+    defer wc.Close()
+
+    var buf bytes.Buffer
+    for k, vv := range header {
+        for _, v := range vv {
+            fmt.Fprintf(&buf, "%s: %s\r\n", k, v)
+        }
+    }
+    fmt.Fprintf(&buf, "\r\n")
+
+    if _, err = buf.WriteTo(wc); err != nil {
+        return err
+    }
+    if _, err = wc.Write(multipartBody.Bytes()); err != nil {
+        return err
+    }
+
+    return nil
 }
+

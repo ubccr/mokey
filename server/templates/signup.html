@@ -1,71 +1,72 @@
 {{ template "header.html" . }}
+{{ if ConfigValueBool "accounts.enable_user_signup" }}
 <section class="main-content">
         <div id="login-failed" style="display: none" class="login-failed alert alert-danger mx-auto" role="alert">
         </div>
         <div id="login" class="container">
             <div class="login-card rounded-3 overflow-hidden bg-white mx-auto">
                 <div class="login-head bg-dark text-light p-4">
-                    <h3 class="text-center m-0">Sign Up</h3>
+                    <h3 class="text-center m-0">{{ Translate $.lang "signup.title" }}</h3>
                 </div>
                 <div class="login-body p-4 p-md-5">
                     <div class="login-body-wrapper mx-auto">
                         <form>
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label">{{ Translate $.lang "common.email" }}</label>
                             <input type="text" class="form-control form-control-lg" name="email" value="{{ $.user.Email }}" autofocus="autofocus" placeholder="">
                             {{ with AllowedDomains }}
                             <div id="emailHelpBlock" class="form-text">
-                            Allowed domains: {{ . }}
+                            {{ Translate $.lang "signup.allowed_domains" }}: {{ . }}
                             </div>
                             {{ end }}
                         </div>
                         {{ if not $.usernameFromEmail }}
                         <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
+                            <label for="username" class="form-label">{{ Translate $.lang "common.username" }}</label>
                             <input type="username" class="form-control form-control-lg" name="username" value="{{ $.user.Username }}" placeholder="">
                         </div>
                         {{ end }}
                         <div class="mb-3">
-                            <label for="first" class="form-label">First Name</label>
+                            <label for="first" class="form-label">{{ Translate $.lang "common.first_name" }}</label>
                             <input type="text" class="form-control form-control-lg" name="first" value="{{ $.user.First }}" placeholder="">
                         </div>
                         <div class="mb-3">
-                            <label for="last" class="form-label">Last Name</label>
+                            <label for="last" class="form-label">{{ Translate $.lang "common.last_name" }}</label>
                             <input type="text" class="form-control form-control-lg" name="last" value="{{ $.user.Last }}" placeholder="">
                         </div>
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
+                            <label for="password" class="form-label">{{ Translate $.lang "common.password" }}</label>
                             <input type="password" class="form-control form-control-lg" name="password" value="{{ $.password }}" placeholder="">
                         </div>
                         <div class="mb-3">
-                            <label for="password2" class="form-label">Confirm Password</label>
+                            <label for="password2" class="form-label">{{ Translate $.lang "common.confirm_password" }}</label>
                             <input type="password" id="password2" class="form-control form-control-lg" name="password2" placeholder="">
                         </div>
                         {{ with $.captchaID }}
                         <div class="mb-3">
                             <div id="captchaHelpBlock" class="form-text">
-                                Type the numbers you see in the picture below:</em> <button type="button" tabindex="-1" class="btn btn-link" onclick="reloadCaptcha()">Reload</button>
+                                {{ Translate $.lang "common.captcha_instruction" }} <button type="button" tabindex="-1" class="btn btn-link" onclick="reloadCaptcha()">{{ Translate $.lang "common.reload" }}</button>
                             </div>
                             <input name="captcha_sol" id="captcha_sol" class="form-control form-control-lg" size="10" type="text" autocomplete="off">
                             <input name="captcha_id" id="captcha_id" type="hidden" value="{{ . }}">
-                            <p><img id="captcha" src="/auth/captcha/{{ . }}.png" alt="Captcha image"></p>
+                            <p><img id="captcha" src="/auth/captcha/{{ . }}.png" alt="{{ Translate $.lang "common.captcha_image" }}"></p>
                         </div>
                         {{ end }}
                         {{ with ConfigValueString "site.tos_url" }}
                         <div class="mb-3">
                             <div id="tosHelpBlock" class="form-text">
-                            By clicking "Create Account" you agree to our <a href="{{ . }}" target="_blank">Terms of Service</a>
+                            {{ Translate $.lang "signup.tos_message" }} <a href="{{ . }}" target="_blank">{{ Translate $.lang "signup.tos_link" }}</a>
                             </div>
                         </div>
                         {{ end }}
                         <div class="mb-3 d-grid gap-2">
                           <button hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-target-error="login-failed" hx-post="/signup" hx-target="#login" hx-swap="innerHTML" class="btn btn-primary btn-lg" type="submit">
                           <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
-                          Create Account
+                          {{ Translate $.lang "signup.create_account" }}
                           </button>
                         </div>
                         </form>
-                        <p class="text-muted text-center">Already have an account? <a href="/auth/login">Login</a></p>
+                        <p class="text-muted text-center">{{ Translate $.lang "signup.already_have_account" }} <a href="/auth/login">{{ Translate $.lang "common.login" }}</a></p>
                     </div>
                 </div>
             </div>
@@ -102,5 +103,6 @@ function reloadCaptcha() {
     return false;
 }
 </script>
+{{ end }}
 {{ end }}
 {{ template "footer.html" . }}

@@ -5,29 +5,29 @@
         <div id="login" class="container">
             <div class="login-card rounded-3 overflow-hidden bg-white mx-auto">
                 <div class="login-head bg-dark text-light p-4">
-                    <h3 class="text-center m-0">Verify Account</h3>
+                    <h3 class="text-center m-0">{{ Translate $.lang "common.verify_account" }}</h3>
                 </div>
                 <div class="login-body p-4 p-md-5">
                     <div class="login-body-wrapper mx-auto">
                         <form>
                         <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
+                            <label for="username" class="form-label">{{ Translate $.lang "common.username" }}</label>
                             <input type="username" class="form-control form-control-lg" name="username" placeholder="">
                         </div>
                         {{ with $.captchaID }}
                         <div class="mb-3">
                             <div id="captchaHelpBlock" class="form-text">
-                                Type the numbers you see in the picture below:</em> <button type="button" tabindex="-1" class="btn btn-link" onclick="reloadCaptcha()">Reload</button>
+                                {{ Translate $.lang "common.captcha_instruction" }} <button type="button" tabindex="-1" class="btn btn-link" onclick="reloadCaptcha()">{{ Translate $.lang "common.reload" }}</button>
                             </div>
                             <input name="captcha_sol" id="captcha_sol" class="form-control form-control-lg" size="10" type="text" autocomplete="off">
                             <input name="captcha_id" id="captcha_id" type="hidden" value="{{ . }}">
-                            <p><img id="captcha" src="/auth/captcha/{{ . }}.png" alt="Captcha image"></p>
+                            <p><img id="captcha" src="/auth/captcha/{{ . }}.png" alt="{{ Translate $.lang "common.captcha_image" }}"></p>
                         </div>
                         {{ end }}
                         <div class="mb-3 d-grid gap-2">
                           <button hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-target-error="login-failed" hx-post hx-target="#login" hx-swap="innerHTML" class="btn btn-primary btn-lg" type="submit">
                           <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
-                          Submit
+                          {{ Translate $.lang "common.submit" }}
                           </button>
                         </div>
                         </form>

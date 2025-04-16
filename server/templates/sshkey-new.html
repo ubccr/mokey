@@ -4,24 +4,24 @@
       <div class="modal-content">
         <form>
         <div class="modal-header">
-           <h5 class="modal-title" id="modalLabel"><i class="fa fa-key"></i> Add New SSH Key</h5>
+           <h5 class="modal-title" id="modalLabel"><i class="fa fa-key"></i> {{ Translate $.lang "sshkey_new.add_title" }}</h5>
         </div>
         <div id="modal-body" class="modal-body">
             <div id="add-key-failed" style="display: none" class="alert alert-danger alert-dismissible mx-auto" role="alert">
             </div>
             <div class="mb-3">
-                <label class="form-label">Title</label>
+                <label class="form-label">{{ Translate $.lang "sshkey_new.title" }}</label>
                 <input type="text" class="form-control" name="title" id="title" value="">
             </div>
             <div class="mb-3">
-              <label for="key" class="form-label">Public Key</label>
+              <label for="key" class="form-label">{{ Translate $.lang "sshkey_new.public_key" }}</label>
               <textarea class="form-control" id="key" name="key" rows="5" aria-describedby="keyHelp"></textarea>
-              <div id="keyHelp" class="form-text">Paste SSH public key contents above. Should begin with 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-ed25519', 'sk-ecdsa-sha2-nistp256@openssh.com', or 'sk-ssh-ed25519@openssh.com'</div>
+              <div id="keyHelp" class="form-text">{{ Translate $.lang "sshkey_new.key_help" }}</div>
             </div>
         </div>
         <div class="modal-footer">
           <div id="add-indicator" class="htmx-indicator spinner-border text-primary" role="status">
-              <span class="visually-hidden">Adding ssh key...</span>
+              <span class="visually-hidden">{{ Translate $.lang "sshkey_new.adding" }}</span>
           </div>
           <button 
             hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}'
@@ -32,12 +32,12 @@
             hx-swap="innerHTML"
             class="btn btn-primary"
             type="submit">
-          Add
+          {{ Translate $.lang "common.add" }}
           </button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal('sshkey-modal')">Cancel</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('sshkey-modal')">{{ Translate $.lang "common.cancel" }}</button>
         </div>
 
         </form>
       </div>
     </div>
-  </div>
+</div>

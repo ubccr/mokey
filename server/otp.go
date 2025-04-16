@@ -134,7 +134,7 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 	key, err := otp.NewKeyFromURL(uri)
 	if err != nil || action == "cancel" {
 		client.RemoveOTPToken(uuid)
-		vars["message"] = "Failed to verify token."
+		vars["message"] = Translate("", "otp.failed_to_verify_token")
 		return r.tokenList(c, vars)
 	}
 
@@ -154,7 +154,7 @@ func (r *Router) OTPTokenVerify(c *fiber.Ctx) error {
 			"uuid":     uuid,
 			"username": user.Username,
 		}).Error("Failed to verify OTP token")
-		return c.Status(fiber.StatusBadRequest).SendString("Invalid 6-digit code. Please try again.")
+		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "otp.invalid_6_digit_code"))
 	}
 
 	autoMFA := false
