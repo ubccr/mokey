@@ -12,7 +12,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/essentialkaos/branca"
+	"github.com/essentialkaos/branca/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/spf13/viper"
 )
@@ -73,8 +73,6 @@ func NewToken(username, email, prefix string, storage fiber.Storage) (string, er
 		return "", err
 	}
 
-	b.SetTTL(viper.GetUint32("email.token_max_age"))
-
 	token, err := b.EncodeToString(jsonBytes)
 	if err != nil {
 		return "", err
@@ -101,14 +99,12 @@ func ParseToken(token, prefix string, storage fiber.Storage) (*Token, error) {
 		return nil, err
 	}
 
-	b.SetTTL(viper.GetUint32("email.token_max_age"))
-
 	brancaToken, err := b.DecodeString(token)
 	if err != nil {
 		return nil, err
 	}
 
-	if b.IsExpired(brancaToken) {
+	if brancaToken.IsExpired(viper.GetUint32("email.token_max_age")) {
 		return nil, errors.New("Token expired")
 	}
 
