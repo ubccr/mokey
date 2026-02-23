@@ -2,7 +2,6 @@ package server
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/ory/hydra-client-go/client/admin"
@@ -67,13 +66,15 @@ func (r *Router) ConsentGet(c *fiber.Ctx) error {
 		GrantScope: consent.RequestedScope,
 		Session: &models.ConsentRequestSession{
 			IDToken: map[string]interface{}{
-				"uid":         string(user.Username),
-				"first":       string(user.First),
-				"last":        string(user.Last),
-				"given_name":  string(user.First),
-				"family_name": string(user.Last),
-				"groups":      strings.Join(user.Groups, ";"),
-				"email":       string(user.Email),
+				"uid":                string(user.Username),
+				"preferred_username": string(user.Username),
+				"name":               string(user.DisplayName),
+				"first":              string(user.First),
+				"last":               string(user.Last),
+				"given_name":         string(user.First),
+				"family_name":        string(user.Last),
+				"groups":             user.Groups,
+				"email":              string(user.Email),
 			},
 		}})
 

@@ -1,5 +1,9 @@
 # Mokey ChangeLog
 
+## [v0.6.6] - 2025-11-24
+
+- Modify OIDC payload params (effects Hydra support)
+
 ## [v0.6.5] - 2024-10-28
 
 - Update fiber, htmx (v2.0.3), hyperscript (v0.9.13)
@@ -140,4 +144,5 @@
 [v0.6.2]: https://github.com/ubccr/mokey/releases/tag/v0.6.2
 [v0.6.3]: https://github.com/ubccr/mokey/releases/tag/v0.6.3
 [v0.6.4]: https://github.com/ubccr/mokey/releases/tag/v0.6.4
-[v0.6.5]: https://github.com/ubccr/mokey/releases/tag/v0.6.6
+[v0.6.5]: https://github.com/ubccr/mokey/releases/tag/v0.6.5
+[v0.6.6]: https://github.com/ubccr/mokey/releases/tag/v0.6.6

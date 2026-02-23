@@ -38,8 +38,8 @@ css = ""
 # css/javascript/images assets locally. Only used for advanced customization.
 # static_assets_dir = "/usr/share/mokey/assets"
 
-# User account for the mokey service
-ktuser = "mokeyapp"
+# Kerberos principal for the mokey service
+ktuser = "mokey/mokey"
 
 # Path to keytab file
 keytab = "/etc/mokey/private/mokeyapp.keytab"
