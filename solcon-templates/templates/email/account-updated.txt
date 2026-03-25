@@ -1,0 +1,18 @@
+[{{ $.site_name }}] ( {{ $.homepage }} )
+
+****************
+{{ Translate $.lang "email_template.account_updated_greeting" }} {{ $.user.First }},
+****************
+
+{{ Translate $.lang "email_template.account_updated_body_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.account_updated_body_part2" }}
+
+{{ $.event }}
+
+{{ Translate $.lang "email_template.account_updated_security_notice_part1" }}{{ $.os }}{{ Translate $.lang "email_template.account_updated_security_notice_part2" }}{{ $.browser }}{{ Translate $.lang "email_template.account_updated_security_notice_part3" }}
+{{ Translate $.lang "email_template.account_updated_security_notice_part4" }} {{ $.contact }} {{ Translate $.lang "email_template.account_updated_security_notice_part5" }}{{ $.help_url }}{{ Translate $.lang "email_template.account_updated_security_notice_help" }}{{ Translate $.lang "email_template.account_updated_security_notice_part6" }}
+
+{{ Translate $.lang "email_template.account_updated_signature" }}
+
+The [{{ $.site_name }}] team
+
+{{ $.sig }}

@@ -1,0 +1,17 @@
+{{ Translate $.lang "email_template.welcome_preheader_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.welcome_preheader_part2" }}
+
+[{{ $.site_name }}] ( {{$.homepage}} )
+
+******************
+{{ Translate $.lang "email_template.welcome_greeting" }} {{ $.user.First }}!
+******************
+
+{{ Translate $.lang "email_template.welcome_intro_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.welcome_intro_part2" }}
+
+{{ Translate $.lang "email_template.welcome_button" }} ( {{ $.getting_started_url }} )
+
+{{ Translate $.lang "email_template.welcome_note_part1" }}{{ $.base_url }}{{ Translate $.lang "email_template.welcome_note_part2" }}{{ $.user.Username }}
+
+{{ Translate $.lang "email_template.closing_part1" }}{{ $.site_name }}{{ Translate $.lang "email_template.closing_part2" }}
+
+{{ $.sig }}

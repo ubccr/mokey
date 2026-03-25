@@ -1,0 +1,25 @@
+<div class="container">
+  <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+    <p class="col-md-4 mb-0 text-muted">
+        {{ with ConfigValueString "site.homepage" }}
+            <a href="{{ . }}" style="color: #0055bb;">{{ ConfigValueString "site.name" }}</a>
+        {{ else }}
+            <a href="https://github.com/tubby1981/mokey" style="color: #0055bb;"><i class="fa-brands fa-github" aria-hidden="true"></i> mokey</a>
+        {{ end }}
+    </p>
+
+    {{ with ConfigValueString "site.help_url" }}
+    <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+      <li class="ms-3"><a class="text-muted" href="{{ . }}"><i class="fa fa-circle-question fa-lg" style="color: #0055bb;"></i></a></li>
+    </ul>
+    {{ end }}
+  </footer>
+</div>
+
+<script src="/static/js/htmx.min.js"></script>
+<script src="/static/js/hyperscript.min.js"></script>
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/sweetalert2.min.js"></script>
+<script src="/static/js/site.js"></script>
+</body>
+</html>

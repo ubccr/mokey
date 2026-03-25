@@ -1,0 +1,840 @@
+/* Solcon Theme for Mokey */
+/* Based on Solcon brand colors - www.solcon.nl */
+/* Optimized with fixed avatar sizing */
+
+:root {
+    --solcon-primary: #0055bb;
+    --solcon-primary-dark: #003d82;
+    --solcon-primary-light: #1a6ddb;
+    --solcon-secondary: #f8f9fa;
+    --solcon-text: #333333;
+    --solcon-text-light: #6c757d;
+    --solcon-white: #ffffff;
+    --solcon-border: #dee2e6;
+    --solcon-success: #28a745;
+    --solcon-danger: #dc3545;
+    --solcon-warning: #ffc107;
+    --solcon-info: #17a2b8;
+    --solcon-nav-width: 260px;
+}
+
+/* Base styles */
+body {
+    background: linear-gradient(135deg, #f0f4f8 0%, #e8ecf1 100%);
+    font-family:
+        "Roboto",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+    color: var(--solcon-text);
+    min-height: 100vh;
+}
+
+/* Navbar - Solcon Blue */
+.navbar-inverse {
+    background: linear-gradient(
+        90deg,
+        var(--solcon-primary-dark) 0%,
+        var(--solcon-primary) 100%
+    );
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 85, 187, 0.2);
+}
+
+.navbar-inverse .navbar-brand {
+    color: var(--solcon-white) !important;
+    font-weight: 600;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-inverse .navbar-brand:hover {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.navbar-inverse .navbar-text {
+    color: var(--solcon-white);
+}
+
+.navbar-solcon {
+    background: linear-gradient(
+        90deg,
+        var(--solcon-primary-dark) 0%,
+        var(--solcon-primary) 100%
+    );
+    border: none;
+}
+
+.solcon-brand {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.solcon-brand i {
+    font-size: 1.3rem;
+}
+
+/* Login card styling */
+.login-card {
+    max-width: 480px;
+    box-shadow: 0 4px 24px rgba(0, 85, 187, 0.12);
+    border-radius: 12px !important;
+    overflow: hidden;
+    border: 1px solid rgba(0, 85, 187, 0.1);
+}
+
+.login-card .login-head {
+    background: linear-gradient(
+        90deg,
+        var(--solcon-primary-dark) 0%,
+        var(--solcon-primary) 100%
+    );
+    padding: 24px !important;
+}
+
+.login-card .login-head h3 {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.login-card .login-body {
+    padding: 32px !important;
+    background: var(--solcon-white);
+}
+
+.login-body-wrapper {
+    max-width: 380px !important;
+}
+
+/* Form controls */
+.form-control {
+    border: 1px solid var(--solcon-border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: var(--solcon-primary);
+    box-shadow: 0 0 0 3px rgba(0, 85, 187, 0.1);
+    outline: none;
+}
+
+.form-control:disabled {
+    background-color: #f8f9fa;
+    border-color: var(--solcon-border);
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--solcon-text);
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+/* Primary button - Solcon style */
+.btn-primary {
+    background: linear-gradient(
+        135deg,
+        var(--solcon-primary) 0%,
+        var(--solcon-primary-light) 100%
+    );
+    border: none;
+    border-radius: 6px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 85, 187, 0.25);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(
+        135deg,
+        var(--solcon-primary-dark) 0%,
+        var(--solcon-primary) 100%
+    );
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 85, 187, 0.35);
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 3px rgba(0, 85, 187, 0.25);
+}
+
+.btn-primary.btn-lg {
+    padding: 14px 28px;
+    font-size: 1rem;
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Secondary links */
+.text-muted a {
+    color: var(--solcon-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.text-muted a:hover {
+    text-decoration: underline;
+    color: var(--solcon-primary-dark);
+}
+
+/* Account page styling */
+.bg-white.shadow-sm.rounded-3 {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0, 85, 187, 0.08) !important;
+    overflow: hidden;
+}
+
+.solcon-account-card {
+    border: 1px solid rgba(0, 85, 187, 0.08);
+}
+
+/* Profile tab navigation */
+.profile-tab-nav {
+    background: linear-gradient(
+        180deg,
+        var(--solcon-primary-dark) 0%,
+        var(--solcon-primary) 100%
+    );
+    border-radius: 12px 0 0 12px;
+    min-width: var(--solcon-nav-width);
+    flex: 0 0 var(--solcon-nav-width);
+}
+
+.profile-tab-nav .p-4 {
+    padding: 24px !important;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.profile-header {
+    padding-bottom: 16px !important;
+}
+
+/* Avatar - FIXED SIZE */
+.img-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.img-circle img.solcon-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50%;
+    border: 3px solid var(--solcon-white);
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+}
+
+.img-circle img.solcon-avatar:hover {
+    transform: scale(1.05);
+}
+
+/* Avatar Image */
+.img-circle img {
+    width: 64px;
+    height: 64px;
+    border-radius: 100%;
+    border: 1px solid var(--solcon-white);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.img-circle img:hover {
+    transform: scale(1.05);
+}
+
+@media (max-width: 576px) {
+    .img-circle img {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+.username-display {
+    color: var(--solcon-white);
+    margin-top: 12px;
+    font-weight: 500;
+    font-size: 1.5rem;
+}
+
+.profile-tab-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    padding: 14px 20px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.profile-tab-nav .nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--solcon-white) !important;
+    padding-left: 24px !important;
+}
+
+.profile-tab-nav .nav-link.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--solcon-white) !important;
+    font-weight: 500;
+}
+
+.profile-tab-nav .nav-link i {
+    color: rgba(255, 255, 255, 0.9);
+    width: 20px;
+}
+
+.nav-link-logout {
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none !important;
+}
+
+/* Tab content area */
+.tab-content {
+    padding: 24px;
+    background: var(--solcon-white);
+    border-radius: 0 12px 12px 0;
+    flex: 1;
+}
+
+.tab-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--solcon-text);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--solcon-primary);
+}
+
+/* Alert styling */
+.alert-danger {
+    background: linear-gradient(90deg, #fff5f5 0%, #ffe8e8 100%);
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    border-radius: 6px;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+}
+
+.login-failed {
+    max-width: 480px;
+}
+
+.alert-warning {
+    background: linear-gradient(90deg, #fff9e6 0%, #fff3cc 100%);
+    border: 1px solid #ffc107;
+    color: #856404;
+    border-radius: 6px;
+}
+
+.alert-success {
+    background: linear-gradient(90deg, #f0fff4 0%, #d4edda 100%);
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    border-radius: 6px;
+}
+
+/* Help text */
+.form-text {
+    color: var(--solcon-text-light);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+}
+
+footer a {
+    color: var(--solcon-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+footer a:hover {
+    color: var(--solcon-primary-dark);
+    text-decoration: underline;
+}
+
+/* Main content padding */
+.main-content {
+    padding-top: 100px;
+    padding-bottom: 80px;
+}
+
+section.col-lg-8.mx-auto.p-3.py-md-5 {
+    padding-top: 80px !important;
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-width: 2px;
+}
+
+.htmx-indicator {
+    display: none;
+    margin-left: 8px;
+}
+
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}
+
+/* Card hover effects */
+.shadow-sm:hover {
+    box-shadow: 0 6px 24px rgba(0, 85, 187, 0.12) !important;
+}
+
+/* Badge styling */
+.badge {
+    font-weight: 500;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.badge.bg-dark {
+    background: var(--solcon-text) !important;
+}
+
+.badge.rounded-pill {
+    border-radius: 50px !important;
+}
+
+/* Table styling */
+.table {
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.table thead th {
+    background: var(--solcon-primary);
+    color: var(--solcon-white);
+    font-weight: 600;
+    border: none;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table tbody td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-color: var(--solcon-border);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 85, 187, 0.03);
+}
+
+/* Button styling for actions */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+}
+
+.btn-danger {
+    background: var(--solcon-danger);
+    border: none;
+    border-radius: 4px;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-success {
+    background: var(--solcon-success);
+    border: none;
+    border-radius: 4px;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+/* Captcha styling */
+#captcha {
+    border-radius: 6px;
+    border: 1px solid var(--solcon-border);
+    margin-top: 8px;
+    max-width: 100%;
+}
+
+/* Input group styling */
+.input-group-text {
+    background: var(--solcon-secondary);
+    border: 1px solid var(--solcon-border);
+    border-radius: 6px;
+}
+
+/* QR code container */
+.qr-code-container {
+    text-align: center;
+    padding: 20px;
+    background: var(--solcon-white);
+    border-radius: 8px;
+    display: inline-block;
+    border: 1px solid var(--solcon-border);
+}
+
+/* Key/value list styling */
+.list-group-item {
+    border: none;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--solcon-border);
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Toggle switch styling */
+.form-switch .form-check-input {
+    width: 2.5em;
+    height: 1.25em;
+    cursor: pointer;
+    background-color: var(--solcon-border);
+    border: none;
+    border-radius: 50px;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: var(--solcon-primary);
+}
+
+/* Modal styling */
+.modal-header {
+    background: linear-gradient(
+        90deg,
+        var(--solcon-primary-dark) 0%,
+        var(--solcon-primary) 100%
+    );
+    color: var(--solcon-white);
+    border-radius: 0;
+    padding: 16px 20px;
+}
+
+.modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.modal-content {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 8px 32px rgba(0, 85, 187, 0.15);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+/* Toast/SweetAlert customization */
+.swal2-confirm {
+    background: var(--solcon-primary) !important;
+    border-radius: 6px !important;
+}
+
+.swal2-cancel {
+    background: var(--solcon-text-light) !important;
+    border-radius: 6px !important;
+}
+
+.swal2-popup {
+    border-radius: 10px;
+}
+
+/* Row and column adjustments */
+.row {
+    --bs-gutter-x: 1.5rem;
+}
+
+.col-md-6 {
+    margin-bottom: 16px;
+}
+
+.mb-3 {
+    margin-bottom: 16px !important;
+}
+
+.mb-4 {
+    margin-bottom: 20px !important;
+}
+
+/* Card title styling */
+.card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--solcon-text);
+    margin-bottom: 16px;
+}
+
+/* Empty state styling */
+.text-muted {
+    color: var(--solcon-text-light) !important;
+}
+
+/* Card styling for dashboard/cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0, 85, 187, 0.08);
+}
+
+.card-header {
+    background: linear-gradient(
+        90deg,
+        var(--solcon-primary-dark) 0%,
+        var(--solcon-primary) 100%
+    );
+    color: var(--solcon-white);
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 600;
+    padding: 14px 20px;
+    font-size: 0.95rem;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Button with icon spacing */
+.btn i {
+    margin-right: 6px;
+}
+
+/* Form group margin */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+/* Link styling */
+a {
+    color: var(--solcon-primary);
+    transition: color 0.2s ease;
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--solcon-primary-dark);
+    text-decoration: underline;
+}
+
+/* Text utilities */
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .profile-tab-nav {
+        border-radius: 10px 10px 0 0;
+        margin-bottom: -1px;
+        min-width: 100%;
+    }
+
+    .tab-content {
+        border-radius: 0 0 10px 10px;
+    }
+
+    .nav.flex-column.nav-pills {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+    }
+
+    .nav.flex-column.nav-pills .nav-link {
+        flex: 1;
+        text-align: center;
+        padding: 12px !important;
+        font-size: 0.85rem;
+    }
+
+    .nav.flex-column.nav-pills .nav-link i {
+        display: block;
+        margin-bottom: 4px;
+        width: auto !important;
+    }
+
+    .nav-link-logout {
+        margin-top: 0;
+        border-top: none;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-inverse .navbar-brand {
+        font-size: 1.1rem;
+    }
+
+    .login-card {
+        max-width: 100%;
+        margin: 0 16px;
+    }
+
+    .login-card .login-body {
+        padding: 24px !important;
+    }
+
+    .main-content {
+        padding-top: 70px;
+        padding-bottom: 50px;
+    }
+
+    .tab-content {
+        padding: 20px;
+    }
+
+    section.col-lg-8.mx-auto.p-3.py-md-5 {
+        padding-top: 60px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .col-md-6 {
+        margin-bottom: 12px;
+    }
+
+    .table-responsive {
+        border-radius: 6px;
+        border: 1px solid var(--solcon-border);
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .btn-primary.btn-lg {
+        padding: 12px 20px;
+        font-size: 0.95rem;
+    }
+
+    .profile-tab-nav .p-4 {
+        padding: 16px !important;
+    }
+
+    .img-circle img.solcon-avatar {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    .profile-tab-nav .nav-link {
+        padding: 10px 12px !important;
+        font-size: 0.8rem;
+    }
+
+    .modal-dialog {
+        margin: 12px;
+    }
+}
+
+/* Animation utilities */
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Page load animations */
+.container {
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* HTMX transitions */
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.htmx-added {
+    opacity: 0;
+}
+
+.htmx-added.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Print styles */
+@media print {
+    .navbar-inverse,
+    .footer,
+    .btn,
+    .nav-pills {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+
+    .login-card,
+    .bg-white.shadow-sm.rounded-3 {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+    .tab-content {
+        border-radius: 0;
+        border: none;
+    }
+}
+
+/* Focus visible for accessibility */
+.btn:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--solcon-primary);
+    outline-offset: 2px;
+}
+
+/* Remove default link focus outline and replace with better one */
+a:focus:not(:focus-visible) {
+    outline: none;
+}
