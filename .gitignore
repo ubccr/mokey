@@ -7,3 +7,4 @@ dist/
 key.gpg
 mokey-*.tar.gz
 *.swp
+solcon-templates/
