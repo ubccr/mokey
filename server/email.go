@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"mime/multipart"
 	"mime/quotedprintable"
 	"net"
 	"net/smtp"
@@ -275,75 +274,57 @@ func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string
 	header.Set("Subject", fmt.Sprintf("[%s] %s", viper.GetString("site.name"), subject))
 	header.Set("From", viper.GetString("email.from"))
 
+	// Manually build multipart/related structure with nested multipart/alternative
 	var multipartBody bytes.Buffer
-	mp := multipart.NewWriter(&multipartBody)
-	header.Set("Content-Type", fmt.Sprintf("multipart/related;%s boundary=%s", crlf, mp.Boundary()))
+	outerBoundary := "related-" + fmt.Sprintf("%x", time.Now().UnixNano())
+	innerBoundary := "alternative-" + fmt.Sprintf("%x", time.Now().UnixNano())
 
-	// Create multipart/alternative part for text and html
-	altWriter, err := mp.CreatePart(textproto.MIMEHeader{
-		"Content-Type": []string{"multipart/alternative"},
-	})
-	if err != nil {
-		return err
-	}
+	header.Set("Content-Type", fmt.Sprintf("multipart/related; boundary=%s", outerBoundary))
 
-	altMp := multipart.NewWriter(altWriter)
+	// Start outer multipart
+	multipartBody.WriteString("--" + outerBoundary + "\r\n")
 
-	txtPart, err := altMp.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              []string{"text/plain; charset=utf-8"},
-		"Content-Transfer-Encoding": []string{"quoted-printable"},
-	})
-	if err != nil {
-		return err
-	}
+	// Start inner multipart/alternative
+	multipartBody.WriteString("Content-Type: multipart/alternative; boundary=" + innerBoundary + "\r\n")
+	multipartBody.WriteString("\r\n")
 
-	_, err = txtPart.Write(txtBody)
-	if err != nil {
-		return err
-	}
+	// Text/plain part
+	multipartBody.WriteString("--" + innerBoundary + "\r\n")
+	multipartBody.WriteString("Content-Type: text/plain; charset=utf-8\r\n")
+	multipartBody.WriteString("Content-Transfer-Encoding: quoted-printable\r\n")
+	multipartBody.WriteString("\r\n")
+	multipartBody.Write(txtBody)
+	multipartBody.WriteString("\r\n")
 
-	htmlPart, err := altMp.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              []string{"text/html; charset=utf-8"},
-		"Content-Transfer-Encoding": []string{"quoted-printable"},
-	})
-	if err != nil {
-		return err
-	}
+	// Text/html part
+	multipartBody.WriteString("--" + innerBoundary + "\r\n")
+	multipartBody.WriteString("Content-Type: text/html; charset=utf-8\r\n")
+	multipartBody.WriteString("Content-Transfer-Encoding: quoted-printable\r\n")
+	multipartBody.WriteString("\r\n")
+	multipartBody.Write(htmlBody)
+	multipartBody.WriteString("\r\n")
 
-	_, err = htmlPart.Write(htmlBody)
-	if err != nil {
-		return err
-	}
+	// Close inner multipart/alternative
+	multipartBody.WriteString("--" + innerBoundary + "--\r\n")
+	multipartBody.WriteString("\r\n")
 
-	err = altMp.Close()
-	if err != nil {
-		return err
-	}
-
-	// Add logo as inline image attachment if available
+	// Add logo as inline image attachment
 	if logoData != nil {
-		logoPart, err := mp.CreatePart(textproto.MIMEHeader{
-			"Content-Type":              []string{logoContentType},
-			"Content-Transfer-Encoding": []string{"base64"},
-			"Content-ID":                []string{"<solcon_logo>"},
-			"Content-Disposition":       []string{"inline; filename=\"Solcon_RGB_logo_payoff_OB_small.png\""},
-		})
-		if err != nil {
-			return err
-		}
+		multipartBody.WriteString("--" + outerBoundary + "\r\n")
+		multipartBody.WriteString("Content-Type: " + logoContentType + "\r\n")
+		multipartBody.WriteString("Content-Transfer-Encoding: base64\r\n")
+		multipartBody.WriteString("Content-ID: <solcon_logo>\r\n")
+		multipartBody.WriteString("Content-Disposition: inline; filename=\"Solcon_RGB_logo_payoff_OB_small.png\"\r\n")
+		multipartBody.WriteString("\r\n")
 
 		encodedLogo := make([]byte, base64.StdEncoding.EncodedLen(len(logoData)))
 		base64.StdEncoding.Encode(encodedLogo, logoData)
-		_, err = logoPart.Write(encodedLogo)
-		if err != nil {
-			return err
-		}
+		multipartBody.Write(encodedLogo)
+		multipartBody.WriteString("\r\n")
 	}
 
-	err = mp.Close()
-	if err != nil {
-		return err
-	}
+	// Close outer multipart
+	multipartBody.WriteString("--" + outerBoundary + "--\r\n")
 
 	smtpHostPort := fmt.Sprintf("%s:%d", viper.GetString("email.smtp_host"), viper.GetInt("email.smtp_port"))
 	var conn net.Conn
