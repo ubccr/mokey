@@ -48,8 +48,29 @@
 
     <div class="col-md-6">
       <div class="mb-3">
-        <label class="form-label">{{ Translate $.lang "account.phone_number" }}</label>
-        <input type="text" class="form-control" name="phone" id="phone" value="{{ .user.Mobile }}">
+        <label class="form-label">{{ Translate $.lang "account.org_unit" }}</label>
+        <input type="text" class="form-control" value="{{ .user.Ou }}" disabled readonly>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.job_title" }}</label>
+        <input type="text" class="form-control" name="title" id="title" value="{{ .user.Title }}">
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.telephone_number" }}</label>
+        <input type="text" class="form-control" value="{{ .user.TelephoneNumber }}" disabled readonly>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label class="form-label">{{ Translate $.lang "account.mobile_number" }}</label>
+        <input type="text" class="form-control" name="mobile" id="mobile" value="{{ .user.Mobile }}">
       </div>
     </div>
 

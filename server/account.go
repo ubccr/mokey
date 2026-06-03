@@ -27,7 +27,8 @@ func (r *Router) AccountSettings(c *fiber.Ctx) error {
 
 	user.First = strings.TrimSpace(c.FormValue("first"))
 	user.Last = strings.TrimSpace(c.FormValue("last"))
-	user.Mobile = strings.TrimSpace(c.FormValue("phone"))
+	user.Title = strings.TrimSpace(c.FormValue("title"))
+	user.Mobile = strings.TrimSpace(c.FormValue("mobile"))
 
 	if user.First == "" || user.Last == "" {
 		vars["message"] = "Please provide a first and last name"

@@ -21,7 +21,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	github.com/ubccr/goipa v0.0.7
+	github.com/ubccr/goipa v0.0.8
 	github.com/urfave/negroni v1.0.0
 	github.com/valyala/fasthttp v1.56.0
 	golang.org/x/net v0.29.0
@@ -113,5 +113,7 @@ require (
 )
 
 go 1.22.0
+
+replace github.com/ubccr/goipa => github.com/tubby1981/goipa v0.0.8
 
 toolchain go1.23.2
