@@ -1,5 +1,12 @@
 # Mokey ChangeLog
 
+## [v0.6.10] - 2026-06-03
+
+- Add account portal fields: Department (read-only), Job Title, Telephone Number (read-only), and Mobile Telephone Number (editable)
+- Use tubby1981/goipa v0.0.8 for Org Unit and Job Title support in FreeIPA
+- Ship translation files as dutch.toml and english.toml in packages
+- Remove unused create_templates.py script
+
 ## [v0.6.7] - 2025-04-17
 - Added `timeago` function with support for English, Portuguese, Spanish, Dutch, French, German, and Turkish. Based on [xeonx/timeago](https://github.com/xeonx/timeago).
 - Some translations in the email templates were not working properly. This has been fixed.
