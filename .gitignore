@@ -7,6 +7,6 @@ dist/
 key.gpg
 mokey-*.tar.gz
 *.swp
-solcon-templates/
-solcon-templates-2/
-solcon-templates-old/
+# Local full template override directories (brand-specific; not published upstream)
+*-templates/
+*-templates-*/

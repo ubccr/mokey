@@ -250,10 +250,10 @@ func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string
 	// Determine logo path
 	logoPath := viper.GetString("email.logo_path")
 	if logoPath == "" {
-		logoPath = filepath.Join(viper.GetString("site.templates_dir"), "static/images/Solcon_RGB_logo_payoff_OB_small.png")
+		logoPath = filepath.Join(viper.GetString("site.templates_dir"), "static/images/logo.png")
 	}
 	if _, err := os.Stat(logoPath); os.IsNotExist(err) {
-		logoPath = "/etc/mokey/templates/static/images/Solcon_RGB_logo_payoff_OB_small.png"
+		logoPath = "/etc/mokey/templates/static/images/logo.png"
 	}
 
 	// Load logo file
@@ -313,8 +313,8 @@ func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string
 		multipartBody.WriteString("--" + outerBoundary + "\r\n")
 		multipartBody.WriteString("Content-Type: " + logoContentType + "\r\n")
 		multipartBody.WriteString("Content-Transfer-Encoding: base64\r\n")
-		multipartBody.WriteString("Content-ID: <solcon_logo>\r\n")
-		multipartBody.WriteString("Content-Disposition: inline; filename=\"Solcon_RGB_logo_payoff_OB_small.png\"\r\n")
+		multipartBody.WriteString("Content-ID: <email_logo>\r\n")
+		multipartBody.WriteString("Content-Disposition: inline; filename=\"logo.png\"\r\n")
 		multipartBody.WriteString("\r\n")
 
 		encodedLogo := make([]byte, base64.StdEncoding.EncodedLen(len(logoData)))

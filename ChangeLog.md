@@ -1,5 +1,9 @@
 # Mokey ChangeLog
 
+## [v0.6.12] - 2026-06-04
+
+- Remove organization-specific strings from default translations and email logo defaults
+
 ## [v0.6.11] - 2026-06-04
 
 - Redirect expired passwords to forgot-password flow (`/auth/forgotpw?expired=1`) instead of a dedicated expired-password page; remove `login-password-expired.html`
@@ -9,7 +13,8 @@
 - Make favicon middleware optional when `site.favicon` or bundled `images/favicon.ico` is missing
 - Extract `userHasOTP` template helper to `userauth.go`
 - Add `email.logo_path` to `mokey.toml.sample`
-- Add translations for forgot-password expired redirect and optional login title key
+- Add translations for forgot-password expired redirect message
+- Use generic default email branding paths and translation strings (no organization-specific names in upstream)
 
 ## [v0.6.10] - 2026-06-03
 
