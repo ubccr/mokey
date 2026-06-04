@@ -1,5 +1,16 @@
 # Mokey ChangeLog
 
+## [v0.6.11] - 2026-06-04
+
+- Redirect expired passwords to forgot-password flow (`/auth/forgotpw?expired=1`) instead of a dedicated expired-password page; remove `login-password-expired.html`
+- Add HTTP 408 request timeout error pages (`408.html`, `408-partial.html`)
+- Improve error handling: shared `renderErrorPage` with 500 fallback, fix error logger username context key
+- Reduce noisy 502/error logs for benign client disconnects (`errors.go`)
+- Make favicon middleware optional when `site.favicon` or bundled `images/favicon.ico` is missing
+- Extract `userHasOTP` template helper to `userauth.go`
+- Add `email.logo_path` to `mokey.toml.sample`
+- Add translations for forgot-password expired redirect and optional login title key
+
 ## [v0.6.10] - 2026-06-03
 
 - Add account portal fields: Department (read-only), Job Title, Telephone Number (read-only), and Mobile Telephone Number (editable)

@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -250,35 +251,10 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 			log.WithFields(log.Fields{
 				"username": username,
 				"err":      err,
-			}).Info("Password expired, forcing change")
+			}).Info("Password expired, redirecting to forgot password")
 
-			sess, err := r.session(c)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("")
-			}
-
-			err = sess.Regenerate()
-			if err != nil {
-				return err
-			}
-
-			sess.Set(SessionKeyAuthenticated, false)
-			sess.Set(SessionKeyUsername, username)
-
-			if err := r.sessionSave(c, sess); err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("")
-			}
-
-			userRec, err := r.adminClient.UserShow(username)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).SendString("")
-			}
-
-			vars := fiber.Map{
-				"username": username,
-				"user":     userRec,
-			}
-			return c.Render("login-password-expired.html", vars)
+			c.Set("HX-Redirect", fmt.Sprintf("/auth/forgotpw?expired=1&username=%s", url.QueryEscape(username)))
+			return c.Status(fiber.StatusNoContent).SendString("")
 		default:
 			log.WithFields(log.Fields{
 				"username": username,

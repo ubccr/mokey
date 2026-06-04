@@ -8,3 +8,5 @@ key.gpg
 mokey-*.tar.gz
 *.swp
 solcon-templates/
+solcon-templates-2/
+solcon-templates-old/

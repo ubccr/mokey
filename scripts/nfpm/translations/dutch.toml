@@ -129,6 +129,7 @@ bad_gateway = "De server heeft een foutieve gatewayfout ondervonden. Probeer het
 log_in_again = "inloggen opnieuw"
 no_access_to_resource = "Je hebt geen toegang tot deze bron"
 session_timed_out = "Je sessie is verlopen. Probeer het opnieuw"
+request_timeout = "Het verzoek duurde te lang. Probeer het opnieuw."
 something_bad_happened = "Er is iets mis gegaan"
 sorry_page_not_found = "Sorry, de pagina die je hebt aangevraagd is niet gevonden"
 system_trouble = "We hebben momenteel wat systeemproblemen. Als dit probleem aanhoudt, neem dan contact op met de sitebeheerder."
@@ -145,6 +146,8 @@ oauth2_error = "OAuth2 Fout"
 
 [login]
 title = "Inloggen"
+mijn_solcon_title = "Mijn Solcon Medewerkersaccount"
+submit_button = "Nu inloggen"
 create_account = "Account aanmaken"
 forgot_password = "Wachtwoord vergeten?"
 new_user = "Nieuwe gebruiker?"
@@ -200,9 +203,12 @@ success = "Wachtwoord succesvol bijgewerkt"
 [password_expired]
 title = "Wachtwoord Verlopen"
 change_password_button = "Wachtwoord Wijzigen"
+help = "Je bent ingelogd met je verlopen wachtwoord. Kies hieronder een nieuw wachtwoord (minimaal 16 tekens volgens het beleid)."
+otp_help = "Je bent al ingelogd met je verlopen wachtwoord. Kies een nieuw wachtwoord en voer een nieuwe OTP-code in van je authenticator-app."
 
 [password_forgot]
 title = "Wachtwoord vergeten"
+expired_redirect = "Je wachtwoord is verlopen. Vul hieronder je gebruikersnaam in en bevestig met de captcha om een e-mail te ontvangen waarmee je een nieuw wachtwoord kunt instellen."
 email_sent = "Er is een e-mail voor het opnieuw instellen van uw wachtwoord verstuurd."
 
 [password_reset]

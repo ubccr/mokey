@@ -10,7 +10,16 @@ import (
 func (r *Router) CSRF(c *fiber.Ctx) error {
 	sess, err := r.session(c)
 	if err != nil {
-		return err
+		log.WithFields(log.Fields{
+			"path": c.Path(),
+			"ip":   RemoteIP(c),
+			"err":  err,
+		}).Warn("Session storage unavailable")
+		if c.Get("HX-Request", "false") == "true" {
+			c.Set("HX-Redirect", "/auth/login")
+			return c.Status(fiber.StatusNoContent).SendString("")
+		}
+		return c.Redirect("/auth/login")
 	}
 
 	var token string

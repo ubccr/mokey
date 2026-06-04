@@ -1,0 +1,13 @@
+{{ template "header.html" . }}
+<section class="col-lg-8 mx-auto p-3 py-md-5">
+    <div class="container">
+        <div class="page-header">
+            <h1><i class="fa fa-clock"></i> {{ Translate $.lang "error.request_timeout" }}</h1>
+        </div>
+
+        <div class="alert alert-danger" role="alert">
+            {{ Translate $.lang "error.request_timeout" }}
+        </div>
+    </div>
+</section>
+{{ template "footer.html" . }}

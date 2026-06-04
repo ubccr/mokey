@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -57,8 +58,8 @@ func SetDefaults() {
 	viper.SetDefault("server.secure_cookies", true)
 	viper.SetDefault("server.session_idle_timeout", 900)
 	viper.SetDefault("server.listen", "0.0.0.0:8866")
-	viper.SetDefault("server.read_timeout", 5)
-	viper.SetDefault("server.write_timeout", 5)
+	viper.SetDefault("server.read_timeout", 30)
+	viper.SetDefault("server.write_timeout", 30)
 	viper.SetDefault("server.idle_timeout", 120)
 	viper.SetDefault("server.rate_limit_expiration", 3600)
 	viper.SetDefault("server.rate_limit_max", 10)
@@ -77,6 +78,44 @@ func NewServer(address string) (*Server, error) {
 	s.app = app
 
 	return s, nil
+}
+
+func setupFavicon(app *fiber.App, assetsFS http.FileSystem) {
+	faviconPath := strings.TrimSpace(viper.GetString("site.favicon"))
+	if faviconPath != "" {
+		if _, err := os.Stat(faviconPath); err != nil {
+			log.Warnf("site.favicon not found (%s), skipping favicon middleware: %v", faviconPath, err)
+			return
+		}
+		app.Use(favicon.New(favicon.Config{
+			File: faviconPath,
+		}))
+		return
+	}
+
+	// Relative to static_assets_dir root (deploy: assets/css, assets/js, assets/images/…)
+	const embeddedFavicon = "images/favicon.ico"
+	if f, err := assetsFS.Open(embeddedFavicon); err == nil {
+		_ = f.Close()
+		app.Use(favicon.New(favicon.Config{
+			File:       embeddedFavicon,
+			FileSystem: assetsFS,
+		}))
+		return
+	}
+
+	if assetsRoot := strings.TrimSpace(viper.GetString("site.static_assets_dir")); assetsRoot != "" {
+		absPath := filepath.Join(assetsRoot, embeddedFavicon)
+		if _, err := os.Stat(absPath); err == nil {
+			app.Use(favicon.New(favicon.Config{
+				File: absPath,
+			}))
+			return
+		}
+		log.Warnf("favicon not found under static_assets_dir (%s); expected %s", assetsRoot, absPath)
+	}
+
+	log.Warnf("favicon not found (%s); skipping favicon middleware", embeddedFavicon)
 }
 
 func getAssetsFS() http.FileSystem {
@@ -200,16 +239,7 @@ func newFiber() (*fiber.App, error) {
 		MaxAge: 900,
 	}))
 
-	if viper.IsSet("site.favicon") {
-		app.Use(favicon.New(favicon.Config{
-			File: viper.GetString("site.favicon"),
-		}))
-	} else {
-		app.Use(favicon.New(favicon.Config{
-			File:       "images/favicon.ico",
-			FileSystem: assetsFS,
-		}))
-	}
+	setupFavicon(app, assetsFS)
 
 	// This must be last
 	app.Use(NotFoundHandler)

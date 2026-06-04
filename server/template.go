@@ -27,6 +27,7 @@ var funcMap = template.FuncMap{
 	"AllowedDomains":    AllowedDomains,
 	"BreakNewlines":     BreakNewlines,
 	"Translate":         Translate,
+	"UserHasOTP":        userHasOTP,
 }
 
 type TemplateRenderer struct {

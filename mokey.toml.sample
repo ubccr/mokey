@@ -121,6 +121,10 @@ enable_user_signup = true
 # to hard code the base_url.
 # base_url = "https://localhost"
 
+# PNG logo embedded in outgoing HTML emails (optional).
+# Default: {site.templates_dir}/static/images/logo.png
+# logo_path = "/etc/mokey/assets/images/logo.png"
+
 # Max lifetime of branca tokens used for password resets and account verify
 token_max_age = 3600
 
@@ -170,8 +174,9 @@ secure_cookies = true
 csrf_secret = ""
 
 # Timeouts
-read_timeout = 5
-write_timeout = 5
+# Seconds; increase if FreeIPA or Redis session storage is slow (low values cause 502 errors)
+read_timeout = 30
+write_timeout = 30
 idle_timeout = 120
 
 # Rate limiter

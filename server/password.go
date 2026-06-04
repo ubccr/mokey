@@ -3,7 +3,9 @@ package server
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/dchest/captcha"
@@ -175,6 +177,12 @@ func (r *Router) PasswordForgot(c *fiber.Ctx) error {
 		vars := fiber.Map{
 			"captchaID": captcha.New(),
 		}
+		if username := strings.TrimSpace(c.Query("username")); username != "" {
+			vars["username"] = username
+		}
+		if c.Query("expired") == "1" {
+			vars["message"] = Translate("", "password_forgot.expired_redirect")
+		}
 
 		return c.Render("password-forgot.html", vars)
 	}
@@ -323,102 +331,11 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 	return c.Render("password-reset-success.html", fiber.Map{})
 }
 
-func (r *Router) PasswordExpired(c *fiber.Ctx) error {
-	sess, err := r.session(c)
-	if err != nil {
-		log.Warn("Failed to get user session. Logging out")
-		return r.redirectLogin(c)
+// PasswordExpiredRedirect sends legacy expired-password URLs to the forgot-password flow.
+func (r *Router) PasswordExpiredRedirect(c *fiber.Ctx) error {
+	target := "/auth/forgotpw?expired=1"
+	if username := strings.TrimSpace(c.FormValue("username")); username != "" {
+		target = fmt.Sprintf("/auth/forgotpw?expired=1&username=%s", url.QueryEscape(username))
 	}
-
-	username := sess.Get(SessionKeyUsername)
-	authenticated := sess.Get(SessionKeyAuthenticated)
-	if username == nil || authenticated == nil {
-		return r.redirectLogin(c)
-	}
-
-	if isAuthed, ok := authenticated.(bool); !ok || isAuthed {
-		return r.redirectLogin(c)
-	}
-
-	if _, ok := username.(string); !ok {
-		log.Error("Invalid user in session")
-		return r.redirectLogin(c)
-	}
-
-	user, err := r.adminClient.UserShow(username.(string))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"username": username,
-			"err":      err,
-		}).Warn("Password expired attempt for unknown username")
-		return r.redirectLogin(c)
-	}
-
-	password := c.FormValue("password")
-	newpass := c.FormValue("newpassword")
-	newpass2 := c.FormValue("newpassword2")
-	otp := c.FormValue("otp")
-
-	if user.OTPOnly() && otp == "" {
-		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "password_change.otp_help"))
-	}
-
-	if err := validatePasswordChange(password, newpass, newpass2); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
-	}
-
-	err = r.adminClient.SetPassword(user.Username, password, newpass, otp)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err":      err,
-			"username": user.Username,
-			"email":    user.Email,
-		}).Error("Failed to change expired password for user")
-
-		return c.Status(fiber.StatusInternalServerError).SendString("")
-	}
-
-	err = r.emailer.SendPasswordChangedEmail(user, c)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"err":      err,
-			"username": user.Username,
-			"email":    user.Email,
-		}).Error("Failed to send password changed email")
-	}
-
-	client := ipa.NewDefaultClient()
-	err = client.RemoteLogin(user.Username, newpass+otp)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"username":         user.Username,
-			"ipa_client_error": err,
-		}).Error("Failed to login after expired password change")
-		return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "login.login_failed"))
-	}
-
-	_, err = client.Ping()
-	if err != nil {
-		log.WithFields(log.Fields{
-			"username":         user.Username,
-			"ipa_client_error": err,
-		}).Error("Failed to ping FreeIPA after expired password change")
-		return c.Status(fiber.StatusUnauthorized).SendString(Translate("", "account.invalid_credentials"))
-	}
-
-	sess.Set(SessionKeyAuthenticated, true)
-	sess.Set(SessionKeyUsername, user.Username)
-	sess.Set(SessionKeySID, client.SessionID())
-
-	if err := r.sessionSave(c, sess); err != nil {
-		return err
-	}
-
-	log.WithFields(log.Fields{
-		"username": user.Username,
-	}).Info("AUDIT User logged in and changed expired password successfully")
-	r.metrics.totalPasswordResets.Inc()
-
-	c.Set("HX-Redirect", "/")
-	return c.Status(fiber.StatusNoContent).SendString("")
+	return c.Redirect(target)
 }

@@ -129,6 +129,7 @@ bad_gateway = "The server encountered a bad gateway error. Please try again late
 log_in_again = "log in again"
 no_access_to_resource = "You do not have access to this resource"
 session_timed_out = "Your session has timed out. Please try again"
+request_timeout = "The request took too long. Please try again."
 something_bad_happened = "Something bad happened"
 sorry_page_not_found = "Sorry, the page you requested was not found"
 system_trouble = "We are currently experiencing some system trouble. If this problem persists, please contact the site administrator."
@@ -145,6 +146,8 @@ oauth2_error = "OAuth2 Error"
 
 [login]
 title = "Login"
+mijn_solcon_title = "My Solcon Employee Account"
+submit_button = "Log in now"
 create_account = "Create Account"
 forgot_password = "Forgot Password?"
 new_user = "New User?"
@@ -200,9 +203,12 @@ success = "Password successfully updated"
 [password_expired]
 title = "Password Expired"
 change_password_button = "Change Password"
+help = "You signed in with your expired password. Choose a new password below (at least 16 characters per policy)."
+otp_help = "You have already signed in with your expired password. Choose a new password and enter a fresh OTP code from your authenticator app."
 
 [password_forgot]
 title = "Forgot Password"
+expired_redirect = "Your password has expired. Enter your username below and complete the captcha to receive an email to set a new password."
 email_sent = "An email to reset your password has been sent."
 
 [password_reset]

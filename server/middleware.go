@@ -46,7 +46,7 @@ func NotFoundHandler(c *fiber.Ctx) error {
 }
 
 func HTTPErrorHandler(c *fiber.Ctx, err error) error {
-	username := c.Locals(ContextKeyUser)
+	username := c.Locals(ContextKeyUsername)
 	path := c.Path()
 	code := fiber.StatusInternalServerError
 
@@ -54,36 +54,48 @@ func HTTPErrorHandler(c *fiber.Ctx, err error) error {
 		code = e.Code
 	}
 
-	log.WithFields(log.Fields{
+	fields := log.Fields{
 		"code":     code,
 		"username": username,
 		"path":     path,
+		"method":   c.Method(),
 		"ip":       RemoteIP(c),
-	}).Error(err)
+		"error":    err.Error(),
+	}
+
+	if isNoisyGatewayError(code, err) {
+		log.WithFields(fields).Warn("HTTP request ended before response completed (client disconnect or timeout)")
+	} else {
+		log.WithFields(fields).Error("HTTP request failed")
+	}
 
 	if c.Locals("NoErrorTemplate") == "true" {
 		return c.Status(code).SendString("")
 	}
 
-	if c.Get("HX-Request", "false") == "true" {
-		errorPage := fmt.Sprintf("%d-partial.html", code)
-		err := c.Render(errorPage, nil)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Error("Failed to render custom error partial")
-			return c.Status(code).SendString("")
-		}
-		return nil
+	return renderErrorPage(c, code)
+}
+
+func renderErrorPage(c *fiber.Ctx, code int) error {
+	vars := fiber.Map{}
+	hx := c.Get("HX-Request", "false") == "true"
+
+	primary := fmt.Sprintf("%d.html", code)
+	fallback := "500.html"
+	if hx {
+		primary = fmt.Sprintf("%d-partial.html", code)
+		fallback = "500-partial.html"
 	}
 
-	errorPage := fmt.Sprintf("%d.html", code)
-	err = c.Render(errorPage, nil)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Error("Failed to render custom error page")
-		return c.Status(code).SendString("")
+	if err := c.Render(primary, vars); err != nil {
+		if err2 := c.Render(fallback, vars); err2 != nil {
+			log.WithFields(log.Fields{
+				"code":    code,
+				"primary": primary,
+				"error":   err,
+			}).Error("Failed to render error page")
+			return c.Status(code).SendString("")
+		}
 	}
 
 	return nil

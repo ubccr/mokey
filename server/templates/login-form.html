@@ -22,7 +22,7 @@
                     <label for="password" class="form-label">{{ Translate $.lang "common.password" }}</label>
                     <input type="password" class="form-control form-control-lg" name="password" id="password" autofocus="autofocus" placeholder="">
                 </div>
-                {{ if $.user.OTPOnly }}
+                {{ if UserHasOTP $.user }}
                 <div class="mb-3">
                     <label for="otp" class="form-label">{{ Translate $.lang "common.otp_code" }}</label>
                     <input type="otp" class="form-control form-control-lg" name="otp" id="otp" placeholder="">
