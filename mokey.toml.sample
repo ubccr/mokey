@@ -65,18 +65,19 @@ default_homedir = "/home"
 # Default login shell
 default_shell = "/bin/bash"
 
-# Minimum password length. Used for validating new passwords. Should match your
-# password policy set in FreeIPA
+# Minimum password length fallback. When mokeyapp can read the user's FreeIPA
+# password policy (pwpolicy_show), the per-user Min length value is used instead.
 min_passwd_len = 8
 
-# Minimum password classes. Classes are lowercase, uppercase, numbers, and
-# special characters.  Used for validating new passwords. Should match your
-# password policy set in FreeIPA
+# Minimum password classes fallback (lowercase, uppercase, numbers, special).
+# When mokeyapp can read the user's FreeIPA password policy, the per-user
+# Character classes value is used instead.
 min_passwd_classes = 2
 
 # Fallback max password lifetime in days for krbPasswordExpiration after admin
 # password reset, when FreeIPA pwpolicy_show is unavailable to the service
-# account. Set this to match your IPA password policy (e.g. 183).
+# account. Set this to match your IPA password policy (e.g. 183). Optional if
+# mokeyapp has the "System: Read Password Policies" privilege.
 # password_max_life_days = 183
 
 # Hash algorithm for generating OTP tokens: sha1, sha256, or sha512

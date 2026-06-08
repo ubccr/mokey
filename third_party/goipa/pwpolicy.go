@@ -14,87 +14,111 @@ import (
 
 const globalPasswordPolicyCN = "global_policy"
 
-func parsePasswordPolicyMaxLife(data []byte) (int, error) {
+// PasswordPolicy holds the effective password policy for a user.
+type PasswordPolicy struct {
+	CN          string
+	MaxLifeDays int
+	MinLength   int
+	MinClasses  int
+}
+
+func policyInt(policy gjson.Result, paths ...string) int {
+	for _, path := range paths {
+		if v := policy.Get(path).Int(); v > 0 {
+			return int(v)
+		}
+	}
+	return 0
+}
+
+func parsePasswordPolicy(data []byte) (*PasswordPolicy, error) {
 	if len(data) == 0 {
-		return 0, errors.New("ipa: empty password policy response")
+		return nil, errors.New("ipa: empty password policy response")
 	}
 
 	policy := gjson.ParseBytes(data)
-	maxLife := policy.Get("krbmaxpwdlife.0").Int()
-	if maxLife == 0 {
-		maxLife = policy.Get("krbmaxpwdlife").Int()
-	}
-	if maxLife <= 0 {
-		return 0, errors.New("ipa: password policy has no max lifetime")
+	pp := &PasswordPolicy{
+		CN:          policy.Get("cn.0").String(),
+		MaxLifeDays: policyInt(policy, "krbmaxpwdlife.0", "krbmaxpwdlife", "krbMaxPwdLife.0", "krbMaxPwdLife"),
+		MinLength:   policyInt(policy, "krbpwdminlength.0", "krbpwdminlength", "krbPwdMinLength.0", "krbPwdMinLength"),
+		MinClasses:  policyInt(policy, "krbpwdmindiffchars.0", "krbpwdmindiffchars", "krbPwdMinDiffChars.0", "krbPwdMinDiffChars"),
 	}
 
-	return int(maxLife), nil
+	if pp.MinLength == 0 && pp.MinClasses == 0 && pp.MaxLifeDays == 0 {
+		return nil, errors.New("ipa: password policy has no usable settings")
+	}
+
+	return pp, nil
 }
 
-func (c *Client) showPasswordPolicy(cn, username string) (int, error) {
+func parsePasswordPolicyFromResults(data []byte, preferCN string) (*PasswordPolicy, error) {
+	if len(data) == 0 {
+		return nil, errors.New("ipa: empty password policy response")
+	}
+
+	policies := gjson.ParseBytes(data)
+	if !policies.IsArray() {
+		return parsePasswordPolicy(data)
+	}
+
+	var fallback *PasswordPolicy
+	policies.ForEach(func(_, policy gjson.Result) bool {
+		pp, err := parsePasswordPolicy([]byte(policy.Raw))
+		if err != nil {
+			return true
+		}
+		cn := policy.Get("cn.0").String()
+		if cn == preferCN || (preferCN == "" && cn == globalPasswordPolicyCN) {
+			fallback = pp
+			return false
+		}
+		if fallback == nil {
+			fallback = pp
+		}
+		return true
+	})
+
+	if fallback == nil {
+		return nil, errors.New("ipa: password policies found but none define usable settings")
+	}
+
+	return fallback, nil
+}
+
+func (c *Client) fetchPasswordPolicy(cn, username string) (*PasswordPolicy, error) {
 	params := []string{}
 	if cn != "" {
 		params = []string{cn}
 	}
 
-	options := Options{}
+	options := Options{"all": true}
 	if username != "" {
 		options["user"] = username
 	}
 
 	res, err := c.rpc("pwpolicy_show", params, options)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	if res.Result == nil {
-		return 0, errors.New("ipa: empty password policy response")
+		return nil, errors.New("ipa: empty password policy response")
 	}
 
-	return parsePasswordPolicyMaxLife(res.Result.Data)
+	return parsePasswordPolicy(res.Result.Data)
 }
 
-func (c *Client) findPasswordPolicyMaxLife() (int, error) {
-	res, err := c.rpc("pwpolicy_find", []string{""}, Options{})
+func (c *Client) findPasswordPolicy() (*PasswordPolicy, error) {
+	res, err := c.rpc("pwpolicy_find", []string{""}, Options{"all": true})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	if res.Result == nil || len(res.Result.Data) == 0 {
-		return 0, errors.New("ipa: no password policies found")
+		return nil, errors.New("ipa: no password policies found")
 	}
 
-	policies := gjson.ParseBytes(res.Result.Data)
-	if !policies.IsArray() {
-		return parsePasswordPolicyMaxLife(res.Result.Data)
-	}
-
-	var fallback int
-	policies.ForEach(func(_, policy gjson.Result) bool {
-		ml := policy.Get("krbmaxpwdlife.0").Int()
-		if ml == 0 {
-			ml = policy.Get("krbmaxpwdlife").Int()
-		}
-		if ml <= 0 {
-			return true
-		}
-
-		cn := policy.Get("cn.0").String()
-		if cn == globalPasswordPolicyCN {
-			fallback = int(ml)
-			return false
-		}
-		if fallback == 0 {
-			fallback = int(ml)
-		}
-		return true
-	})
-
-	if fallback <= 0 {
-		return 0, errors.New("ipa: password policies found but none define max lifetime")
-	}
-
-	return fallback, nil
+	return parsePasswordPolicyFromResults(res.Result.Data, globalPasswordPolicyCN)
 }
 
 func isPasswordPolicyNotFound(err error) bool {
@@ -104,28 +128,27 @@ func isPasswordPolicyNotFound(err error) bool {
 	return false
 }
 
-// PasswordPolicyMaxLife returns the effective maximum password lifetime in days
-// for the given user.
-func (c *Client) PasswordPolicyMaxLife(username string) (int, error) {
-	var attempts []func() (int, error)
+// PasswordPolicyForUser returns the effective password policy for a user.
+func (c *Client) PasswordPolicyForUser(username string) (*PasswordPolicy, error) {
+	var attempts []func() (*PasswordPolicy, error)
 
 	if username != "" {
-		attempts = append(attempts, func() (int, error) {
-			return c.showPasswordPolicy("", username)
+		attempts = append(attempts, func() (*PasswordPolicy, error) {
+			return c.fetchPasswordPolicy("", username)
 		})
 	}
 
 	attempts = append(attempts,
-		func() (int, error) { return c.showPasswordPolicy("", "") },
-		func() (int, error) { return c.showPasswordPolicy(globalPasswordPolicyCN, "") },
-		func() (int, error) { return c.findPasswordPolicyMaxLife() },
+		func() (*PasswordPolicy, error) { return c.fetchPasswordPolicy("", "") },
+		func() (*PasswordPolicy, error) { return c.fetchPasswordPolicy(globalPasswordPolicyCN, "") },
+		func() (*PasswordPolicy, error) { return c.findPasswordPolicy() },
 	)
 
 	var lastErr error
 	for _, attempt := range attempts {
-		maxLife, err := attempt()
+		pp, err := attempt()
 		if err == nil {
-			return maxLife, nil
+			return pp, nil
 		}
 		lastErr = err
 		if !isPasswordPolicyNotFound(err) {
@@ -136,7 +159,20 @@ func (c *Client) PasswordPolicyMaxLife(username string) (int, error) {
 		}
 	}
 
-	return 0, lastErr
+	return nil, lastErr
+}
+
+// PasswordPolicyMaxLife returns the effective maximum password lifetime in days
+// for the given user.
+func (c *Client) PasswordPolicyMaxLife(username string) (int, error) {
+	pp, err := c.PasswordPolicyForUser(username)
+	if err != nil {
+		return 0, err
+	}
+	if pp.MaxLifeDays <= 0 {
+		return 0, errors.New("ipa: password policy has no max lifetime")
+	}
+	return pp.MaxLifeDays, nil
 }
 
 func (c *Client) resolvePasswordMaxLife(username string) (int, error) {
@@ -203,14 +239,20 @@ func (c *Client) RefreshPasswordExpiration(username string) error {
 	return nil
 }
 
-// ResetUserPassword sets a new password using ResetPassword followed by passwd
-// with the temporary random password as current_password. This clears FreeIPA's
-// "administratively set password is expired" state and applies password policy.
+// ResetUserPassword sets a new password using ResetPassword followed by the
+// self-service change_password endpoint (unauthenticated HTTP). This avoids
+// FreeIPA marking admin-set passwords as immediately expired.
 func (c *Client) ResetUserPassword(username, newPassword, otpcode string) error {
 	rand, err := c.ResetPassword(username)
 	if err != nil {
 		return err
 	}
 
-	return c.ChangePassword(username, rand, newPassword, otpcode)
+	anon := &Client{
+		host:       c.host,
+		realm:      c.realm,
+		httpClient: newHTTPClient(),
+	}
+
+	return anon.SetPassword(username, rand, newPassword, otpcode)
 }

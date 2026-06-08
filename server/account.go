@@ -135,7 +135,7 @@ func (r *Router) accountCreate(user *ipa.User, password, passwordConfirm, captch
 		return errors.New("Last name is too long. Maximum of 150 chars allowed")
 	}
 
-	if err := validatePassword(password, passwordConfirm); err != nil {
+	if err := r.validatePasswordForUser(user.Username, password, passwordConfirm); err != nil {
 		return err
 	}
 

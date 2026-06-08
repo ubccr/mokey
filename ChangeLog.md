@@ -2,14 +2,25 @@
 
 ## [v0.6.13] - 2026-06-08
 
-- Fix password reset from email links: prefer ResetPassword+SetPassword (self-service change_password) so users can log in immediately; FreeIPA admin `passwd` marks passwords as expired
-- Refresh krbPasswordExpiration from the user's effective password policy (pwpolicy maxlife), with `pwpolicy_find` fallbacks and configurable `accounts.password_max_life_days` when IPA policy read fails
-- Password reset primary flow uses `ChangePassword` with the temporary random password instead of the HTTP change_password endpoint
+### Password reset
+- Fix password reset from email links so users can log in immediately after choosing a new password
+- Prefer `ResetPassword` + self-service `change_password` over admin `passwd` (admin-set passwords are marked expired by FreeIPA)
+- Fall back to admin `passwd` when self-service reset fails; refresh `krbPasswordExpiration` from the user's effective password policy
+- Use `pwpolicy_show` / `pwpolicy_find` for max lifetime, with `accounts.password_max_life_days` as config fallback
 - Return accurate error messages on password reset (no longer always "Invalid OTP" when 2FA is disabled)
 - Show the OTP field on password reset when the user has MFA enabled (`UserHasOTP`), not only for OTP-only accounts
 - Add `password_reset.failed` translation for generic reset failures
-- Vendor goipa locally with `AdminSetPassword`, `ResetUserPassword`, password policy helpers, and omit empty OTP from `SetPassword` requests
+
+### Password policy validation
+- Enforce per-user FreeIPA password policy (min length, character classes) on password change, reset, and signup
+- `min_passwd_len` and `min_passwd_classes` in `mokey.toml` are fallbacks when the service account cannot read IPA policies
+
+### FreeIPA / goipa
+- Vendor goipa locally with `AdminSetPassword`, `ResetUserPassword`, `PasswordPolicyForUser`, and omit empty OTP from `SetPassword` requests
+
+### Other
 - Add explicit `font-src 'self'` to Content-Security-Policy headers
+- Update setup documentation: `Password Policy Readers` privilege, keytab verification, and config fallbacks
 
 ## [v0.6.12] - 2026-06-04
 

@@ -61,17 +61,40 @@ $ sudo rpm -ivh mokey-VERSION-amd64.rpm
 
 ## Setup and configuration
 
-Create a user account and role in FreeIPA with the "Modify users and Reset
-passwords" privilege. This user account will be used by the mokey application
-to reset users passwords. The "Modify Users" permission also needs to have the
-"ipauserauthtype" enabled. Run the following commands (requires ipa-admintools
-to be installed):
+Create a dedicated service account in FreeIPA for mokey. All FreeIPA API calls
+run as this account using a keytab (`site.ktuser` / `site.keytab` in
+`mokey.toml`).
+
+### Required FreeIPA privileges
+
+The service account needs privileges to manage users and passwords. The
+`User Administrators` privilege covers most day-to-day operations (user lookup,
+password reset, MFA, SSH keys, and so on).
+
+For password reset via email, mokey also needs to read password policies so it
+can set `krbPasswordExpiration` correctly after an admin password change. Add
+the **Password Policy Readers** privilege. Without it, `ipa pwpolicy-show`
+fails for the service account and mokey falls back to
+`accounts.password_max_life_days` in `mokey.toml`.
+
+| Privilege | Purpose |
+|-----------|---------|
+| User Administrators | User management, password reset, MFA, SSH keys |
+| Password Policy Readers | Read effective password policy (`maxlife`) per user |
+
+The **System: Modify Users** permission must include the `ipauserauthtype`
+attribute (required for MFA enable/disable).
+
+### FreeIPA setup
+
+Run the following on an IPA server (requires `ipa-admintools`):
 
 ```
 $ mkdir /etc/mokey/private
 $ kinit adminuser
-$ ipa role-add 'Mokey User Manager' --desc='Mokey User management'
-$ ipa role-add-privilege 'Mokey User Manager' --privilege='User Administrators'
+$ ipa role-add 'Mokey User Manager' --desc='Mokey user management'
+$ ipa role-add-privilege 'Mokey User Manager' --privileges='User Administrators'
+$ ipa role-add-privilege 'Mokey User Manager' --privileges='Password Policy Readers'
 $ ipa user-add mokeyapp --first Mokey --last App
 $ ipa role-add-member 'Mokey User Manager' --users=mokeyapp
 $ ipa permission-mod 'System: Modify Users' --includedattrs=ipauserauthtype
@@ -80,22 +103,50 @@ $ chmod 640 /etc/mokey/private/mokeyapp.keytab
 $ chgrp mokey /etc/mokey/private/mokeyapp.keytab
 ```
 
-Edit mokey configuration file and set path to keytab file. The values for
-`token_secret` and `csrf_secret` will be automatically generated for you if
-left blank. Set these secret values if you'd like sessions to persist after a restart.
-For other site specific config options [see here](https://github.com/tubby1981/mokey/blob/main/mokey.toml.sample):
+Verify the service account can read password policies:
+
+```
+$ kinit -kt /etc/mokey/private/mokeyapp.keytab mokeyapp
+$ ipa pwpolicy-show --user=someuser
+$ kdestroy
+```
+
+If `pwpolicy-show` returns *password policy not found*, the role is missing
+**Password Policy Readers** or the user is not a member of the role. As a
+fallback, set `password_max_life_days` in `mokey.toml` to match your IPA policy
+(for example `183`).
+
+### mokey configuration
+
+Edit `/etc/mokey/mokey.toml`. Set the keytab path and service account name. The
+values for `token_secret` and `csrf_secret` are generated automatically if left
+blank. Set them explicitly if you want sessions and tokens to persist across
+restarts. For all options see
+[mokey.toml.sample](https://github.com/tubby1981/mokey/blob/main/mokey.toml.sample).
 
 ```
 $ vim /etc/mokey/mokey.toml
-# Path to keytab file
+
+[site]
+# User account for the mokey service (must match keytab principal)
+ktuser = "mokeyapp"
 keytab = "/etc/mokey/private/mokeyapp.keytab"
 
 # Secret key for branca tokens. Must be 32 bytes. To generate run:
-#    openssl rand -hex 32 
+#    openssl rand -hex 32
 token_secret = ""
 
 # CSRF token secret key. Should be a random string
 csrf_secret = ""
+
+[accounts]
+# Fallback when pwpolicy_show is unavailable to the service account.
+# Per-user IPA policy is used automatically when mokeyapp can read it.
+password_max_life_days = 183
+
+# Fallback password validation limits when IPA policy cannot be read.
+# min_passwd_len and min_passwd_classes in mokey.toml are used only as fallback;
+# effective Min length and Character classes come from each user's IPA policy.
 ```
 
 It's highly recommended to run mokey using HTTPS. You'll need an SSL

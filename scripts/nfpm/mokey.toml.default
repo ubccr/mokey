@@ -47,11 +47,10 @@ default_shell = "/bin/bash"
 
 # Minimum password length. Used for validating new passwords. Should match your
 # password policy set in FreeIPA
+# Minimum password length fallback when IPA password policy cannot be read.
 min_passwd_len = 8
 
-# Minimum password classes. Classes are lowercase, uppercase, numbers, and
-# special characters.  Used for validating new passwords. Should match your
-# password policy set in FreeIPA
+# Minimum password classes fallback when IPA password policy cannot be read.
 min_passwd_classes = 2
 
 # Fallback max password lifetime in days for krbPasswordExpiration after admin

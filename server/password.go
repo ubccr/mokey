@@ -23,10 +23,7 @@ var (
 )
 
 // Simple password checker to validate passwords before creating an account
-func checkPassword(pass string) error {
-	minLength := viper.GetInt("accounts.min_passwd_len")
-	minClasses := viper.GetInt("accounts.min_passwd_classes")
-
+func checkPassword(pass string, minLength, minClasses int) error {
 	l := len([]rune(pass))
 	if l < minLength {
 	    // Translators: “Min length: %d” – keep the placeholder for the length
@@ -75,7 +72,46 @@ func checkPassword(pass string) error {
 	return nil
 }
 
-func validatePassword(password, passwordConfirm string) error {
+func (r *Router) passwordPolicyLimits(username string) (minLength, minClasses int) {
+	minLength = viper.GetInt("accounts.min_passwd_len")
+	minClasses = viper.GetInt("accounts.min_passwd_classes")
+
+	if username == "" {
+		return minLength, minClasses
+	}
+
+	policy, err := r.adminClient.PasswordPolicyForUser(username)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"username": username,
+			"error":    err,
+		}).Debug("Using mokey.toml password limits; could not read IPA password policy")
+		return minLength, minClasses
+	}
+
+	if policy.MinLength > 0 {
+		minLength = policy.MinLength
+	}
+	if policy.MinClasses > 0 {
+		minClasses = policy.MinClasses
+	}
+
+	log.WithFields(log.Fields{
+		"username":    username,
+		"policy":      policy.CN,
+		"min_length":  minLength,
+		"min_classes": minClasses,
+	}).Debug("Using IPA password policy for validation")
+
+	return minLength, minClasses
+}
+
+func (r *Router) checkPasswordForUser(username, pass string) error {
+	minLength, minClasses := r.passwordPolicyLimits(username)
+	return checkPassword(pass, minLength, minClasses)
+}
+
+func validatePassword(password, passwordConfirm string, minLength, minClasses int) error {
 	if password == "" {
 		// Translators: Prompt user to enter a new password
 		return errors.New(Translate("", "password.enter_new"))
@@ -91,14 +127,19 @@ func validatePassword(password, passwordConfirm string) error {
 		return errors.New(Translate("", "password.confirm_new"))
 	}
 
-	if err := checkPassword(password); err != nil {
+	if err := checkPassword(password, minLength, minClasses); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func validatePasswordChange(passwordCurrent, password, passwordConfirm string) error {
+func (r *Router) validatePasswordForUser(username, password, passwordConfirm string) error {
+	minLength, minClasses := r.passwordPolicyLimits(username)
+	return validatePassword(password, passwordConfirm, minLength, minClasses)
+}
+
+func (r *Router) validatePasswordChangeForUser(username, passwordCurrent, password, passwordConfirm string) error {
 	if passwordCurrent == "" {
 		// Translators: Prompt user to enter current password
 		return errors.New(Translate("", "password.enter_current"))
@@ -109,7 +150,7 @@ func validatePasswordChange(passwordCurrent, password, passwordConfirm string) e
 		return errors.New(Translate("", "password.same_as_new"))
 	}
 
-	return validatePassword(password, passwordConfirm)
+	return r.validatePasswordForUser(username, password, passwordConfirm)
 }
 
 func (r *Router) PasswordChange(c *fiber.Ctx) error {
@@ -135,7 +176,7 @@ func (r *Router) PasswordChange(c *fiber.Ctx) error {
 		return c.Render("password.html", vars)
 	}
 
-	if err := validatePasswordChange(password, newpass, newpass2); err != nil {
+	if err := r.validatePasswordChangeForUser(user.Username, password, newpass, newpass2); err != nil {
 		vars["message"] = err.Error()
 		return c.Render("password.html", vars)
 	}
@@ -279,7 +320,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "password_change.otp_help"))
 	}
 
-	if err := validatePassword(password, passwordConfirm); err != nil {
+	if err := r.validatePasswordForUser(user.Username, password, passwordConfirm); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
