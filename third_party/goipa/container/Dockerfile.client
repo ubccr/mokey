@@ -1,0 +1,33 @@
+FROM centos:centos7
+RUN yum swap -y -- remove fakesystemd -- install systemd systemd-libs && yum clean all
+RUN yum install -y ipa-client openssh-server openssh-clients sudo vim vim-go wget dbus-python perl 'perl(Data::Dumper)' 'perl(Time::HiRes)' && yum clean all
+COPY init-data ipa-client-enroll populate-data-volume /usr/sbin/
+RUN sed -i 's/^#AddressFamily any/AddressFamily inet/' /etc/ssh/sshd_config
+COPY ipa-client-enroll.service populate-data-volume.service /usr/lib/systemd/system/
+RUN ln -s /usr/lib/systemd/system/ipa-client-enroll.service /usr/lib/systemd/system/default.target.wants/
+RUN ln -s /usr/lib/systemd/system/sshd.service /usr/lib/systemd/system/default.target.wants/
+RUN ln -s /usr/lib/systemd/system/populate-data-volume.service /usr/lib/systemd/system/default.target.wants/
+COPY volume-data-list /etc/
+
+ARG DEV_SSH_KEY
+ARG GO_VERSION
+ARG USER
+ARG USER_ID
+
+RUN useradd -m --uid=${USER_ID} ${USER} \
+	&& mkdir /home/${USER}/.ssh \
+    && echo "$DEV_SSH_KEY" > /home/${USER}/.ssh/authorized_keys \
+	&& chmod 600 /home/${USER}/.ssh/authorized_keys \
+    && echo 'export PATH=$PATH:/usr/local/go/bin' >> /home/${USER}/.bashrc \
+	&& chown -R ${USER}:${USER} /home/${USER}
+
+RUN install -o ${USER_ID} -g ${USER_ID} -m 0755 -d /app
+RUN wget https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+
+RUN echo "${USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/90-dev-user \
+	&& chmod 440 /etc/sudoers.d/90-dev-user
+
+ENV container docker
+VOLUME [ "/tmp", "/run", "/data" ]
+ENTRYPOINT /usr/sbin/init-data

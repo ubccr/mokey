@@ -114,6 +114,6 @@ require (
 
 go 1.22.0
 
-replace github.com/ubccr/goipa => github.com/tubby1981/goipa v0.0.8
+replace github.com/ubccr/goipa => ./third_party/goipa
 
 toolchain go1.23.2

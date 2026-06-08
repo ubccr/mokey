@@ -16,7 +16,7 @@ func SecureHeaders(c *fiber.Ctx) error {
 	c.Set(fiber.HeaderXXSSProtection, "1; mode=block")
 	c.Set(fiber.HeaderXContentTypeOptions, "nosniff")
 	c.Set(fiber.HeaderXFrameOptions, "DENY")
-	c.Set(fiber.HeaderContentSecurityPolicy, "default-src 'self' 'unsafe-inline'; img-src 'self' data:;script-src 'self' 'unsafe-inline'")
+	c.Set(fiber.HeaderContentSecurityPolicy, "default-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; script-src 'self' 'unsafe-inline'")
 
 	if !strings.HasPrefix(c.Path(), "/static") {
 		c.Set("Cache-Control", "no-store")

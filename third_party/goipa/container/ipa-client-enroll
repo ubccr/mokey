@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Copyright 2016--2018 Jan Pazdziora
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+
+# If the machine is not yet IPA-enrolled, fetch its OTP from the IPA
+# server and IPA-enroll the machine. In container with Apache HTTP
+# server, also get keytab for the HTTP/ service and SSL certificate.
+
+set -e
+
+exec >> /run/docker-console/fd/1 2>> /run/docker-console/fd/2
+
+workaround_1708275 () {
+	# Workaround 1708275
+	if ! grep -q dyndns_refresh_interval /etc/sssd/sssd.conf ; then
+		sed -i '/^\[domain/adyndns_refresh_interval = 999999' /etc/sssd/sssd.conf
+	fi
+}
+
+if [ -f /etc/ipa/default.conf ] ; then
+	echo "$HOSTNAME is already IPA-enrolled."
+	workaround_1708275
+	exit
+fi
+
+DOMAIN=mokey.local
+IPA=ipa.$DOMAIN
+
+i=0
+while ! curl -fs https://$IPA/pub/$HOSTNAME-otp &> /dev/null ; do
+	if [ "$(( i % 20 ))" -eq 0 ] ; then
+		echo "Waiting for my host record and OTP ..."
+	fi
+	i=$(( i + 1 ))
+	sleep 1
+done
+
+(
+set -x
+curl -o /tmp/otp-password -fs https://$IPA/pub/$HOSTNAME-otp
+ipa-client-install --server $IPA --domain $DOMAIN --password $( cat /tmp/otp-password ) --enable-dns-updates --no-ntp --no-nisdomain --no-ssh --no-sshd --no-sudo --no-dns-sshfp --unattended
+)
+
+workaround_1708275
+
+if id apache &> /dev/null ; then
+	HTTP_CERT=/etc/pki/tls/certs/localhost.crt
+	rm -f $HTTP_CERT
+
+	(
+	set -x
+
+	kinit -k
+	ipa-getkeytab -k /etc/http.keytab -s $IPA -p HTTP/$HOSTNAME
+	chown apache /etc/http.keytab
+
+	ipa-getcert request -k /etc/pki/tls/private/localhost.key -f $HTTP_CERT -N $HOSTNAME -K HTTP/$HOSTNAME -w
+	chown apache $HTTP_CERT
+	)
+fi

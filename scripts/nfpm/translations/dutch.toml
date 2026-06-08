@@ -214,6 +214,7 @@ email_sent = "Er is een e-mail voor het opnieuw instellen van uw wachtwoord vers
 title = "Wachtwoord Herstellen"
 reset_button = "Wachtwoord Herstellen"
 success_message = "Je wachtwoord is succesvol hersteld"
+failed = "Het wachtwoord kon niet worden gewijzigd. Controleer of het voldoet aan het wachtwoordbeleid en probeer het opnieuw."
 
 [profile]
 title = "Profielinstellingen"

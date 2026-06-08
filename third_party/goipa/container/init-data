@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Copyright 2016--2017 Jan Pazdziora
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+
+# Populates data in the image from the /data volume. Also
+# waits for the IPA server to be ready.
+
+set -e
+
+UNAME=$( uname -n )
+if [ "$HOSTNAME" != "$UNAME" -a "$HOSTNAME" == "${UNAME%%.*}" ] ; then
+	HOSTNAME="$UNAME"
+fi
+
+for i in /run/* /tmp/* ; do
+	if [ -e "$i" -a "$i" != '/run/secrets' ] ; then
+		rm -rf "$i"
+	fi
+done
+
+if [ -f /data/volume-version ] ; then
+	sed 's%^/%%' /etc/volume-data-list | while read f ; do [ -e /data/$f -o -L /data/$f ] && echo $f ; done | ( cd /data && xargs cp --parents -rp -t / )
+fi
+
+DOMAIN=mokey.local
+IPA=ipa.$DOMAIN
+
+IPA_IP_FROM_DOCKER=$( host $IPA | awk '/has address (.+)/ { print $4; exit}' )
+
+i=0
+while ! curl -fs http://$IPA/ipa/config/ca.crt &> /dev/null ; do
+	if [ "$(( i % 20 ))" -eq 0 ] ; then
+		echo "Waiting for FreeIPA server (HTTP Server) ..."
+	fi
+	i=$(( i + 1 ))
+	sleep 1
+done
+i=0
+while ! dig NS mokey.local &> /dev/null ; do
+	if [ "$(( i % 20 ))" -eq 0 ] ; then
+		echo "Waiting for FreeIPA server (DNS) ..."
+	fi
+	i=$(( i + 1 ))
+	sleep 1
+done
+
+echo "nameserver $IPA_IP_FROM_DOCKER" > /etc/resolv.conf
+echo "Pointing resolv.conf at $HOSTNAME to $IPA_IP_FROM_DOCKER"
+
+i=0
+while true ; do
+	IPA_IP_FROM_IPA=$( host $IPA | awk '/has address (.+)/ { print $4; exit}' )
+	if [ "$IPA_IP_FROM_DOCKER" == "$IPA_IP_FROM_IPA" ] ; then
+		break
+	fi
+	if [ "$(( i % 20 ))" -eq 0 ] ; then
+		echo "Waiting for FreeIPA server (its IP address in DNS) ..."
+	fi
+	i=$(( i + 1 ))
+	sleep 1
+done
+
+echo "FreeIPA server is ready."
+
+while ! ( set -x ; curl -o /etc/pki/ca-trust/source/anchors/ipa-ca.crt -fs http://$IPA/ipa/config/ca.crt ) ; do
+	sleep 1
+done
+(
+set -x
+update-ca-trust
+)
+
+(
+	trap '' SIGHUP
+	rm -rf /run/docker-console
+	mkdir -p /run/docker-console
+	(sleep infinity) &
+	ln -s /proc/$!/fd /run/docker-console/
+)
+
+exec /usr/sbin/init

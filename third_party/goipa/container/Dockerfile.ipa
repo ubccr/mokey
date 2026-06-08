@@ -1,0 +1,12 @@
+FROM freeipa/freeipa-server:centos-7
+ARG IPA_ADMIN_PASS
+ARG IPA_DS_PASS
+COPY init-ipa-server-install-options ipa-precreate-hosts /usr/sbin/
+COPY ipa-precreate-hosts.service /usr/lib/systemd/system/
+RUN mkdir /usr/lib/systemd/system/container-ipa.target.wants \
+	&& ln -s /usr/lib/systemd/system/ipa-precreate-hosts.service /usr/lib/systemd/system/container-ipa.target.wants/ipa-precreate-hosts.service
+RUN ln -s /data /var/www/html/pub
+
+ENV IPA_ADMIN_PASS $IPA_ADMIN_PASS
+ENV IPA_DS_PASS $IPA_DS_PASS
+ENTRYPOINT [ "/usr/sbin/init-ipa-server-install-options" ]

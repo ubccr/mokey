@@ -1,0 +1,8 @@
+[Unit]
+Description=Store the data in /data
+After=ipa-client-enroll.service ipsilon-server-configure.service ipsilon-client-configure.service ipsilon-server-wait-for-sp.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/populate-data-volume
+RemainAfterExit=true

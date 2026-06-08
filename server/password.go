@@ -275,7 +275,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 	passwordConfirm := c.FormValue("password2")
 	otp := c.FormValue("otpcode")
 
-	if user.OTPOnly() && otp == "" {
+	if userHasOTP(user) && otp == "" {
 		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "password_change.otp_help"))
 	}
 
@@ -283,12 +283,24 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	rand, err := r.adminClient.ResetPassword(user.Username)
+	err = r.adminClient.AdminSetPassword(user.Username, password, otp)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(Translate("", "account.system_error"))
-	}
+		log.WithFields(log.Fields{
+			"username": user.Username,
+			"error":    err,
+		}).Warn("AdminSetPassword failed, trying ResetPassword+SetPassword fallback")
 
-	err = r.adminClient.SetPassword(user.Username, rand, password, otp)
+		rand, resetErr := r.adminClient.ResetPassword(user.Username)
+		if resetErr != nil {
+			log.WithFields(log.Fields{
+				"username": user.Username,
+				"error":    resetErr,
+			}).Error("failed to reset user password in FreeIPA")
+			return c.Status(fiber.StatusInternalServerError).SendString(Translate("", "account.system_error"))
+		}
+
+		err = r.adminClient.SetPassword(user.Username, rand, password, otp)
+	}
 	if err != nil {
 		switch {
 		case errors.Is(err, ipa.ErrPasswordPolicy):
@@ -302,7 +314,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 				"username": user.Username,
 				"error":    err,
 			}).Error("invalid password from FreeIPA")
-			return c.Status(fiber.StatusBadRequest).SendString(Translate("", "otptoken.invalid_otp"))
+			return c.Status(fiber.StatusBadRequest).SendString(passwordResetInvalidMessage(user, otp))
 		default:
 			log.WithFields(log.Fields{
 				"username": user.Username,
@@ -329,6 +341,16 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 	r.metrics.totalPasswordResets.Inc()
 
 	return c.Render("password-reset-success.html", fiber.Map{})
+}
+
+func passwordResetInvalidMessage(user *ipa.User, otp string) string {
+	if userHasOTP(user) {
+		if otp == "" {
+			return Translate("", "password_change.otp_help")
+		}
+		return Translate("", "otptoken.invalid_otp")
+	}
+	return Translate("", "password_reset.failed")
 }
 
 // PasswordExpiredRedirect sends legacy expired-password URLs to the forgot-password flow.

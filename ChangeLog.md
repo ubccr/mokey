@@ -1,5 +1,14 @@
 # Mokey ChangeLog
 
+## [v0.6.13] - 2026-06-08
+
+- Fix password reset from email links: use the FreeIPA admin `passwd` API instead of the ResetPassword/SetPassword self-service flow that failed for expired passwords
+- Return accurate error messages on password reset (no longer always "Invalid OTP" when 2FA is disabled)
+- Show the OTP field on password reset when the user has MFA enabled (`UserHasOTP`), not only for OTP-only accounts
+- Add `password_reset.failed` translation for generic reset failures
+- Vendor goipa locally with `AdminSetPassword` and omit empty OTP from `SetPassword` requests
+- Add explicit `font-src 'self'` to Content-Security-Policy headers
+
 ## [v0.6.12] - 2026-06-04
 
 - Remove organization-specific strings from default translations and email logo defaults

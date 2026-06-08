@@ -214,6 +214,7 @@ email_sent = "An email to reset your password has been sent."
 title = "Reset Password"
 reset_button = "Reset Password"
 success_message = "Your password has been successfully reset"
+failed = "Your password could not be changed. Check that it meets the password policy and try again."
 
 [profile]
 title = "Profile Settings"
