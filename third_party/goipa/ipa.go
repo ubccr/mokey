@@ -67,6 +67,9 @@ type Client struct {
 	sticky     bool
 	httpClient *http.Client
 	krbClient  *client.Client
+
+	// PasswordMaxLifeFallback is used when pwpolicy_show is unavailable (days).
+	PasswordMaxLifeFallback int
 }
 
 // FreeIPA api options map

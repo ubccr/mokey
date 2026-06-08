@@ -74,6 +74,11 @@ min_passwd_len = 8
 # password policy set in FreeIPA
 min_passwd_classes = 2
 
+# Fallback max password lifetime in days for krbPasswordExpiration after admin
+# password reset, when FreeIPA pwpolicy_show is unavailable to the service
+# account. Set this to match your IPA password policy (e.g. 183).
+# password_max_life_days = 183
+
 # Hash algorithm for generating OTP tokens: sha1, sha256, or sha512
 otp_hash_algorithm = "sha1"
 

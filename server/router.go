@@ -34,6 +34,7 @@ func NewRouter(storage fiber.Storage) (*Router, error) {
 	}
 
 	r.adminClient = ipa.NewDefaultClient()
+	r.adminClient.PasswordMaxLifeFallback = viper.GetInt("accounts.password_max_life_days")
 
 	err := r.adminClient.LoginWithKeytab(viper.GetString("site.keytab"), viper.GetString("site.ktuser"))
 	if err != nil {

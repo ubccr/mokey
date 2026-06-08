@@ -54,27 +54,107 @@ func (c *Client) showPasswordPolicy(cn, username string) (int, error) {
 	return parsePasswordPolicyMaxLife(res.Result.Data)
 }
 
+func (c *Client) findPasswordPolicyMaxLife() (int, error) {
+	res, err := c.rpc("pwpolicy_find", []string{""}, Options{})
+	if err != nil {
+		return 0, err
+	}
+
+	if res.Result == nil || len(res.Result.Data) == 0 {
+		return 0, errors.New("ipa: no password policies found")
+	}
+
+	policies := gjson.ParseBytes(res.Result.Data)
+	if !policies.IsArray() {
+		return parsePasswordPolicyMaxLife(res.Result.Data)
+	}
+
+	var fallback int
+	policies.ForEach(func(_, policy gjson.Result) bool {
+		ml := policy.Get("krbmaxpwdlife.0").Int()
+		if ml == 0 {
+			ml = policy.Get("krbmaxpwdlife").Int()
+		}
+		if ml <= 0 {
+			return true
+		}
+
+		cn := policy.Get("cn.0").String()
+		if cn == globalPasswordPolicyCN {
+			fallback = int(ml)
+			return false
+		}
+		if fallback == 0 {
+			fallback = int(ml)
+		}
+		return true
+	})
+
+	if fallback <= 0 {
+		return 0, errors.New("ipa: password policies found but none define max lifetime")
+	}
+
+	return fallback, nil
+}
+
+func isPasswordPolicyNotFound(err error) bool {
+	if ierr, ok := err.(*IpaError); ok && ierr.Code == 4001 {
+		return true
+	}
+	return false
+}
+
 // PasswordPolicyMaxLife returns the effective maximum password lifetime in days
-// for the given user. Falls back to the global policy when no user-specific
-// policy is configured.
+// for the given user.
 func (c *Client) PasswordPolicyMaxLife(username string) (int, error) {
+	var attempts []func() (int, error)
+
 	if username != "" {
-		maxLife, err := c.showPasswordPolicy("", username)
+		attempts = append(attempts, func() (int, error) {
+			return c.showPasswordPolicy("", username)
+		})
+	}
+
+	attempts = append(attempts,
+		func() (int, error) { return c.showPasswordPolicy("", "") },
+		func() (int, error) { return c.showPasswordPolicy(globalPasswordPolicyCN, "") },
+		func() (int, error) { return c.findPasswordPolicyMaxLife() },
+	)
+
+	var lastErr error
+	for _, attempt := range attempts {
+		maxLife, err := attempt()
 		if err == nil {
 			return maxLife, nil
 		}
-
-		if ierr, ok := err.(*IpaError); ok && ierr.Code == 4001 {
+		lastErr = err
+		if !isPasswordPolicyNotFound(err) {
 			log.WithFields(log.Fields{
 				"username": username,
 				"error":    err,
-			}).Debug("No user-specific password policy, falling back to global_policy")
-		} else {
-			return 0, err
+			}).Debug("Password policy lookup attempt failed")
 		}
 	}
 
-	return c.showPasswordPolicy(globalPasswordPolicyCN, "")
+	return 0, lastErr
+}
+
+func (c *Client) resolvePasswordMaxLife(username string) (int, error) {
+	maxLife, err := c.PasswordPolicyMaxLife(username)
+	if err == nil {
+		return maxLife, nil
+	}
+
+	if c.PasswordMaxLifeFallback > 0 {
+		log.WithFields(log.Fields{
+			"username": username,
+			"days":     c.PasswordMaxLifeFallback,
+			"error":    err,
+		}).Warn("Using configured accounts.password_max_life_days fallback for password expiration")
+		return c.PasswordMaxLifeFallback, nil
+	}
+
+	return 0, err
 }
 
 // SetPasswordExpiration sets krbPasswordExpiration for a user.
@@ -88,6 +168,11 @@ func (c *Client) SetPasswordExpiration(username string, expires time.Time) error
 		return nil
 	}
 
+	log.WithFields(log.Fields{
+		"username": username,
+		"error":    err,
+	}).Debug("password_expiration user_mod failed, trying krbpasswordexpiration attribute")
+
 	options = Options{
 		"krbpasswordexpiration": expires.UTC().Format(IpaDatetimeFormat),
 	}
@@ -99,29 +184,33 @@ func (c *Client) SetPasswordExpiration(username string, expires time.Time) error
 // RefreshPasswordExpiration sets krbPasswordExpiration to now plus the user's
 // effective password policy max lifetime.
 func (c *Client) RefreshPasswordExpiration(username string) error {
-	maxLife, err := c.PasswordPolicyMaxLife(username)
+	maxLife, err := c.resolvePasswordMaxLife(username)
 	if err != nil {
 		return err
 	}
 
 	expires := time.Now().UTC().Add(time.Duration(maxLife) * 24 * time.Hour)
-	return c.SetPasswordExpiration(username, expires)
+	if err := c.SetPasswordExpiration(username, expires); err != nil {
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"username": username,
+		"expires":  expires.UTC().Format(time.RFC3339),
+		"maxlife":  maxLife,
+	}).Info("Refreshed krbPasswordExpiration after password reset")
+
+	return nil
 }
 
-// ResetUserPassword sets a new password using ResetPassword followed by the
-// self-service change_password endpoint. This avoids FreeIPA marking admin-set
-// passwords as immediately expired.
+// ResetUserPassword sets a new password using ResetPassword followed by passwd
+// with the temporary random password as current_password. This clears FreeIPA's
+// "administratively set password is expired" state and applies password policy.
 func (c *Client) ResetUserPassword(username, newPassword, otpcode string) error {
 	rand, err := c.ResetPassword(username)
 	if err != nil {
 		return err
 	}
 
-	anon := &Client{
-		host:       c.host,
-		realm:      c.realm,
-		httpClient: newHTTPClient(),
-	}
-
-	return anon.SetPassword(username, rand, newPassword, otpcode)
+	return c.ChangePassword(username, rand, newPassword, otpcode)
 }
