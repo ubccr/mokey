@@ -6,39 +6,75 @@ package ipa
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
-// PasswordPolicyMaxLife returns the effective maximum password lifetime in days
-// for the given user (via pwpolicy_show --user=...).
-func (c *Client) PasswordPolicyMaxLife(username string) (int, error) {
-	options := Options{}
-	if username != "" {
-		options["user"] = username
-	}
+const globalPasswordPolicyCN = "global_policy"
 
-	res, err := c.rpc("pwpolicy_show", []string{}, options)
-	if err != nil {
-		return 0, err
-	}
-
-	if res.Result == nil || len(res.Result.Data) == 0 {
+func parsePasswordPolicyMaxLife(data []byte) (int, error) {
+	if len(data) == 0 {
 		return 0, errors.New("ipa: empty password policy response")
 	}
 
-	policy := gjson.ParseBytes(res.Result.Data)
+	policy := gjson.ParseBytes(data)
 	maxLife := policy.Get("krbmaxpwdlife.0").Int()
 	if maxLife == 0 {
 		maxLife = policy.Get("krbmaxpwdlife").Int()
 	}
 	if maxLife <= 0 {
-		return 0, fmt.Errorf("ipa: password policy has no max lifetime for user %s", username)
+		return 0, errors.New("ipa: password policy has no max lifetime")
 	}
 
 	return int(maxLife), nil
+}
+
+func (c *Client) showPasswordPolicy(cn, username string) (int, error) {
+	params := []string{}
+	if cn != "" {
+		params = []string{cn}
+	}
+
+	options := Options{}
+	if username != "" {
+		options["user"] = username
+	}
+
+	res, err := c.rpc("pwpolicy_show", params, options)
+	if err != nil {
+		return 0, err
+	}
+
+	if res.Result == nil {
+		return 0, errors.New("ipa: empty password policy response")
+	}
+
+	return parsePasswordPolicyMaxLife(res.Result.Data)
+}
+
+// PasswordPolicyMaxLife returns the effective maximum password lifetime in days
+// for the given user. Falls back to the global policy when no user-specific
+// policy is configured.
+func (c *Client) PasswordPolicyMaxLife(username string) (int, error) {
+	if username != "" {
+		maxLife, err := c.showPasswordPolicy("", username)
+		if err == nil {
+			return maxLife, nil
+		}
+
+		if ierr, ok := err.(*IpaError); ok && ierr.Code == 4001 {
+			log.WithFields(log.Fields{
+				"username": username,
+				"error":    err,
+			}).Debug("No user-specific password policy, falling back to global_policy")
+		} else {
+			return 0, err
+		}
+	}
+
+	return c.showPasswordPolicy(globalPasswordPolicyCN, "")
 }
 
 // SetPasswordExpiration sets krbPasswordExpiration for a user.
@@ -48,6 +84,15 @@ func (c *Client) SetPasswordExpiration(username string, expires time.Time) error
 	}
 
 	_, err := c.rpc("user_mod", []string{username}, options)
+	if err == nil {
+		return nil
+	}
+
+	options = Options{
+		"krbpasswordexpiration": expires.UTC().Format(IpaDatetimeFormat),
+	}
+
+	_, err = c.rpc("user_mod", []string{username}, options)
 	return err
 }
 
@@ -72,5 +117,11 @@ func (c *Client) ResetUserPassword(username, newPassword, otpcode string) error 
 		return err
 	}
 
-	return c.SetPassword(username, rand, newPassword, otpcode)
+	anon := &Client{
+		host:       c.host,
+		realm:      c.realm,
+		httpClient: newHTTPClient(),
+	}
+
+	return anon.SetPassword(username, rand, newPassword, otpcode)
 }

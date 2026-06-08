@@ -141,7 +141,10 @@ func (u *User) fromJSON(raw []byte) error {
 	u.Title = res.Get("title.0").String()
 	u.Shell = res.Get("loginshell.0").String()
 	u.Category = res.Get("userclass.0").String()
-	u.RandomPassword = res.Get("randompassword").String()
+	u.RandomPassword = res.Get("randompassword.0").String()
+	if u.RandomPassword == "" {
+		u.RandomPassword = res.Get("randompassword").String()
+	}
 	u.LastPasswdChange = ParseDateTime(res.Get("krblastpwdchange.0.__datetime__").String())
 	u.PasswdExpire = ParseDateTime(res.Get("krbpasswordexpiration.0.__datetime__").String())
 	u.PrincipalExpire = ParseDateTime(res.Get("krbprincipalexpiration.0.__datetime__").String())
@@ -293,6 +296,27 @@ func (c *Client) UserFind(options Options) ([]*User, error) {
 }
 
 // Reset user password and return new random password
+func parseRandomPasswordValue(res *Response) string {
+	if res == nil || res.Result == nil {
+		return ""
+	}
+
+	if value, ok := res.Result.Value.(string); ok {
+		return strings.TrimSpace(value)
+	}
+
+	if res.Result.Value != nil {
+		if b, err := json.Marshal(res.Result.Value); err == nil {
+			parsed := gjson.ParseBytes(b).String()
+			if parsed != "" && parsed != "null" {
+				return strings.TrimSpace(parsed)
+			}
+		}
+	}
+
+	return ""
+}
+
 func (c *Client) ResetPassword(username string) (string, error) {
 
 	options := Options{
@@ -310,6 +334,10 @@ func (c *Client) ResetPassword(username string) (string, error) {
 	err = userRec.fromJSON(res.Result.Data)
 	if err != nil {
 		return "", err
+	}
+
+	if len(userRec.RandomPassword) == 0 {
+		userRec.RandomPassword = parseRandomPasswordValue(res)
 	}
 
 	if len(userRec.RandomPassword) == 0 {
@@ -412,7 +440,10 @@ func (c *Client) AdminSetPassword(username, new_passwd, otpcode string) error {
 	}
 
 	if err := c.RefreshPasswordExpiration(username); err != nil {
-		return fmt.Errorf("password set but failed to refresh expiration: %w", err)
+		log.WithFields(log.Fields{
+			"username": username,
+			"error":    err,
+		}).Warn("Password set but failed to refresh krbPasswordExpiration")
 	}
 
 	return nil
