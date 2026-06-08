@@ -2,11 +2,12 @@
 
 ## [v0.6.13] - 2026-06-08
 
-- Fix password reset from email links: use the FreeIPA admin `passwd` API instead of the ResetPassword/SetPassword self-service flow that failed for expired passwords
+- Fix password reset from email links: prefer ResetPassword+SetPassword (self-service change_password) so users can log in immediately; FreeIPA admin `passwd` marks passwords as expired
+- Refresh krbPasswordExpiration from the user's effective password policy (pwpolicy maxlife) when the admin passwd fallback is used
 - Return accurate error messages on password reset (no longer always "Invalid OTP" when 2FA is disabled)
 - Show the OTP field on password reset when the user has MFA enabled (`UserHasOTP`), not only for OTP-only accounts
 - Add `password_reset.failed` translation for generic reset failures
-- Vendor goipa locally with `AdminSetPassword` and omit empty OTP from `SetPassword` requests
+- Vendor goipa locally with `AdminSetPassword`, `ResetUserPassword`, password policy helpers, and omit empty OTP from `SetPassword` requests
 - Add explicit `font-src 'self'` to Content-Security-Policy headers
 
 ## [v0.6.12] - 2026-06-04

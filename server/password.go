@@ -283,23 +283,14 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).SendString(err.Error())
 	}
 
-	err = r.adminClient.AdminSetPassword(user.Username, password, otp)
+	err = r.adminClient.ResetUserPassword(user.Username, password, otp)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"username": user.Username,
 			"error":    err,
-		}).Warn("AdminSetPassword failed, trying ResetPassword+SetPassword fallback")
+		}).Warn("ResetUserPassword failed, trying AdminSetPassword fallback")
 
-		rand, resetErr := r.adminClient.ResetPassword(user.Username)
-		if resetErr != nil {
-			log.WithFields(log.Fields{
-				"username": user.Username,
-				"error":    resetErr,
-			}).Error("failed to reset user password in FreeIPA")
-			return c.Status(fiber.StatusInternalServerError).SendString(Translate("", "account.system_error"))
-		}
-
-		err = r.adminClient.SetPassword(user.Username, rand, password, otp)
+		err = r.adminClient.AdminSetPassword(user.Username, password, otp)
 	}
 	if err != nil {
 		switch {
@@ -339,6 +330,14 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		"username": user.Username,
 	}).Info("AUDIT User password changed successfully")
 	r.metrics.totalPasswordResets.Inc()
+
+	if updated, showErr := r.adminClient.UserShow(user.Username); showErr == nil {
+		log.WithFields(log.Fields{
+			"username":          user.Username,
+			"password_expires":  updated.PasswdExpire.UTC().Format(time.RFC3339),
+			"last_password_chg": updated.LastPasswdChange.UTC().Format(time.RFC3339),
+		}).Debug("Password reset expiration state")
+	}
 
 	return c.Render("password-reset-success.html", fiber.Map{})
 }

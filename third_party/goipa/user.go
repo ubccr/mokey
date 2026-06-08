@@ -396,7 +396,8 @@ func (c *Client) SetPassword(username, old_passwd, new_passwd, otpcode string) e
 
 // AdminSetPassword sets a user's password via the IPA passwd command using
 // administrator privileges (no current password required). Provide OTP when the
-// user has MFA enabled.
+// user has MFA enabled. Also refreshes krbPasswordExpiration from the user's
+// effective password policy because admin passwd marks passwords expired.
 func (c *Client) AdminSetPassword(username, new_passwd, otpcode string) error {
 	options := Options{
 		"password": new_passwd,
@@ -408,6 +409,10 @@ func (c *Client) AdminSetPassword(username, new_passwd, otpcode string) error {
 	_, err := c.rpc("passwd", []string{username}, options)
 	if err != nil {
 		return err
+	}
+
+	if err := c.RefreshPasswordExpiration(username); err != nil {
+		return fmt.Errorf("password set but failed to refresh expiration: %w", err)
 	}
 
 	return nil
