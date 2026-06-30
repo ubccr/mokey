@@ -53,6 +53,28 @@ document.body.addEventListener('htmx:configRequest', function (evt) {
   });
 });
 
+function initLoginForm(form) {
+  if (!form || form.dataset.loginInit === '1') {
+    return;
+  }
+  form.dataset.loginInit = '1';
+
+  // Password managers call form.submit() directly, which bypasses HTMX.
+  form.submit = function () {
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) {
+      btn.click();
+    }
+  };
+}
+
+function initLoginForms() {
+  document.querySelectorAll('form.mokey-login-form, form#login-form').forEach(initLoginForm);
+}
+
+document.addEventListener('DOMContentLoaded', initLoginForms);
+document.body.addEventListener('htmx:afterSwap', initLoginForms);
+
 function closeModal(ele) {
     var container = document.getElementById(ele)
     var backdrop = document.getElementById("modal-backdrop")

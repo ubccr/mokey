@@ -96,6 +96,7 @@ func RemoteIP(c *fiber.Ctx) string {
 func (r *Router) SetupRoutes(app *fiber.App) {
 	// CSRF tokens stored in sessions
 	app.Use(r.CSRF)
+	app.Use(r.sanitizeAuthQuery)
 
 	app.Get("/", r.RequireLogin, r.Index)
 	app.Get("/account", r.RequireLogin, r.Index)

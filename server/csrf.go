@@ -36,10 +36,22 @@ func (r *Router) CSRF(c *fiber.Ctx) error {
 			sess.Save()
 		}
 	default:
-		if token == "" || token != c.Get("X-CSRF-Token") {
+		requestToken := c.Get("X-CSRF-Token")
+		if requestToken == "" {
+			requestToken = c.FormValue("_csrf")
+		}
+		if requestToken == "" {
+			requestToken = c.FormValue("csrf")
+		}
+
+		if token == "" || requestToken == "" || token != requestToken {
 			log.WithFields(log.Fields{
-				"path": c.Path(),
-				"ip":   RemoteIP(c),
+				"path":            c.Path(),
+				"ip":              RemoteIP(c),
+				"is_htmx":         c.Get("HX-Request") == "true",
+				"has_csrf_header": c.Get("X-CSRF-Token") != "",
+				"has_csrf_form":   c.FormValue("_csrf") != "" || c.FormValue("csrf") != "",
+				"session_cookie":  c.Cookies("session"),
 			}).Error("Invalid CSRF token in POST request")
 			return fiber.ErrForbidden
 		}

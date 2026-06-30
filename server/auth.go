@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -67,7 +68,12 @@ func (r *Router) isLoggedIn(c *fiber.Ctx) (bool, error) {
 }
 
 func (r *Router) Login(c *fiber.Ctx) error {
+	r.logAuthStep(c, "login_get", nil)
+
 	vars := fiber.Map{}
+	if challenge := strings.TrimSpace(c.Query("login_challenge")); challenge != "" {
+		vars["challenge"] = challenge
+	}
 	return c.Render("login.html", vars)
 }
 
@@ -112,6 +118,11 @@ func (r *Router) logout(c *fiber.Ctx) {
 }
 
 func (r *Router) redirectLogin(c *fiber.Ctx) error {
+	r.logAuthStep(c, "redirect_login", log.Fields{
+		"redirect_reason": "logout_or_session_invalid",
+		"redirect_to":     "/auth/login",
+	})
+
 	r.logout(c)
 
 	if c.Get("HX-Request", "false") == "true" {
@@ -124,6 +135,11 @@ func (r *Router) redirectLogin(c *fiber.Ctx) error {
 
 func (r *Router) RequireNoLogin(c *fiber.Ctx) error {
 	if ok, _ := r.isLoggedIn(c); ok {
+		r.logAuthStep(c, "redirect_already_authenticated", log.Fields{
+			"redirect_reason": "session_already_authenticated",
+			"redirect_to":     "/",
+		})
+
 		if c.Get("HX-Request", "false") == "true" {
 			c.Set("HX-Redirect", "/")
 			return c.Status(fiber.StatusNoContent).SendString("")
@@ -162,9 +178,23 @@ func (r *Router) RequireMFA(c *fiber.Ctx) error {
 }
 
 func (r *Router) CheckUser(c *fiber.Ctx) error {
+	r.logAuthStep(c, "check_user_start", nil)
+
+	if authQueryHasCredentials(c) {
+		return r.redirectCleanLogin(c, "credentials_in_query_string_on_post")
+	}
+
+	if password := strings.TrimSpace(c.FormValue("password")); password != "" {
+		r.logAuthStep(c, "check_user_password_present", log.Fields{
+			"action": "delegate_to_authenticate",
+		})
+		return r.Authenticate(c)
+	}
+
 	username := c.FormValue("username")
 
 	if username == "" {
+		r.logAuthStep(c, "check_user_missing_username", nil)
 		return c.Status(fiber.StatusBadRequest).SendString(Translate("", "account.please_provide_username"))
 	}
 
@@ -213,6 +243,10 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 		"ip":       RemoteIP(c),
 	}).Info("Login user attempt")
 
+	r.logAuthStep(c, "check_user_show_password_step", log.Fields{
+		"username": username,
+	})
+
 	vars := fiber.Map{
 		"user":      userRec,
 		"challenge": c.FormValue("challenge"),
@@ -222,6 +256,12 @@ func (r *Router) CheckUser(c *fiber.Ctx) error {
 }
 
 func (r *Router) Authenticate(c *fiber.Ctx) error {
+	r.logAuthStep(c, "authenticate_start", nil)
+
+	if authQueryHasCredentials(c) {
+		return r.redirectCleanLogin(c, "credentials_in_query_string_on_post")
+	}
+
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 	challenge := c.FormValue("challenge")
@@ -253,8 +293,19 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 				"err":      err,
 			}).Info("Password expired, redirecting to forgot password")
 
-			c.Set("HX-Redirect", fmt.Sprintf("/auth/forgotpw?expired=1&username=%s", url.QueryEscape(username)))
-			return c.Status(fiber.StatusNoContent).SendString("")
+			target := fmt.Sprintf("/auth/forgotpw?expired=1&username=%s", url.QueryEscape(username))
+			r.logAuthStep(c, "redirect_password_expired", log.Fields{
+				"redirect_reason": "password_expired",
+				"redirect_to":     target,
+				"username":          username,
+			})
+
+			if c.Get("HX-Request", "false") == "true" {
+				c.Set("HX-Redirect", target)
+				return c.Status(fiber.StatusNoContent).SendString("")
+			}
+
+			return c.Redirect(target)
 		default:
 			log.WithFields(log.Fields{
 				"username": username,
@@ -278,6 +329,9 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 
 	sess, err := r.session(c)
 	if err != nil {
+		r.logAuthStep(c, "authenticate_session_error", log.Fields{
+			"error": err.Error(),
+		})
 		return err
 	}
 
@@ -294,6 +348,12 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 		return err
 	}
 
+	r.logAuthStep(c, "authenticate_session_saved", log.Fields{
+		"username":       username,
+		"session_cookie": c.Cookies("session"),
+		"ipa_session_id": client.SessionID(),
+	})
+
 	if viper.IsSet("hydra.admin_url") && challenge != "" {
 		return r.LoginOAuthPost(username, challenge, c)
 	}
@@ -304,6 +364,15 @@ func (r *Router) Authenticate(c *fiber.Ctx) error {
 	}).Info("AUDIT User logged in successfully")
 	r.metrics.totalLogins.Inc()
 
-	c.Set("HX-Redirect", "/")
-	return c.Status(fiber.StatusNoContent).SendString("")
+	r.logAuthStep(c, "redirect_login_success", log.Fields{
+		"redirect_reason": "authenticated",
+		"redirect_to":     "/",
+	})
+
+	if c.Get("HX-Request", "false") == "true" {
+		c.Set("HX-Redirect", "/")
+		return c.Status(fiber.StatusNoContent).SendString("")
+	}
+
+	return c.Redirect("/")
 }

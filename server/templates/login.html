@@ -10,14 +10,21 @@
                 </div>
                 <div class="login-body p-4 p-md-5">
                     <div class="login-body-wrapper mx-auto">
-                        <form method="post" action="/auth/login" autocomplete="on">
+                        <form id="login-form" class="mokey-login-form" method="post" action="/auth/login" autocomplete="on"
+                              hx-post="/auth/login" hx-target="#login" hx-swap="innerHTML"
+                              hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-target-error="login-failed">
+                        <input type="hidden" name="_csrf" value="{{ $.csrf }}">
                         <div class="mb-3">
                             <label for="username" class="form-label">{{ Translate $.lang "common.username" }}</label>
                             <input type="text" class="form-control form-control-lg" name="username" id="username" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus="autofocus" placeholder="">
                         </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">{{ Translate $.lang "common.password" }}</label>
+                            <input type="password" class="form-control form-control-lg" name="password" id="password" autocomplete="current-password" placeholder="">
+                        </div>
                         <div class="mb-3 d-grid gap-2">
                           <input type="hidden" name="challenge" value="{{ $.challenge }}" />
-                          <button hx-headers='{"X-CSRF-Token": "{{ $.csrf }}"}' hx-target-error="login-failed" hx-post="/auth/login" hx-target="#login" hx-swap="innerHTML" class="btn btn-primary btn-lg" type="submit">
+                          <button class="btn btn-primary btn-lg" type="submit">
                           <span class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                           {{ Translate $.lang "login.next_button" }}
                           </button>

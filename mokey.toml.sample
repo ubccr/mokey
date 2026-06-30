@@ -167,6 +167,10 @@ listen = "0.0.0.0:8866"
 # Times out the session after inactivity (in seconds)
 session_idle_timeout = 900
 
+# Log login flow steps (session cookie id, redirects, form fields) for troubleshooting.
+# Never logs password values. Also warns when credentials appear in URL query strings.
+# auth_debug = true
+
 # Path to ssl certificate
 # ssl_cert = ""
 

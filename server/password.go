@@ -307,6 +307,7 @@ func (r *Router) PasswordReset(c *fiber.Ctx) error {
 		vars := fiber.Map{
 			"claims": claims,
 			"user":   user,
+			"path":   c.Path(),
 		}
 
 		return c.Render("password-reset.html", vars)

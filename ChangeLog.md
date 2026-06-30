@@ -2,10 +2,18 @@
 
 ## [Unreleased]
 
+## [v0.6.14] - 2026-06-30
+
 ### Login / password managers
 - Fix login loop when browsers or password managers autofill credentials (HTMX now reads input values from the DOM)
 - Use standard `autocomplete` attributes and input types on login and forgot-password forms
 - Use readonly instead of disabled for the username field on the password step so password managers recognize the form
+- Accept one-step login when password managers submit username and password together on `/auth/login`
+- Route login forms through HTMX even when password managers call `form.submit()` directly
+- Strip credentials from URL query strings on auth routes (prevents passwords in access logs)
+- Accept CSRF token from hidden form field (not only `X-CSRF-Token` header)
+- Add optional `server.auth_debug` logging for login flow troubleshooting
+- Pass reset form path to password-reset template for HTMX form posts
 
 ## [v0.6.13] - 2026-06-08
 
