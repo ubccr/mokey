@@ -1,5 +1,12 @@
 # Mokey ChangeLog
 
+## [Unreleased]
+
+### Login / password managers
+- Fix login loop when browsers or password managers autofill credentials (HTMX now reads input values from the DOM)
+- Use standard `autocomplete` attributes and input types on login and forgot-password forms
+- Use readonly instead of disabled for the username field on the password step so password managers recognize the form
+
 ## [v0.6.13] - 2026-06-08
 
 ### Password reset

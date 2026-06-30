@@ -10,10 +10,10 @@
                 </div>
                 <div class="login-body p-4 p-md-5">
                     <div class="login-body-wrapper mx-auto">
-                        <form>
+                        <form method="post" action="/auth/login" autocomplete="on">
                         <div class="mb-3">
                             <label for="username" class="form-label">{{ Translate $.lang "common.username" }}</label>
-                            <input type="username" class="form-control form-control-lg" name="username" id="username" autofocus="autofocus" placeholder="">
+                            <input type="text" class="form-control form-control-lg" name="username" id="username" autocomplete="username" autocapitalize="none" spellcheck="false" autofocus="autofocus" placeholder="">
                         </div>
                         <div class="mb-3 d-grid gap-2">
                           <input type="hidden" name="challenge" value="{{ $.challenge }}" />
