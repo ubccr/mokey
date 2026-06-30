@@ -30,6 +30,9 @@
                           </button>
                         </div>
                         </form>
+			<p class="text-muted text-center">
+			    <a href="/auth/forgotpw">{{ Translate $.lang "login.forgot_password" }}</a>
+			</p>
 			{{ if ConfigValueBool "accounts.enable_user_signup" }}
 			<p class="text-muted text-center">{{ Translate $.lang "login.new_user" }} <a href="/signup">{{ Translate $.lang "login.create_account" }}</a></p>
 			{{ end }}

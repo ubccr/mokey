@@ -14,6 +14,7 @@
 - Accept CSRF token from hidden form field (not only `X-CSRF-Token` header)
 - Add optional `server.auth_debug` logging for login flow troubleshooting
 - Pass reset form path to password-reset template for HTMX form posts
+- Show forgot-password link on the main login page
 
 ## [v0.6.13] - 2026-06-08
 
