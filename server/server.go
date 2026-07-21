@@ -61,6 +61,7 @@ func SetDefaults() {
 	viper.SetDefault("server.idle_timeout", 120)
 	viper.SetDefault("server.rate_limit_expiration", 3600)
 	viper.SetDefault("server.rate_limit_max", 10)
+	viper.SetDefault("server.read_buffer_size", 16384)
 	viper.SetDefault("storage.driver", "memory")
 }
 
@@ -144,6 +145,7 @@ func newFiber() (*fiber.App, error) {
 		ReadTimeout:           time.Duration(viper.GetInt("server.read_timeout")) * time.Second,
 		WriteTimeout:          time.Duration(viper.GetInt("server.write_timeout")) * time.Second,
 		IdleTimeout:           time.Duration(viper.GetInt("server.idle_timeout")) * time.Second,
+		ReadBufferSize:        viper.GetInt("server.read_buffer_size"),
 		AppName:               "mokey",
 		DisableStartupMessage: true,
 		PassLocalsToViews:     true,
