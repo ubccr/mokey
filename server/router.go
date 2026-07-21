@@ -93,6 +93,9 @@ func RemoteIP(c *fiber.Ctx) string {
 }
 
 func (r *Router) SetupRoutes(app *fiber.App) {
+	// Health check (no auth, no CSRF/session - must be registered first)
+	app.Get("/healthz", r.Healthz)
+
 	// CSRF tokens stored in sessions
 	app.Use(r.CSRF)
 
