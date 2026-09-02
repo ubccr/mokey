@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v0.6.15] - 2026-09-02
+
+### Email
+- Wrap base64-encoded inline logo at 76 characters (RFC 2045) so messages stay under RFC 5322's 998-character line limit and Exim can DKIM-sign them
+
 ## [v0.6.14] - 2026-06-30
 
 ### Login / password managers

@@ -189,6 +189,22 @@ func (e *Emailer) quotedBody(body []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// writeBase64Wrapped writes base64-encoded data with CRLF line breaks every
+// 76 characters, as required by RFC 2045 and to stay under RFC 5322's 998
+// character line length limit (needed for Exim DKIM signing).
+func writeBase64Wrapped(w *bytes.Buffer, data []byte) {
+	encoded := base64.StdEncoding.EncodeToString(data)
+	const lineLen = 76
+	for i := 0; i < len(encoded); i += lineLen {
+		end := i + lineLen
+		if end > len(encoded) {
+			end = len(encoded)
+		}
+		w.WriteString(encoded[i:end])
+		w.WriteString("\r\n")
+	}
+}
+
 func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string, data map[string]interface{}) error {
 	log.WithFields(log.Fields{
 		"email":    user.Email,
@@ -317,10 +333,7 @@ func (e *Emailer) sendEmail(user *ipa.User, ctx *fiber.Ctx, subject, tmpl string
 		multipartBody.WriteString("Content-Disposition: inline; filename=\"logo.png\"\r\n")
 		multipartBody.WriteString("\r\n")
 
-		encodedLogo := make([]byte, base64.StdEncoding.EncodedLen(len(logoData)))
-		base64.StdEncoding.Encode(encodedLogo, logoData)
-		multipartBody.Write(encodedLogo)
-		multipartBody.WriteString("\r\n")
+		writeBase64Wrapped(&multipartBody, logoData)
 	}
 
 	// Close outer multipart
